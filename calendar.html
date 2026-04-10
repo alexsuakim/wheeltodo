@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Wheel Todo · Calendar</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app">
+      <header class="header">
+        <h1>Calendar</h1>
+        <p class="tagline">Plan tasks for future days and track what you completed.</p>
+
+        <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Toggle theme">
+          Light
+        </button>
+      </header>
+
+      <main class="calendar-main">
+        <section class="panel calendar-controls" aria-label="Calendar controls">
+          <h2>Pick a date</h2>
+
+          <div class="calendar-date-row">
+            <button type="button" class="btn btn-ghost calendar-nav-btn" id="cal-prev-btn">
+              Prev
+            </button>
+            <input type="date" id="cal-date" class="calendar-date-input" />
+            <button type="button" class="btn btn-ghost calendar-nav-btn" id="cal-next-btn">
+              Next
+            </button>
+          </div>
+
+          <div class="calendar-summary" id="cal-summary"></div>
+          <div class="calendar-note">
+            Actions edit this day only. Previous days remain in history.
+          </div>
+        </section>
+
+        <section class="panel calendar-col">
+          <h2>Planned (To-do)</h2>
+          <ul class="task-list" id="cal-planned-list" aria-live="polite"></ul>
+          <p class="empty-hint" id="cal-planned-empty" hidden>No planned tasks for this day.</p>
+
+          <div class="calendar-form">
+            <h3 class="calendar-form-title">Add planned task</h3>
+            <form id="cal-add-planned-form" autocomplete="off">
+              <input
+                id="cal-planned-text"
+                type="text"
+                maxlength="120"
+                placeholder="Task name"
+                required
+              />
+              <input id="cal-planned-mins" type="number" min="1" max="480" step="1" value="25" required />
+              <button type="submit" class="btn btn-primary">Add</button>
+            </form>
+          </div>
+        </section>
+
+        <section class="panel calendar-col">
+          <h2>Completed (Done)</h2>
+          <ul class="task-list" id="cal-done-list" aria-live="polite"></ul>
+          <p class="empty-hint" id="cal-done-empty" hidden>No completed tasks for this day.</p>
+
+          <div class="calendar-form">
+            <h3 class="calendar-form-title">Add completed task</h3>
+            <form id="cal-add-done-form" autocomplete="off">
+              <input id="cal-done-text" type="text" maxlength="120" placeholder="Task name" required />
+              <input id="cal-done-est-mins" type="number" min="1" max="480" step="1" value="25" required />
+              <input
+                id="cal-done-taken-mins"
+                type="number"
+                min="0"
+                max="480"
+                step="1"
+                value="25"
+                required
+              />
+              <button type="submit" class="btn btn-accent">Add</button>
+            </form>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script src="calendar.js"></script>
+  </body>
+</html>
+
