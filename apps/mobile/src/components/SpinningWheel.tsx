@@ -2,21 +2,12 @@ import React, { useRef, useState } from 'react';
 import { Animated, Easing, Pressable, StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, Path } from 'react-native-svg';
 import {
-  Briefcase,
-  Code,
-  Coffee,
-  Dumbbell,
-  GraduationCap,
-  Heart,
-  Mail,
-  BookOpen,
-  Palette,
-  PenLine,
-  ShoppingCart,
-  Users,
+  Briefcase, Code, Coffee, Dumbbell, GraduationCap, Heart,
+  Mail, BookOpen, Palette, PenLine, ShoppingCart, Users,
 } from 'lucide-react-native';
 import type { LucideIcon } from 'lucide-react-native';
 import type { Task } from '../context/AppContext';
+import { TOKENS } from '../theme/tokens';
 
 const iconMap: Record<string, LucideIcon> = {
   PenLine, Code, Palette, Users, Mail, BookOpen,
@@ -24,20 +15,20 @@ const iconMap: Record<string, LucideIcon> = {
 };
 
 const SIZE = 280;
-const CX = SIZE / 2;       // 140
-const R = SIZE / 2;        // outer radius — 140
-const ICON_R = 85;         // radial distance for icon centres
-const HUB_R = 45;          // white centre hub radius
-const MAX_TASKS = 6;
+const CX = SIZE / 2;
+const R = SIZE / 2;
+const ICON_R = 85;
+const HUB_R = 45;
 
 interface SpinningWheelProps {
   tasks: Task[];
   onTaskSelected: (task: Task) => void;
   onSliceClick: (task: Task) => void;
+  dailyGoal?: number;
+  todayDone?: number;
+  style?: object;
 }
 
-// Clock convention: 0° = top, clockwise positive.
-// Converts to standard math angles for cos/sin.
 function polar(r: number, deg: number) {
   const rad = (deg - 90) * (Math.PI / 180);
   return { x: CX + r * Math.cos(rad), y: CX + r * Math.sin(rad) };
@@ -51,15 +42,19 @@ function slicePath(index: number, n: number): string {
   return `M ${CX} ${CX} L ${s.x} ${s.y} A ${R} ${R} 0 ${largeArc} 1 ${e.x} ${e.y} Z`;
 }
 
-// After the wheel rotates `rotDeg` clockwise, the slice now at the top is
-// the one whose initial centre was at rotDeg % 360 from the top.
+// When the wheel has rotated clockwise by rotDeg, the slice now under the top
+// pointer is the one whose initial angular position was (360 - rotDeg) % 360.
 function pickIndex(rotDeg: number, n: number): number {
+  const norm = ((rotDeg % 360) + 360) % 360;
+  const atTop = ((360 - norm) + 360) % 360;
   const sliceDeg = 360 / n;
-  return Math.floor((((rotDeg % 360) + 360) % 360) / sliceDeg) % n;
+  return Math.floor(atTop / sliceDeg) % n;
 }
 
-export function SpinningWheel({ tasks, onTaskSelected, onSliceClick }: SpinningWheelProps) {
-  const wheelTasks = tasks.slice(0, MAX_TASKS);
+export function SpinningWheel({
+  tasks, onTaskSelected, onSliceClick, dailyGoal, todayDone = 0, style,
+}: SpinningWheelProps) {
+  const wheelTasks = tasks;
   const n = wheelTasks.length;
 
   const rotation = useRef(new Animated.Value(0)).current;
@@ -82,10 +77,13 @@ export function SpinningWheel({ tasks, onTaskSelected, onSliceClick }: SpinningW
 
     const sliceDeg = 360 / n;
     const targetIndex = Math.floor(Math.random() * n);
-    // Land with centre of targetIndex slice at the top pointer.
+    // Centre of the target slice in its initial position (clock angle from top).
     const targetNorm = targetIndex * sliceDeg + sliceDeg / 2;
-    const currentNorm = ((rotDegRef.current % 360) + 360) % 360;
-    let delta = targetNorm - currentNorm;
+    // For the target to sit under the top pointer, rotDeg % 360 must equal
+    // (360 - targetNorm) % 360 so that atTop == targetNorm.
+    const wantMod = (360 - targetNorm + 360) % 360;
+    const currentMod = ((rotDegRef.current % 360) + 360) % 360;
+    let delta = wantMod - currentMod;
     if (delta < 0) delta += 360;
     const toValue = rotDegRef.current + 5 * 360 + delta;
 
@@ -102,18 +100,16 @@ export function SpinningWheel({ tasks, onTaskSelected, onSliceClick }: SpinningW
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, style]}>
       {/* Wheel */}
       <View style={styles.wheelWrap}>
-        {/* Pointer: sits outside the rotating view so it stays fixed at top */}
         <View style={styles.pointerWrap} pointerEvents="none">
           <Svg width={28} height={28} viewBox="0 0 28 28">
-            <Path d="M14 20L7 8H21L14 20Z" fill="#1C1C1E" />
+            <Path d="M14 20L7 8H21L14 20Z" fill="#111111" />
           </Svg>
         </View>
 
         <Animated.View style={{ width: SIZE, height: SIZE, transform: [{ rotate }] }}>
-          {/* SVG layer: coloured slices + centre hub */}
           <Svg width={SIZE} height={SIZE} style={StyleSheet.absoluteFill}>
             {n === 0 ? (
               <Circle cx={CX} cy={CX} r={R} fill="#E8E5E0" />
@@ -130,38 +126,42 @@ export function SpinningWheel({ tasks, onTaskSelected, onSliceClick }: SpinningW
             <Circle cx={CX} cy={CX} r={HUB_R} fill="white" stroke="#E8E5E0" strokeWidth={2} />
           </Svg>
 
-          {/*
-           * Icon layer: absolutely positioned Views on top of the SVG.
-           * They live inside Animated.View so they rotate with the wheel.
-           * pointerEvents="none" lets taps fall through to the Path onPress handlers.
-           */}
           {wheelTasks.map((task, i) => {
             const sliceDeg = 360 / n;
             const { x, y } = polar(ICON_R, (i + 0.5) * sliceDeg);
             const Icon = (iconMap[task.icon] ?? Briefcase) as LucideIcon;
+            const iconSize = n <= 8 ? 24 : n <= 12 ? 18 : 14;
+            const half = iconSize / 2;
             return (
               <View
                 key={`icon-${task.id}`}
-                style={[styles.iconOverlay, { left: x - 16, top: y - 16 }]}
+                style={[styles.iconOverlay, { left: x - half, top: y - half, width: iconSize * 1.33, height: iconSize * 1.33 }]}
                 pointerEvents="none"
               >
-                <Icon size={24} color="white" strokeWidth={2} />
+                <Icon size={iconSize} color="white" strokeWidth={2} />
               </View>
             );
           })}
         </Animated.View>
       </View>
 
-      {/* Spin button */}
-      <Pressable
-        onPress={spin}
-        disabled={isSpinning || n === 0}
-        style={[styles.spinBtn, (isSpinning || n === 0) && styles.disabled]}
-      >
-        <Text style={styles.spinBtnText}>
-          {isSpinning ? 'Spinning…' : 'Spin the wheel'}
-        </Text>
-      </Pressable>
+      {/* Daily goal + spin button */}
+      <View style={styles.bottomArea}>
+        {dailyGoal !== undefined && (
+          <Text style={styles.goalText}>
+            Daily goal: {todayDone} / {dailyGoal} tasks
+          </Text>
+        )}
+        <Pressable
+          onPress={spin}
+          disabled={isSpinning || n === 0}
+          style={[styles.spinBtn, (isSpinning || n === 0) && styles.disabled]}
+        >
+          <Text style={styles.spinBtnText}>
+            {isSpinning ? 'Spinning…' : 'Spin the wheel'}
+          </Text>
+        </Pressable>
+      </View>
     </View>
   );
 }
@@ -171,13 +171,10 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 48,
+    gap: 36,
     paddingHorizontal: 24,
   },
-  wheelWrap: {
-    width: SIZE,
-    height: SIZE,
-  },
+  wheelWrap: { width: SIZE, height: SIZE },
   pointerWrap: {
     position: 'absolute',
     top: -20,
@@ -193,12 +190,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  bottomArea: {
+    width: '100%',
+    gap: 12,
+    alignItems: 'center',
+  },
+  goalText: {
+    fontSize: 14,
+    color: TOKENS.colors.text.secondary,
+    fontWeight: '500',
+  },
   spinBtn: {
     width: '100%',
-    backgroundColor: '#FF6B35',
-    paddingVertical: 16,
-    borderRadius: 14,
+    height: 52,
+    backgroundColor: '#111111',
+    borderRadius: 100,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   spinBtnText: { color: '#ffffff', fontSize: 17, fontWeight: '600' },
   disabled: { opacity: 0.4 },

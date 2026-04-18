@@ -92,6 +92,6 @@ const styles = StyleSheet.create({
     borderBottomWidth: 22,
     borderLeftColor: 'transparent',
     borderRightColor: 'transparent',
-    borderBottomColor: '#FF6B35',
+    borderBottomColor: '#111111',
   },
 });

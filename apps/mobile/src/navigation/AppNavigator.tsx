@@ -1,12 +1,14 @@
 import React from 'react';
+import { Text, View } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Ionicons } from '@expo/vector-icons';
+import { Clock, ListTodo, RotateCcw, User } from 'lucide-react-native';
 import { useApp } from '../context/AppContext';
 import { LoginScreen } from '../screens/LoginScreen';
 import { SpinScreen } from '../screens/SpinScreen';
 import { TasksScreen } from '../screens/TasksScreen';
 import { HistoryScreen } from '../screens/HistoryScreen';
 import { ProfileScreen } from '../screens/ProfileScreen';
+import { TOKENS } from '../theme/tokens';
 
 type TabParamList = {
   Spin: undefined;
@@ -17,47 +19,55 @@ type TabParamList = {
 
 const Tab = createBottomTabNavigator<TabParamList>();
 
-type IoniconsName = React.ComponentProps<typeof Ionicons>['name'];
-
-const TAB_ICONS: Record<keyof TabParamList, { active: IoniconsName; inactive: IoniconsName }> = {
-  Spin:    { active: 'disc',          inactive: 'disc-outline'          },
-  Tasks:   { active: 'list',          inactive: 'list-outline'          },
-  History: { active: 'time',          inactive: 'time-outline'          },
-  Profile: { active: 'person',        inactive: 'person-outline'        },
+const ICONS = {
+  Spin:    RotateCcw,
+  Tasks:   ListTodo,
+  History: Clock,
+  Profile: User,
 };
 
 export function AppNavigator() {
   const { user } = useApp();
 
   if (!user) {
-    // Once login() is called, user becomes non-null and this re-renders to the tab navigator.
     return <LoginScreen onLogin={() => {}} />;
   }
 
   return (
     <Tab.Navigator
       initialRouteName="Spin"
-      screenOptions={({ route }) => ({
-        headerShown: false,
-        tabBarActiveTintColor: '#007AFF',
-        tabBarInactiveTintColor: '#8E8E93',
-        tabBarStyle: {
-          backgroundColor: '#ffffff',
-          borderTopColor: '#E8E5E0',
-          borderTopWidth: 1,
-        },
-        tabBarLabelStyle: { fontSize: 11, fontWeight: '500' },
-        tabBarIcon: ({ focused, color, size }) => {
-          const icons = TAB_ICONS[route.name as keyof TabParamList];
-          return (
-            <Ionicons
-              name={focused ? icons.active : icons.inactive}
-              size={size}
-              color={color}
-            />
-          );
-        },
-      })}
+      screenOptions={({ route }) => {
+        const Icon = ICONS[route.name as keyof TabParamList];
+        return {
+          headerShown: false,
+          tabBarActiveTintColor: TOKENS.colors.text.primary,
+          tabBarInactiveTintColor: TOKENS.colors.text.secondary,
+          tabBarStyle: {
+            backgroundColor: '#ffffff',
+            borderTopColor: '#e8e8e8',
+            borderTopWidth: 1,
+            height: 60,
+            paddingBottom: 8,
+          },
+          tabBarIcon: ({ focused, color, size }) => (
+            <Icon size={size} color={color} strokeWidth={focused ? 2.5 : 1.8} />
+          ),
+          tabBarLabel: ({ focused, color }) => (
+            <View style={{ alignItems: 'center' }}>
+              <Text style={{ fontSize: 10, color, fontWeight: focused ? '600' : '400' }}>
+                {route.name}
+              </Text>
+              {focused && (
+                <View style={{
+                  width: 4, height: 4, borderRadius: 2,
+                  backgroundColor: TOKENS.colors.action.streak,
+                  marginTop: 2,
+                }} />
+              )}
+            </View>
+          ),
+        };
+      }}
     >
       <Tab.Screen name="Spin"    component={SpinScreen}    />
       <Tab.Screen name="Tasks"   component={TasksScreen}   />

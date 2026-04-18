@@ -8,6 +8,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useApp } from '../context/AppContext';
 
 interface Props {
@@ -26,8 +27,9 @@ export function LoginScreen({ onLogin }: Props) {
   }
 
   return (
+    <SafeAreaView style={styles.safe}>
     <KeyboardAvoidingView
-      style={styles.safe}
+      style={{ flex: 1 }}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <View style={styles.inner}>
@@ -92,11 +94,12 @@ export function LoginScreen({ onLogin }: Props) {
         </Pressable>
       </View>
     </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#FAF9F7' },
+  safe: { flex: 1, backgroundColor: '#f2f0eb' },
   inner: {
     flex: 1,
     paddingHorizontal: 32,
@@ -114,8 +117,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  logoIcon: { fontSize: 40, color: '#007AFF' },
-  appName: { fontSize: 26, fontWeight: '700', color: '#1C1C1E' },
+  logoIcon: { fontSize: 40, color: '#111111' },
+  appName: { fontSize: 26, fontWeight: '700', color: '#111111' },
   tagline: { fontSize: 15, color: '#8E8E93' },
   form: { gap: 10 },
   input: {
@@ -126,13 +129,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
     fontSize: 17,
-    color: '#1C1C1E',
+    color: '#111111',
   },
   signInBtn: {
-    backgroundColor: '#007AFF',
-    borderRadius: 14,
-    paddingVertical: 16,
+    backgroundColor: '#111111',
+    borderRadius: 100,
+    height: 52,
     alignItems: 'center',
+    justifyContent: 'center',
     marginTop: 4,
   },
   signInBtnText: { color: '#ffffff', fontSize: 17, fontWeight: '600' },
@@ -148,7 +152,7 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     alignItems: 'center',
   },
-  socialBtnText: { fontSize: 17, color: '#1C1C1E', fontWeight: '500' },
+  socialBtnText: { fontSize: 17, color: '#111111', fontWeight: '500' },
   signUpLink: { alignItems: 'center' },
-  signUpText: { fontSize: 15, color: '#007AFF' },
+  signUpText: { fontSize: 15, color: '#111111' },
 });

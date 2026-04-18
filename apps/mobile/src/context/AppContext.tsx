@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 
 export interface Task {
   id: string;
@@ -14,6 +14,7 @@ export interface CompletedTask {
   taskId: string;
   taskName: string;
   color: string;
+  icon: string;
   minutesEstimated: number;
   minutesActual: number;
   completedAt: Date;
@@ -35,6 +36,7 @@ interface AppContextType {
 
   completedTasks: CompletedTask[];
   completeTask: (taskId: string, minutesActual: number) => void;
+  uncompleteTask: (completedTaskId: string) => void;
 
   pomodoroSession: PomodoroSession | null;
   startPomodoro: (task: Task) => void;
@@ -49,6 +51,8 @@ interface AppContextType {
   setDailyGoal: (goal: number) => void;
   notificationsEnabled: boolean;
   setNotificationsEnabled: (enabled: boolean) => void;
+  wheelSoundEnabled: boolean;
+  setWheelSoundEnabled: (enabled: boolean) => void;
 
   user: { name: string; email: string; initials: string } | null;
   login: (email: string, password: string) => void;
@@ -64,23 +68,16 @@ const STORAGE_KEYS = {
 } as const;
 
 export const COLORS = [
-  '#FF6B6B', '#4ECDC4', '#FFE66D', '#95E1D3', '#C7CEEA', '#FFDAB9',
-  '#FF9FF3', '#54A0FF', '#48DBFB', '#FF6348', '#1DD1A1', '#EE5A6F',
+  '#FF5C4D', '#FF9B50', '#4ECDC4', '#FFE66D', '#A78BFA', '#F9A8D4',
 ];
 
 const defaultTasks: Task[] = [
-  { id: '1',  name: 'Write blog post',  minutes: 25, color: '#FF6B6B', icon: 'PenLine'      },
-  { id: '2',  name: 'Review code',      minutes: 15, color: '#4ECDC4', icon: 'Code'          },
-  { id: '3',  name: 'Design mockups',   minutes: 30, color: '#FFE66D', icon: 'Palette'       },
-  { id: '4',  name: 'Team meeting',     minutes: 20, color: '#95E1D3', icon: 'Users'         },
-  { id: '5',  name: 'Email replies',    minutes: 10, color: '#C7CEEA', icon: 'Mail'          },
-  { id: '6',  name: 'Research',         minutes: 25, color: '#FFDAB9', icon: 'BookOpen'      },
-  { id: '7',  name: 'Workout',          minutes: 30, color: '#FF9FF3', icon: 'Dumbbell'      },
-  { id: '8',  name: 'Grocery shopping', minutes: 45, color: '#54A0FF', icon: 'ShoppingCart'  },
-  { id: '9',  name: 'Meditation',       minutes: 15, color: '#48DBFB', icon: 'Heart'         },
-  { id: '10', name: 'Study session',    minutes: 50, color: '#FF6348', icon: 'GraduationCap' },
-  { id: '11', name: 'Client call',      minutes: 30, color: '#1DD1A1', icon: 'Briefcase'     },
-  { id: '12', name: 'Coffee break',     minutes: 10, color: '#EE5A6F', icon: 'Coffee'        },
+  { id: '1', name: 'Write blog post',  minutes: 25, color: '#FF5C4D', icon: 'PenLine'   },
+  { id: '2', name: 'Review code',      minutes: 15, color: '#FF9B50', icon: 'Code'      },
+  { id: '3', name: 'Design mockups',   minutes: 30, color: '#4ECDC4', icon: 'Palette'   },
+  { id: '4', name: 'Team meeting',     minutes: 20, color: '#FFE66D', icon: 'Users'     },
+  { id: '5', name: 'Email replies',    minutes: 10, color: '#A78BFA', icon: 'Mail'      },
+  { id: '6', name: 'Research',         minutes: 25, color: '#F9A8D4', icon: 'BookOpen'  },
 ];
 
 export function AppProvider({ children }: { children: ReactNode }) {
@@ -91,6 +88,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [defaultTimerMinutes, setDefaultTimerMinutes] = useState(25);
   const [dailyGoal, setDailyGoal] = useState(6);
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const [wheelSoundEnabled, setWheelSoundEnabled] = useState(true);
   const [user, setUser] = useState<{ name: string; email: string; initials: string } | null>(null);
 
   useEffect(() => {
@@ -159,11 +157,25 @@ export function AppProvider({ children }: { children: ReactNode }) {
       taskId: task.id,
       taskName: task.name,
       color: task.color,
+      icon: task.icon,
       minutesEstimated: task.minutes,
       minutesActual,
       completedAt: new Date(),
     };
     setCompletedTasks((prev) => [completed, ...prev]);
+  };
+
+  const uncompleteTask = (completedTaskId: string) => {
+    const ct = completedTasks.find((t) => t.id === completedTaskId);
+    if (!ct) return;
+    setTasks((prev) => [...prev, {
+      id: ct.taskId,
+      name: ct.taskName,
+      minutes: ct.minutesEstimated,
+      color: ct.color,
+      icon: ct.icon ?? 'BookOpen',
+    }]);
+    setCompletedTasks((prev) => prev.filter((t) => t.id !== completedTaskId));
   };
 
   const startPomodoro = (task: Task) => {
@@ -187,21 +199,23 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const completePomodoro = () => {
     if (!pomodoroSession) return;
+    const { taskId } = pomodoroSession;
     const minutesActual = Math.ceil(
       (pomodoroSession.totalSeconds - pomodoroSession.remainingSeconds) / 60
     );
-    completeTask(pomodoroSession.taskId, minutesActual);
+    completeTask(taskId, minutesActual);
+    deleteTask(taskId);
     setPomodoroSession(null);
   };
 
   // Caller is responsible for driving this with setInterval (keeps context side-effect free).
-  const tickPomodoro = () => {
+  const tickPomodoro = useCallback(() => {
     setPomodoroSession((s) =>
       s && s.isRunning && s.remainingSeconds > 0
         ? { ...s, remainingSeconds: s.remainingSeconds - 1 }
         : s
     );
-  };
+  }, []);
 
   // TODO: replace with supabase.auth.signInWithPassword() once the shared
   // Supabase client is patched for React Native (needs storage: AsyncStorage,
@@ -219,11 +233,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const value: AppContextType = {
     tasks, addTask, updateTask, deleteTask,
-    completedTasks, completeTask,
+    completedTasks, completeTask, uncompleteTask,
     pomodoroSession, startPomodoro, pausePomodoro, resumePomodoro, completePomodoro, tickPomodoro,
     defaultTimerMinutes, setDefaultTimerMinutes,
     dailyGoal, setDailyGoal,
     notificationsEnabled, setNotificationsEnabled,
+    wheelSoundEnabled, setWheelSoundEnabled,
     user, login, logout,
   };
 

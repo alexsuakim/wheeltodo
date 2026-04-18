@@ -1,19 +1,27 @@
 import React from 'react';
-import { SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { CheckCircle2 } from 'lucide-react-native';
 import { useApp, type CompletedTask } from '../context/AppContext';
+import { TOKENS } from '../theme/tokens';
 
-function TaskRow({ task }: { task: CompletedTask }) {
+function TaskCard({ task, onUntick }: { task: CompletedTask; onUntick: () => void }) {
+  const actualH = (task.minutesActual / 60).toFixed(1);
   return (
-    <View style={styles.taskRow}>
-      <View style={[styles.dot, { backgroundColor: task.color }]} />
+    <View style={styles.taskCard}>
+      <Pressable onPress={onUntick} hitSlop={8}>
+        <CheckCircle2 size={20} color={TOKENS.colors.action.success} strokeWidth={2.5} />
+      </Pressable>
       <Text style={styles.taskName} numberOfLines={1}>{task.taskName}</Text>
-      <Text style={styles.taskMeta}>{task.minutesActual} min</Text>
+      <Text style={styles.taskMeta}>{task.minutesEstimated}m</Text>
+      <Text style={styles.taskActual}>{actualH}h</Text>
+      <View style={[styles.dot, { backgroundColor: task.color }]} />
     </View>
   );
 }
 
 export function HistoryScreen() {
-  const { completedTasks } = useApp();
+  const { completedTasks, uncompleteTask } = useApp();
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -32,31 +40,46 @@ export function HistoryScreen() {
     return d.getTime() === yesterday.getTime();
   });
 
-  const totalMinutes = completedTasks.reduce((sum, t) => sum + t.minutesActual, 0);
-  const completionRate =
-    completedTasks.length > 0
-      ? Math.round(
-          (completedTasks.filter((t) => t.minutesActual <= t.minutesEstimated).length /
-            completedTasks.length) *
-            100
-        )
-      : 0;
+  const weekDays = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(today);
+    d.setDate(d.getDate() - (6 - i));
+    return d;
+  });
+  const weekTaskCounts = weekDays.map((day) => {
+    const next = new Date(day);
+    next.setDate(next.getDate() + 1);
+    return completedTasks.filter((t) => {
+      const d = new Date(t.completedAt);
+      return d >= day && d < next;
+    }).length;
+  });
+  const maxWeekCount = Math.max(...weekTaskCounts, 1);
+
+  const totalMinutes = completedTasks.reduce((s, t) => s + t.minutesActual, 0);
+  const totalHours = (totalMinutes / 60).toFixed(1);
+  const completionRate = completedTasks.length > 0
+    ? Math.round(
+        (completedTasks.filter((t) => t.minutesActual <= t.minutesEstimated).length /
+          completedTasks.length) * 100
+      )
+    : 0;
 
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.header}>
         <Text style={styles.title}>History</Text>
+        <Text style={styles.subtitle}>Your focus log</Text>
       </View>
 
-      <ScrollView contentContainerStyle={styles.content}>
-        <View style={styles.statsCard}>
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <View style={styles.statCard}>
           <View style={styles.statItem}>
             <Text style={styles.statValue}>{completedTasks.length}</Text>
             <Text style={styles.statLabel}>Tasks Done</Text>
           </View>
           <View style={styles.statDivider} />
           <View style={styles.statItem}>
-            <Text style={styles.statValue}>{(totalMinutes / 60).toFixed(1)}</Text>
+            <Text style={styles.statValue}>{totalHours}</Text>
             <Text style={styles.statLabel}>Hours Focused</Text>
           </View>
           <View style={styles.statDivider} />
@@ -66,36 +89,58 @@ export function HistoryScreen() {
           </View>
         </View>
 
+        {/* This Week */}
+        <View>
+          <Text style={styles.sectionLabel}>This Week</Text>
+          <View style={styles.weekChart}>
+            {weekDays.map((day, i) => {
+              const count = weekTaskCounts[i];
+              const barH = count > 0 ? Math.max((count / maxWeekCount) * 56, 8) : 0;
+              const isToday = day.getTime() === today.getTime();
+              const dayName = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'][day.getDay()];
+              return (
+                <View key={i} style={styles.weekColumn}>
+                  <View style={styles.weekBarTrack}>
+                    {count > 0 && (
+                      <View
+                        style={[
+                          styles.weekBarFill,
+                          { height: barH },
+                          isToday && styles.weekBarToday,
+                        ]}
+                      />
+                    )}
+                  </View>
+                  {count > 0 && (
+                    <Text style={styles.weekBarCount}>{count}</Text>
+                  )}
+                  <Text style={[styles.weekBarLabel, isToday && styles.weekBarLabelToday]}>
+                    {dayName}
+                  </Text>
+                </View>
+              );
+            })}
+          </View>
+        </View>
+
         {todayTasks.length > 0 && (
           <View>
             <Text style={styles.sectionLabel}>Today</Text>
-            <View style={styles.card}>
-              {todayTasks.map((t, i) => (
-                <View key={t.id}>
-                  <TaskRow task={t} />
-                  {i < todayTasks.length - 1 && <View style={styles.rowDivider} />}
-                </View>
-              ))}
-            </View>
+            {todayTasks.map((t) => <TaskCard key={t.id} task={t} onUntick={() => uncompleteTask(t.id)} />)}
           </View>
         )}
 
         {yesterdayTasks.length > 0 && (
           <View>
             <Text style={styles.sectionLabel}>Yesterday</Text>
-            <View style={styles.card}>
-              {yesterdayTasks.map((t, i) => (
-                <View key={t.id}>
-                  <TaskRow task={t} />
-                  {i < yesterdayTasks.length - 1 && <View style={styles.rowDivider} />}
-                </View>
-              ))}
-            </View>
+            {yesterdayTasks.map((t) => <TaskCard key={t.id} task={t} onUntick={() => uncompleteTask(t.id)} />)}
           </View>
         )}
 
         {completedTasks.length === 0 && (
-          <Text style={styles.empty}>No completed tasks yet.{'\n'}Spin the wheel to get started!</Text>
+          <Text style={styles.empty}>
+            No completed tasks yet.{'\n'}Spin the wheel to get started!
+          </Text>
         )}
       </ScrollView>
     </SafeAreaView>
@@ -103,42 +148,71 @@ export function HistoryScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#FAF9F7' },
-  header: { paddingHorizontal: 24, paddingTop: 16, paddingBottom: 8 },
-  title: { fontSize: 34, fontWeight: '700', color: '#1C1C1E', letterSpacing: 0.37 },
-  content: { padding: 16, gap: 12, paddingBottom: 32 },
-  statsCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: '#E8E5E0',
+  safe: { flex: 1, backgroundColor: TOKENS.colors.bg.screen },
+  header: { paddingHorizontal: TOKENS.spacing.screenPad, paddingTop: 12, paddingBottom: 4 },
+  title: { fontSize: 34, fontWeight: '700', color: TOKENS.colors.text.primary, letterSpacing: 0.37 },
+  subtitle: { fontSize: 15, color: TOKENS.colors.text.secondary, marginTop: 2 },
+  content: {
+    paddingHorizontal: TOKENS.spacing.screenPad,
+    paddingBottom: 40,
+    gap: TOKENS.spacing.rowGap,
+  },
+  statCard: {
+    backgroundColor: TOKENS.colors.bg.card,
+    borderRadius: TOKENS.radius.card,
     flexDirection: 'row',
     paddingVertical: 20,
   },
   statItem: { flex: 1, alignItems: 'center', gap: 4 },
-  statValue: { fontSize: 28, fontWeight: '600', color: '#1C1C1E' },
-  statLabel: { fontSize: 13, color: '#8E8E93', textAlign: 'center' },
-  statDivider: { width: 1, backgroundColor: '#E8E5E0' },
+  statValue: { fontSize: 26, fontWeight: '700', color: TOKENS.colors.text.primary },
+  statLabel: { fontSize: 12, color: TOKENS.colors.text.secondary, textAlign: 'center' },
+  statDivider: { width: 1, backgroundColor: '#e8e8e8' },
   sectionLabel: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '600',
-    color: '#8E8E93',
-    letterSpacing: 0.5,
+    color: TOKENS.colors.text.secondary,
+    letterSpacing: 0.8,
     textTransform: 'uppercase',
-    paddingHorizontal: 4,
-    paddingVertical: 8,
+    paddingVertical: 6,
   },
-  card: {
-    backgroundColor: '#ffffff',
+  taskCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: TOKENS.colors.bg.card,
     borderRadius: 14,
-    borderWidth: 1,
-    borderColor: '#E8E5E0',
-    overflow: 'hidden',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    marginBottom: 6,
+    gap: 10,
   },
-  taskRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 14, gap: 10 },
-  dot: { width: 10, height: 10, borderRadius: 5, flexShrink: 0 },
-  taskName: { flex: 1, fontSize: 17, color: '#1C1C1E' },
-  taskMeta: { fontSize: 15, color: '#8E8E93' },
-  rowDivider: { height: 1, backgroundColor: '#E8E5E0', marginLeft: 52 },
-  empty: { textAlign: 'center', color: '#8E8E93', fontSize: 15, marginTop: 32, lineHeight: 24 },
+  taskName: { flex: 1, fontSize: 16, color: TOKENS.colors.text.primary, fontWeight: '500' },
+  taskMeta: { fontSize: 13, color: TOKENS.colors.text.secondary },
+  taskActual: { fontSize: 13, color: TOKENS.colors.text.muted },
+  dot: { width: 8, height: 8, borderRadius: 4, flexShrink: 0 },
+  weekChart: {
+    backgroundColor: TOKENS.colors.bg.card,
+    borderRadius: TOKENS.radius.card,
+    padding: 16,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+  },
+  weekColumn: { flex: 1, alignItems: 'center', gap: 4 },
+  weekBarTrack: { height: 60, justifyContent: 'flex-end', alignItems: 'center' },
+  weekBarFill: {
+    width: 18,
+    borderRadius: 4,
+    backgroundColor: TOKENS.colors.action.primary,
+  },
+  weekBarToday: { backgroundColor: TOKENS.colors.action.streak },
+  weekBarCount: { fontSize: 11, color: TOKENS.colors.text.secondary, fontWeight: '600' },
+  weekBarLabel: { fontSize: 11, color: TOKENS.colors.text.muted },
+  weekBarLabelToday: { color: TOKENS.colors.action.streak, fontWeight: '600' },
+  empty: {
+    textAlign: 'center',
+    color: TOKENS.colors.text.secondary,
+    fontSize: 15,
+    marginTop: 32,
+    lineHeight: 24,
+  },
 });

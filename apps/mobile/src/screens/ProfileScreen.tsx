@@ -1,6 +1,9 @@
-import React from 'react';
-import { Pressable, SafeAreaView, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import React, { useMemo } from 'react';
+import { Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Flame, LogOut, Target, Trophy, Zap } from 'lucide-react-native';
 import { useApp } from '../context/AppContext';
+import { TOKENS } from '../theme/tokens';
 
 export function ProfileScreen() {
   const {
@@ -9,17 +12,72 @@ export function ProfileScreen() {
     defaultTimerMinutes, setDefaultTimerMinutes,
     dailyGoal, setDailyGoal,
     notificationsEnabled, setNotificationsEnabled,
+    wheelSoundEnabled, setWheelSoundEnabled,
   } = useApp();
 
-  const totalMinutes = completedTasks.reduce((sum, t) => sum + t.minutesActual, 0);
-  const completionRate =
-    completedTasks.length > 0
-      ? Math.round(
-          (completedTasks.filter((t) => t.minutesActual <= t.minutesEstimated).length /
-            completedTasks.length) *
-            100
-        )
-      : 0;
+  const totalMinutes = completedTasks.reduce((s, t) => s + t.minutesActual, 0);
+  const completionRate = completedTasks.length > 0
+    ? Math.round(
+        (completedTasks.filter((t) => t.minutesActual <= t.minutesEstimated).length /
+          completedTasks.length) * 100
+      )
+    : 0;
+
+  const streak = useMemo(() => {
+    if (completedTasks.length === 0) return 0;
+    let count = 0;
+    const base = new Date();
+    base.setHours(0, 0, 0, 0);
+    for (let i = 0; i < 365; i++) {
+      const day = new Date(base);
+      day.setDate(day.getDate() - i);
+      const next = new Date(day);
+      next.setDate(next.getDate() + 1);
+      if (completedTasks.some((t) => {
+        const d = new Date(t.completedAt);
+        return d >= day && d < next;
+      })) {
+        count++;
+      } else {
+        break;
+      }
+    }
+    return count;
+  }, [completedTasks]);
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const todayDone = completedTasks.filter((t) => {
+    const d = new Date(t.completedAt); d.setHours(0, 0, 0, 0);
+    return d.getTime() === today.getTime();
+  }).length;
+
+  const badges = [
+    {
+      icon: Target,
+      label: 'Daily Goal',
+      sub: `${dailyGoal} tasks/day`,
+      unlocked: todayDone >= dailyGoal,
+    },
+    {
+      icon: Flame,
+      label: 'On Fire',
+      sub: `${streak} day streak`,
+      unlocked: streak >= 3,
+    },
+    {
+      icon: Trophy,
+      label: 'Achiever',
+      sub: '10 tasks done',
+      unlocked: completedTasks.length >= 10,
+    },
+    {
+      icon: Zap,
+      label: 'Speed Run',
+      sub: 'Beat the clock',
+      unlocked: completedTasks.some((t) => t.minutesActual < t.minutesEstimated),
+    },
+  ];
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -27,18 +85,26 @@ export function ProfileScreen() {
         <Text style={styles.title}>Profile</Text>
       </View>
 
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        {/* Avatar row */}
         <View style={styles.avatarRow}>
           <View style={styles.avatar}>
             <Text style={styles.avatarText}>{user?.initials ?? 'U'}</Text>
           </View>
-          <View>
+          <View style={{ flex: 1 }}>
             <Text style={styles.userName}>{user?.name ?? 'User'}</Text>
             <Text style={styles.userEmail}>{user?.email ?? ''}</Text>
           </View>
+          {streak > 0 && (
+            <View style={styles.streakPill}>
+              <Flame size={13} color="#fff" />
+              <Text style={styles.streakText}>{streak}d</Text>
+            </View>
+          )}
         </View>
 
-        <View style={styles.statsCard}>
+        {/* Stats */}
+        <View style={styles.statCard}>
           <View style={styles.statItem}>
             <Text style={styles.statValue}>{completedTasks.length}</Text>
             <Text style={styles.statLabel}>Tasks Done</Text>
@@ -55,136 +121,178 @@ export function ProfileScreen() {
           </View>
         </View>
 
+        {/* Achievements */}
+        <Text style={styles.sectionLabel}>Achievements</Text>
+        <View style={styles.badgeGrid}>
+          {badges.map((b) => {
+            const Icon = b.icon;
+            return (
+              <View key={b.label} style={[styles.badge, !b.unlocked && styles.badgeLocked]}>
+                <Icon
+                  size={22}
+                  color={b.unlocked ? TOKENS.colors.action.streak : TOKENS.colors.text.muted}
+                  strokeWidth={2}
+                />
+                <Text style={[styles.badgeLabel, !b.unlocked && styles.badgeLabelLocked]}>
+                  {b.label}
+                </Text>
+                <Text style={styles.badgeSub}>{b.sub}</Text>
+              </View>
+            );
+          })}
+        </View>
+
+        {/* Settings */}
         <Text style={styles.sectionLabel}>Settings</Text>
-        <View style={styles.card}>
+        <View style={styles.settingsCard}>
           <View style={styles.settingRow}>
             <Text style={styles.settingLabel}>Default timer</Text>
             <View style={styles.stepperRow}>
-              <Pressable
-                onPress={() => setDefaultTimerMinutes(Math.max(5, defaultTimerMinutes - 5))}
-                style={styles.stepperBtn}
-              >
-                <Text style={styles.stepperBtnText}>−</Text>
+              <Pressable onPress={() => setDefaultTimerMinutes(Math.max(5, defaultTimerMinutes - 5))} style={styles.stepBtn}>
+                <Text style={styles.stepBtnText}>−</Text>
               </Pressable>
-              <Text style={styles.stepperValue}>{defaultTimerMinutes} min</Text>
-              <Pressable
-                onPress={() => setDefaultTimerMinutes(Math.min(120, defaultTimerMinutes + 5))}
-                style={styles.stepperBtn}
-              >
-                <Text style={styles.stepperBtnText}>+</Text>
+              <Text style={styles.stepValue}>{defaultTimerMinutes}m</Text>
+              <Pressable onPress={() => setDefaultTimerMinutes(Math.min(120, defaultTimerMinutes + 5))} style={styles.stepBtn}>
+                <Text style={styles.stepBtnText}>+</Text>
               </Pressable>
             </View>
           </View>
-
           <View style={styles.rowDivider} />
-
           <View style={styles.settingRow}>
             <Text style={styles.settingLabel}>Daily goal</Text>
             <View style={styles.stepperRow}>
-              <Pressable
-                onPress={() => setDailyGoal(Math.max(1, dailyGoal - 1))}
-                style={styles.stepperBtn}
-              >
-                <Text style={styles.stepperBtnText}>−</Text>
+              <Pressable onPress={() => setDailyGoal(Math.max(1, dailyGoal - 1))} style={styles.stepBtn}>
+                <Text style={styles.stepBtnText}>−</Text>
               </Pressable>
-              <Text style={styles.stepperValue}>{dailyGoal} tasks</Text>
-              <Pressable
-                onPress={() => setDailyGoal(Math.min(20, dailyGoal + 1))}
-                style={styles.stepperBtn}
-              >
-                <Text style={styles.stepperBtnText}>+</Text>
+              <Text style={styles.stepValue}>{dailyGoal} tasks</Text>
+              <Pressable onPress={() => setDailyGoal(Math.min(20, dailyGoal + 1))} style={styles.stepBtn}>
+                <Text style={styles.stepBtnText}>+</Text>
               </Pressable>
             </View>
           </View>
-
           <View style={styles.rowDivider} />
-
           <View style={styles.settingRow}>
             <Text style={styles.settingLabel}>Notifications</Text>
             <Switch
               value={notificationsEnabled}
               onValueChange={setNotificationsEnabled}
-              trackColor={{ false: '#E5E5EA', true: '#34C759' }}
+              trackColor={{ false: '#e0e0e0', true: TOKENS.colors.action.primary }}
+              thumbColor="#ffffff"
+            />
+          </View>
+          <View style={styles.rowDivider} />
+          <View style={styles.settingRow}>
+            <Text style={styles.settingLabel}>Wheel sound</Text>
+            <Switch
+              value={wheelSoundEnabled}
+              onValueChange={setWheelSoundEnabled}
+              trackColor={{ false: '#e0e0e0', true: TOKENS.colors.action.primary }}
               thumbColor="#ffffff"
             />
           </View>
         </View>
 
-        <View style={[styles.card, { marginTop: 4 }]}>
-          <Pressable onPress={logout} style={styles.signOutBtn}>
-            <Text style={styles.signOutText}>Sign out</Text>
-          </Pressable>
-        </View>
+        {/* Sign out */}
+        <Pressable onPress={logout} style={styles.signOutBtn}>
+          <LogOut size={16} color={TOKENS.colors.action.danger} strokeWidth={2} />
+          <Text style={styles.signOutText}>Sign out</Text>
+        </Pressable>
       </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#FAF9F7' },
-  header: { paddingHorizontal: 24, paddingTop: 16, paddingBottom: 8 },
-  title: { fontSize: 34, fontWeight: '700', color: '#1C1C1E', letterSpacing: 0.37 },
-  content: { padding: 16, gap: 12, paddingBottom: 32 },
-  avatarRow: { flexDirection: 'row', alignItems: 'center', gap: 16, paddingVertical: 8 },
+  safe: { flex: 1, backgroundColor: TOKENS.colors.bg.screen },
+  header: { paddingHorizontal: TOKENS.spacing.screenPad, paddingTop: 12, paddingBottom: 4 },
+  title: { fontSize: 34, fontWeight: '700', color: TOKENS.colors.text.primary, letterSpacing: 0.37 },
+  content: {
+    paddingHorizontal: TOKENS.spacing.screenPad,
+    paddingBottom: 40,
+    gap: TOKENS.spacing.rowGap,
+  },
+  avatarRow: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 6 },
   avatar: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: '#007AFF',
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: TOKENS.colors.action.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  avatarText: { fontSize: 22, fontWeight: '600', color: '#ffffff' },
-  userName: { fontSize: 20, fontWeight: '600', color: '#1C1C1E' },
-  userEmail: { marginTop: 2, fontSize: 15, color: '#8E8E93' },
-  statsCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: '#E8E5E0',
+  avatarText: { fontSize: 20, fontWeight: '700', color: '#ffffff' },
+  userName: { fontSize: 18, fontWeight: '600', color: TOKENS.colors.text.primary },
+  userEmail: { marginTop: 2, fontSize: 14, color: TOKENS.colors.text.secondary },
+  streakPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: TOKENS.colors.action.streak,
+    borderRadius: TOKENS.radius.pill,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  streakText: { fontSize: 13, fontWeight: '700', color: '#ffffff' },
+  statCard: {
+    backgroundColor: TOKENS.colors.bg.card,
+    borderRadius: TOKENS.radius.card,
     flexDirection: 'row',
     paddingVertical: 20,
   },
   statItem: { flex: 1, alignItems: 'center', gap: 4 },
-  statValue: { fontSize: 28, fontWeight: '600', color: '#1C1C1E' },
-  statLabel: { fontSize: 13, color: '#8E8E93', textAlign: 'center' },
-  statDivider: { width: 1, backgroundColor: '#E8E5E0' },
+  statValue: { fontSize: 24, fontWeight: '700', color: TOKENS.colors.text.primary },
+  statLabel: { fontSize: 12, color: TOKENS.colors.text.secondary, textAlign: 'center' },
+  statDivider: { width: 1, backgroundColor: '#e8e8e8' },
   sectionLabel: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '600',
-    color: '#8E8E93',
-    letterSpacing: 0.5,
+    color: TOKENS.colors.text.secondary,
+    letterSpacing: 0.8,
     textTransform: 'uppercase',
-    paddingHorizontal: 4,
-    paddingBottom: 2,
+    paddingTop: 4,
   },
-  card: {
-    backgroundColor: '#ffffff',
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: '#E8E5E0',
+  badgeGrid: { flexDirection: 'row', gap: 8 },
+  badge: {
+    flex: 1,
+    backgroundColor: TOKENS.colors.bg.card,
+    borderRadius: TOKENS.radius.row,
+    padding: 12,
+    alignItems: 'center',
+    gap: 4,
+  },
+  badgeLocked: { opacity: 0.45 },
+  badgeLabel: { fontSize: 11, fontWeight: '600', color: TOKENS.colors.text.primary, textAlign: 'center' },
+  badgeLabelLocked: { color: TOKENS.colors.text.muted },
+  badgeSub: { fontSize: 10, color: TOKENS.colors.text.muted, textAlign: 'center' },
+  settingsCard: {
+    backgroundColor: TOKENS.colors.bg.card,
+    borderRadius: TOKENS.radius.card,
     overflow: 'hidden',
   },
   settingRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
+    paddingHorizontal: 18,
     paddingVertical: 14,
   },
-  settingLabel: { fontSize: 17, color: '#1C1C1E' },
-  stepperRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  stepperBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: '#F2F2F7',
+  settingLabel: { fontSize: 16, color: TOKENS.colors.text.primary },
+  stepperRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  stepBtn: {
+    width: 30, height: 30, borderRadius: 15,
+    backgroundColor: '#f0f0f0',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  stepBtnText: { fontSize: 18, color: TOKENS.colors.text.primary, lineHeight: 22 },
+  stepValue: { fontSize: 15, color: TOKENS.colors.text.secondary, minWidth: 56, textAlign: 'center' },
+  rowDivider: { height: 1, backgroundColor: '#f0f0f0', marginLeft: 18 },
+  signOutBtn: {
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 16,
+    marginTop: 4,
   },
-  stepperBtnText: { fontSize: 20, color: '#1C1C1E', lineHeight: 24 },
-  stepperValue: { fontSize: 17, color: '#8E8E93', minWidth: 60, textAlign: 'center' },
-  rowDivider: { height: 1, backgroundColor: '#E8E5E0', marginLeft: 20 },
-  signOutBtn: { paddingHorizontal: 20, paddingVertical: 16 },
-  signOutText: { fontSize: 17, color: '#FF3B30' },
+  signOutText: { fontSize: 16, color: TOKENS.colors.action.danger, fontWeight: '500' },
 });
