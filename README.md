@@ -1,28 +1,11 @@
-## Monorepo (Web + iOS + Android)
 
-This repo contains:
+  # Todo app
 
-- `apps/web`: Next.js web app
-- `apps/mobile`: Expo (React Native) app for iOS + Android
-- `packages/shared`: shared TypeScript code (types/schemas) used by both apps
+  This is a code bundle for Todo app. The original project is available at https://www.figma.com/design/l5Ds90SS26eti3O8zDd6Lz/Todo-app.
 
-### Run (after install)
+  ## Running the code
 
-```bash
-npm install
-npm run dev:web
-npm run dev:mobile
-```
+  Run `npm i` to install the dependencies.
 
-### Notes
-
-Your existing static site files are still at the repo root (`index.html`, `styles.css`, `app.js`, etc.). We can migrate them into `apps/web` whenever you’re ready.
-
-### Node version
-
-Expo / React Native tooling in this setup expects a newer Node 20+ (or Node 22). This repo includes an `.nvmrc` so you can run:
-
-```bash
-nvm use
-```
-
+  Run `npm run dev` to start the development server.
+  
