@@ -4,23 +4,38 @@
   "main": "index.ts",
   "scripts": {
     "start": "expo start",
+    "start:dev": "expo start --dev-client",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "build:dev": "node ./node_modules/eas-cli/bin/run build --profile development",
+    "build:preview": "node ./node_modules/eas-cli/bin/run build --profile preview",
+    "build:prod": "node ./node_modules/eas-cli/bin/run build --profile production",
+    "submit:ios": "node ./node_modules/eas-cli/bin/run submit --platform ios",
+    "submit:android": "node ./node_modules/eas-cli/bin/run submit --platform android"
   },
   "dependencies": {
+    "@expo/vector-icons": "^15.0.3",
     "@react-native-async-storage/async-storage": "^2.2.0",
+    "@react-navigation/bottom-tabs": "^7.15.9",
+    "@react-navigation/native": "^7.2.2",
     "@todo/shared": "file:../../packages/shared",
     "expo": "~54.0.33",
+    "expo-constants": "~18.0.13",
     "expo-dev-client": "~6.0.20",
+    "expo-notifications": "~0.32.16",
     "expo-status-bar": "~3.0.9",
+    "lucide-react-native": "^1.8.0",
     "react": "19.1.0",
     "react-native": "0.81.5",
+    "react-native-safe-area-context": "~5.6.0",
+    "react-native-screens": "~4.16.0",
     "react-native-svg": "^15.12.0",
     "react-native-url-polyfill": "^2.0.0"
   },
   "devDependencies": {
     "@types/react": "~19.1.0",
+    "eas-cli": "^16.32.0",
     "typescript": "~5.9.2"
   },
   "private": true

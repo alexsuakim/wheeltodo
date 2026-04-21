@@ -13,16 +13,17 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
+      "bundleIdentifier": "com.todo.mobile",
       "supportsTablet": true
     },
     "android": {
+      "package": "com.todo.mobile",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false,
-      "package": "com.alexsuakim.mobile"
+      "predictiveBackGestureEnabled": false
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -31,6 +32,7 @@
       "eas": {
         "projectId": "9d1b4c74-f6ae-461e-a089-1408dd4da093"
       }
-    }
+    },
+    "owner": "alexsuakim"
   }
 }
