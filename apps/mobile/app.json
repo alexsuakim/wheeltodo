@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "mobile",
-    "slug": "mobile",
+    "name": "wheeltodo",
+    "slug": "wheeltodo",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -13,14 +13,14 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "bundleIdentifier": "com.todo.mobile",
+      "bundleIdentifier": "com.ionstudio.wheeltodo",
       "supportsTablet": true,
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
-      "package": "com.todo.mobile",
+      "package": "com.ionstudio.wheeltodo",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
@@ -36,6 +36,6 @@
         "projectId": "9d1b4c74-f6ae-461e-a089-1408dd4da093"
       }
     },
-    "owner": "alexsuakim"
+    "owner": "ionstudio"
   }
 }
