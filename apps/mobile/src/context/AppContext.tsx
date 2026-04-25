@@ -7,6 +7,7 @@ export interface Task {
   minutes: number;
   color: string;
   icon: string;
+  category?: string;
 }
 
 export interface CompletedTask {
@@ -39,6 +40,7 @@ interface AppContextType {
   uncompleteTask: (completedTaskId: string) => void;
 
   pomodoroSession: PomodoroSession | null;
+  taskProgress: Record<string, number>;
   startPomodoro: (task: Task) => void;
   pausePomodoro: () => void;
   resumePomodoro: () => void;
@@ -57,6 +59,13 @@ interface AppContextType {
   user: { name: string; email: string; initials: string } | null;
   login: (email: string, password: string) => void;
   logout: () => void;
+
+  categories: string[];
+  addCategory: (cat: string) => void;
+  removeCategory: (cat: string) => void;
+
+  seenAchievements: string[];
+  markAchievementSeen: (label: string) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -65,7 +74,11 @@ const STORAGE_KEYS = {
   tasks: 'wheelTodo.tasks',
   completedTasks: 'wheelTodo.completedTasks',
   user: 'wheelTodo.user',
+  categories: 'wheelTodo.categories',
+  seenAchievements: 'wheelTodo.seenAchievements',
 } as const;
+
+const DEFAULT_CATEGORIES = ['Work', 'Personal', 'Learning', 'Health'];
 
 export const COLORS = [
   '#FF5C4D', '#FF9B50', '#4ECDC4', '#FFE66D', '#A78BFA', '#F9A8D4',
@@ -85,19 +98,23 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [tasks, setTasks] = useState<Task[]>(defaultTasks);
   const [completedTasks, setCompletedTasks] = useState<CompletedTask[]>([]);
   const [pomodoroSession, setPomodoroSession] = useState<PomodoroSession | null>(null);
+  const [taskProgress, setTaskProgress] = useState<Record<string, number>>({});
   const [defaultTimerMinutes, setDefaultTimerMinutes] = useState(25);
   const [dailyGoal, setDailyGoal] = useState(6);
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [wheelSoundEnabled, setWheelSoundEnabled] = useState(true);
   const [user, setUser] = useState<{ name: string; email: string; initials: string } | null>(null);
+  const [categories, setCategories] = useState<string[]>(DEFAULT_CATEGORIES);
+  const [seenAchievements, setSeenAchievements] = useState<string[]>([]);
 
   useEffect(() => {
     const load = async () => {
       try {
-        const [[, tasksRaw], [, completedRaw], [, userRaw]] = await AsyncStorage.multiGet([
+        const [[, tasksRaw], [, completedRaw], [, userRaw], [, categoriesRaw]] = await AsyncStorage.multiGet([
           STORAGE_KEYS.tasks,
           STORAGE_KEYS.completedTasks,
           STORAGE_KEYS.user,
+          STORAGE_KEYS.categories,
         ]);
         if (tasksRaw) setTasks(JSON.parse(tasksRaw));
         if (completedRaw) {
@@ -109,6 +126,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
           );
         }
         if (userRaw) setUser(JSON.parse(userRaw));
+        if (categoriesRaw) setCategories(JSON.parse(categoriesRaw));
+        const [, seenRaw] = await AsyncStorage.getItem(STORAGE_KEYS.seenAchievements).then(v => ['', v] as const).catch(() => ['', null] as const);
+        if (seenRaw) setSeenAchievements(JSON.parse(seenRaw));
       } catch {
         // keep defaults on parse failure
       } finally {
@@ -180,11 +200,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const startPomodoro = (task: Task) => {
     const totalSeconds = task.minutes * 60;
+    // Save current session's progress before switching
+    if (pomodoroSession && pomodoroSession.taskId !== task.id) {
+      setTaskProgress((prev) => ({ ...prev, [pomodoroSession.taskId]: pomodoroSession.remainingSeconds }));
+    }
+    const savedRemaining = taskProgress[task.id];
     setPomodoroSession({
       taskId: task.id,
       taskName: task.name,
       totalSeconds,
-      remainingSeconds: totalSeconds,
+      remainingSeconds: savedRemaining ?? totalSeconds,
       isRunning: true,
     });
   };
@@ -206,6 +231,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
     completeTask(taskId, minutesActual);
     deleteTask(taskId);
     setPomodoroSession(null);
+    setTaskProgress((prev) => {
+      const next = { ...prev };
+      delete next[taskId];
+      return next;
+    });
   };
 
   // Caller is responsible for driving this with setInterval (keeps context side-effect free).
@@ -226,6 +256,29 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setUser({ name, email, initials });
   };
 
+  useEffect(() => {
+    if (!loaded) return;
+    AsyncStorage.setItem(STORAGE_KEYS.categories, JSON.stringify(categories)).catch(() => {});
+  }, [categories, loaded]);
+
+  useEffect(() => {
+    if (!loaded) return;
+    AsyncStorage.setItem(STORAGE_KEYS.seenAchievements, JSON.stringify(seenAchievements)).catch(() => {});
+  }, [seenAchievements, loaded]);
+
+  const markAchievementSeen = (label: string) => {
+    setSeenAchievements((prev) => prev.includes(label) ? prev : [...prev, label]);
+  };
+
+  const addCategory = (cat: string) => {
+    const trimmed = cat.trim();
+    if (trimmed && !categories.includes(trimmed)) setCategories((prev) => [...prev, trimmed]);
+  };
+
+  const removeCategory = (cat: string) => {
+    setCategories((prev) => prev.filter((c) => c !== cat));
+  };
+
   const logout = () => {
     setUser(null);
     setPomodoroSession(null);
@@ -234,12 +287,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const value: AppContextType = {
     tasks, addTask, updateTask, deleteTask,
     completedTasks, completeTask, uncompleteTask,
-    pomodoroSession, startPomodoro, pausePomodoro, resumePomodoro, completePomodoro, tickPomodoro,
+    pomodoroSession, taskProgress, startPomodoro, pausePomodoro, resumePomodoro, completePomodoro, tickPomodoro,
     defaultTimerMinutes, setDefaultTimerMinutes,
     dailyGoal, setDailyGoal,
     notificationsEnabled, setNotificationsEnabled,
     wheelSoundEnabled, setWheelSoundEnabled,
     user, login, logout,
+    categories, addCategory, removeCategory,
+    seenAchievements, markAchievementSeen,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

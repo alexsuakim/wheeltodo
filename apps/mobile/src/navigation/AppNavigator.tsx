@@ -46,26 +46,14 @@ export function AppNavigator() {
             backgroundColor: '#ffffff',
             borderTopColor: '#e8e8e8',
             borderTopWidth: 1,
-            height: 60,
-            paddingBottom: 8,
+            height: 56,
+            paddingBottom: 6,
+            paddingTop: 6,
           },
           tabBarIcon: ({ focused, color, size }) => (
             <Icon size={size} color={color} strokeWidth={focused ? 2.5 : 1.8} />
           ),
-          tabBarLabel: ({ focused, color }) => (
-            <View style={{ alignItems: 'center' }}>
-              <Text style={{ fontSize: 10, color, fontWeight: focused ? '600' : '400' }}>
-                {route.name}
-              </Text>
-              {focused && (
-                <View style={{
-                  width: 4, height: 4, borderRadius: 2,
-                  backgroundColor: TOKENS.colors.action.streak,
-                  marginTop: 2,
-                }} />
-              )}
-            </View>
-          ),
+          tabBarLabel: () => null,
         };
       }}
     >
