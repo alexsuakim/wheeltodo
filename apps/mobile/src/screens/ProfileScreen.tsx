@@ -1,5 +1,5 @@
-import React, { useMemo } from 'react';
-import { Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Flame, LogOut, Target, Trophy, Zap } from 'lucide-react-native';
 import { useApp } from '../context/AppContext';
@@ -13,7 +13,11 @@ export function ProfileScreen() {
     dailyGoal, setDailyGoal,
     notificationsEnabled, setNotificationsEnabled,
     wheelSoundEnabled, setWheelSoundEnabled,
+    categories, addCategory, removeCategory,
   } = useApp();
+
+  const [addingLabel, setAddingLabel] = useState(false);
+  const [newLabel, setNewLabel] = useState('');
 
   const totalMinutes = completedTasks.reduce((s, t) => s + t.minutesActual, 0);
   const completionRate = completedTasks.length > 0
@@ -97,8 +101,8 @@ export function ProfileScreen() {
           </View>
           {streak > 0 && (
             <View style={styles.streakPill}>
-              <Flame size={13} color="#fff" />
-              <Text style={styles.streakText}>{streak}d</Text>
+              <Flame size={18} color={TOKENS.colors.action.streak} strokeWidth={2} />
+              <Text style={styles.streakText}>{streak}</Text>
             </View>
           )}
         </View>
@@ -192,6 +196,46 @@ export function ProfileScreen() {
           </View>
         </View>
 
+        {/* Task Labels */}
+        <Text style={styles.sectionLabel}>Task Labels</Text>
+        <View style={styles.labelsCard}>
+          {categories.map((cat) => (
+            <View key={cat} style={styles.labelRow}>
+              <Text style={styles.labelText}>{cat}</Text>
+              <Pressable onPress={() => removeCategory(cat)} style={styles.labelRemoveBtn}>
+                <Text style={styles.labelRemoveText}>✕</Text>
+              </Pressable>
+            </View>
+          ))}
+          <View style={styles.rowDivider} />
+          {addingLabel ? (
+            <View style={styles.labelAddRow}>
+              <TextInput
+                value={newLabel}
+                onChangeText={setNewLabel}
+                placeholder="Label name..."
+                placeholderTextColor={TOKENS.colors.text.muted}
+                style={styles.labelInput}
+                autoFocus
+                returnKeyType="done"
+                onSubmitEditing={() => {
+                  if (newLabel.trim()) addCategory(newLabel.trim());
+                  setNewLabel('');
+                  setAddingLabel(false);
+                }}
+                onBlur={() => {
+                  setNewLabel('');
+                  setAddingLabel(false);
+                }}
+              />
+            </View>
+          ) : (
+            <Pressable style={styles.labelAddBtn} onPress={() => setAddingLabel(true)}>
+              <Text style={styles.labelAddText}>+ Add label</Text>
+            </Pressable>
+          )}
+        </View>
+
         {/* Sign out */}
         <Pressable onPress={logout} style={styles.signOutBtn}>
           <LogOut size={16} color={TOKENS.colors.action.danger} strokeWidth={2} />
@@ -227,12 +271,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: TOKENS.colors.action.streak,
-    borderRadius: TOKENS.radius.pill,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
   },
-  streakText: { fontSize: 13, fontWeight: '700', color: '#ffffff' },
+  streakText: { fontSize: 20, fontWeight: '700', color: TOKENS.colors.text.primary },
   statCard: {
     backgroundColor: TOKENS.colors.bg.card,
     borderRadius: TOKENS.radius.card,
@@ -286,6 +326,29 @@ const styles = StyleSheet.create({
   stepBtnText: { fontSize: 18, color: TOKENS.colors.text.primary, lineHeight: 22 },
   stepValue: { fontSize: 15, color: TOKENS.colors.text.secondary, minWidth: 56, textAlign: 'center' },
   rowDivider: { height: 1, backgroundColor: '#f0f0f0', marginLeft: 18 },
+  labelsCard: {
+    backgroundColor: TOKENS.colors.bg.card,
+    borderRadius: TOKENS.radius.card,
+    overflow: 'hidden',
+  },
+  labelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 18,
+    paddingVertical: 14,
+  },
+  labelText: { fontSize: 16, color: TOKENS.colors.text.primary },
+  labelRemoveBtn: { padding: 4 },
+  labelRemoveText: { fontSize: 14, color: TOKENS.colors.action.danger, fontWeight: '600' },
+  labelAddRow: { paddingHorizontal: 18, paddingVertical: 10 },
+  labelInput: {
+    fontSize: 16,
+    color: TOKENS.colors.text.primary,
+    paddingVertical: 4,
+  },
+  labelAddBtn: { paddingHorizontal: 18, paddingVertical: 14 },
+  labelAddText: { fontSize: 16, color: '#FF5C4D', fontWeight: '500' },
   signOutBtn: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -9,14 +9,19 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
+import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { Flame, Target, Trophy, Zap } from 'lucide-react-native';
 import type { LucideIcon } from 'lucide-react-native';
 import { useApp, type Task } from '../context/AppContext';
 import { SpinningWheel } from '../components/SpinningWheel';
 import { TOKENS } from '../theme/tokens';
 
+type TabNav = BottomTabNavigationProp<{ Spin: undefined; Tasks: undefined; History: undefined; Profile: undefined }>;
+
 export function SpinScreen() {
   const { tasks, startPomodoro, completedTasks, dailyGoal } = useApp();
+  const navigation = useNavigation<TabNav>();
 
   const today = useMemo(() => {
     const d = new Date();
@@ -24,12 +29,17 @@ export function SpinScreen() {
     return d;
   }, []);
 
-  const todayDone = useMemo(() =>
+  const todayTasks = useMemo(() =>
     completedTasks.filter((t) => {
       const d = new Date(t.completedAt); d.setHours(0, 0, 0, 0);
       return d.getTime() === today.getTime();
-    }).length,
+    }),
   [completedTasks, today]);
+
+  const todayDone = todayTasks.length;
+  const todayMinutes = useMemo(() =>
+    todayTasks.reduce((sum, t) => sum + t.minutesActual, 0),
+  [todayTasks]);
 
   // M T W T F S S bubbles for current week (Mon–Sun)
   const weekActivity = useMemo(() => {
@@ -182,6 +192,33 @@ export function SpinScreen() {
           style={styles.wheel}
         />
 
+        {/* Productivity */}
+        <View style={styles.achievementsSection}>
+          <Text style={styles.sectionLabel}>Productivity</Text>
+          {todayMinutes > 0 ? (
+            <View style={styles.focusSummary}>
+              <View style={styles.focusSummaryLeft}>
+                <Text style={styles.focusSummaryEyebrow}>Today you have focused for</Text>
+                <Text style={styles.focusSummaryValue}>
+                  {todayMinutes >= 60
+                    ? `${Math.floor(todayMinutes / 60)}h ${todayMinutes % 60 > 0 ? `${todayMinutes % 60}m` : ''}`.trim()
+                    : `${todayMinutes}m`}
+                </Text>
+              </View>
+              <View style={styles.focusSummaryRight}>
+                <View style={styles.focusSummaryBubble}>
+                  <Text style={styles.focusSummaryTaskCount}>{todayDone}</Text>
+                </View>
+                <Text style={styles.focusSummaryTaskLabel}>{todayDone === 1 ? 'task' : 'tasks'} done</Text>
+              </View>
+            </View>
+          ) : (
+            <View style={styles.focusSummaryEmpty}>
+              <Text style={styles.focusSummaryEmptyText}>Start your first focus session today!</Text>
+            </View>
+          )}
+        </View>
+
         {/* Achievements */}
         <View style={styles.achievementsSection}>
           <Text style={styles.sectionLabel}>Achievements</Text>
@@ -220,6 +257,7 @@ export function SpinScreen() {
               onPress={() => {
                 startPomodoro(picked);
                 hideSheet();
+                navigation.navigate('Tasks');
               }}
               style={styles.primaryBtn}
             >
@@ -240,10 +278,67 @@ const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: TOKENS.colors.bg.screen },
   scroll: { paddingBottom: 32 },
   header: { paddingHorizontal: TOKENS.spacing.screenPad, paddingTop: 12, paddingBottom: 8 },
-  wheel: { flex: undefined, height: 420 },
+  focusSummary: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 16,
+    paddingHorizontal: 18,
+    backgroundColor: TOKENS.colors.bg.card,
+    borderRadius: TOKENS.radius.card,
+  },
+  focusSummaryLeft: {
+    gap: 4,
+  },
+  focusSummaryEyebrow: {
+    fontSize: 12,
+    color: TOKENS.colors.text.secondary,
+    fontWeight: '500',
+  },
+  focusSummaryValue: {
+    fontSize: 40,
+    fontWeight: '800',
+    color: TOKENS.colors.text.primary,
+    letterSpacing: -1,
+    lineHeight: 44,
+  },
+  focusSummaryRight: {
+    alignItems: 'center',
+    gap: 6,
+  },
+  focusSummaryBubble: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: '#FF5C4D',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  focusSummaryTaskCount: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: '#ffffff',
+  },
+  focusSummaryTaskLabel: {
+    fontSize: 12,
+    color: TOKENS.colors.text.secondary,
+    textAlign: 'center',
+  },
+  focusSummaryEmpty: {
+    alignItems: 'center',
+    paddingVertical: 20,
+    backgroundColor: TOKENS.colors.bg.card,
+    borderRadius: TOKENS.radius.card,
+  },
+  focusSummaryEmptyText: {
+    fontSize: 14,
+    color: TOKENS.colors.text.secondary,
+    fontWeight: '500',
+  },
+  wheel: { flex: undefined, height: 420, marginTop: 24 },
   achievementsSection: {
     paddingHorizontal: TOKENS.spacing.screenPad,
-    paddingTop: 8,
+    paddingTop: 24,
     gap: 10,
   },
   sectionLabel: {
