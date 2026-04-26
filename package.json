@@ -13,8 +13,8 @@
     "typecheck": "npm run typecheck -w packages/shared"
   },
   "overrides": {
-    "react": "19.1.0",
-    "react-dom": "19.1.0"
+    "react": "19.2.0",
+    "react-dom": "19.2.0"
   }
 }
 
