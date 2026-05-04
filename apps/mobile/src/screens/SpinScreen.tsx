@@ -17,10 +17,10 @@ import { useApp, type Task } from '../context/AppContext';
 import { SpinningWheel } from '../components/SpinningWheel';
 import { TOKENS } from '../theme/tokens';
 
-type TabNav = BottomTabNavigationProp<{ Spin: undefined; Tasks: undefined; History: undefined; Profile: undefined }>;
+type TabNav = BottomTabNavigationProp<{ Spin: undefined; Tasks: undefined; Rest: undefined; History: undefined }>;
 
 export function SpinScreen() {
-  const { tasks, startPomodoro, completedTasks, dailyGoal } = useApp();
+  const { tasks, startPomodoro, completedTasks, completedRestDays, dailyGoal } = useApp();
   const navigation = useNavigation<TabNav>();
 
   const today = useMemo(() => {
@@ -52,31 +52,30 @@ export function SpinScreen() {
       day.setDate(weekStart.getDate() + i);
       const next = new Date(day);
       next.setDate(next.getDate() + 1);
-      const active = completedTasks.some((t) => {
-        const d = new Date(t.completedAt);
-        return d >= day && d < next;
-      });
+      const active =
+        completedTasks.some((t) => { const d = new Date(t.completedAt); return d >= day && d < next; }) ||
+        completedRestDays.some((d) => d >= day && d < next);
       const isToday = day.getTime() === today.getTime();
       const isFuture = day > today;
       return { label, active, isToday, isFuture };
     });
-  }, [completedTasks, today]);
+  }, [completedTasks, completedRestDays, today]);
 
-  // Consecutive-day streak count
+  // Consecutive-day streak count — regular tasks OR rest days keep it alive
   const streak = useMemo(() => {
-    if (completedTasks.length === 0) return 0;
+    if (completedTasks.length === 0 && completedRestDays.length === 0) return 0;
     let count = 0;
     for (let i = 0; i < 365; i++) {
       const day = new Date(today);
       day.setDate(today.getDate() - i);
       const next = new Date(day);
       next.setDate(next.getDate() + 1);
-      if (completedTasks.some((t) => { const d = new Date(t.completedAt); return d >= day && d < next; })) {
-        count++;
-      } else { break; }
+      const hasTask = completedTasks.some((t) => { const d = new Date(t.completedAt); return d >= day && d < next; });
+      const hasRest = completedRestDays.some((d) => d >= day && d < next);
+      if (hasTask || hasRest) { count++; } else { break; }
     }
     return count;
-  }, [completedTasks, today]);
+  }, [completedTasks, completedRestDays, today]);
 
   const badges: { icon: LucideIcon; label: string; sub: string; unlocked: boolean }[] = [
     {
@@ -138,7 +137,7 @@ export function SpinScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={styles.safe} edges={['bottom']}>
       <ScrollView
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}

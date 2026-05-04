@@ -8,7 +8,7 @@ import { TOKENS } from '../theme/tokens';
 export function ProfileScreen() {
   const {
     user, logout,
-    completedTasks,
+    completedTasks, completedRestDays,
     defaultTimerMinutes, setDefaultTimerMinutes,
     dailyGoal, setDailyGoal,
     notificationsEnabled, setNotificationsEnabled,
@@ -28,7 +28,7 @@ export function ProfileScreen() {
     : 0;
 
   const streak = useMemo(() => {
-    if (completedTasks.length === 0) return 0;
+    if (completedTasks.length === 0 && completedRestDays.length === 0) return 0;
     let count = 0;
     const base = new Date();
     base.setHours(0, 0, 0, 0);
@@ -37,17 +37,12 @@ export function ProfileScreen() {
       day.setDate(day.getDate() - i);
       const next = new Date(day);
       next.setDate(next.getDate() + 1);
-      if (completedTasks.some((t) => {
-        const d = new Date(t.completedAt);
-        return d >= day && d < next;
-      })) {
-        count++;
-      } else {
-        break;
-      }
+      const hasTask = completedTasks.some((t) => { const d = new Date(t.completedAt); return d >= day && d < next; });
+      const hasRest = completedRestDays.some((d) => d >= day && d < next);
+      if (hasTask || hasRest) { count++; } else { break; }
     }
     return count;
-  }, [completedTasks]);
+  }, [completedTasks, completedRestDays]);
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);

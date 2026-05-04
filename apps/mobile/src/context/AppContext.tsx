@@ -29,6 +29,26 @@ export interface PomodoroSession {
   isRunning: boolean;
 }
 
+export interface RestTask {
+  id: string;
+  name: string;
+  isPreset: boolean;
+  completedToday: boolean;
+}
+
+export const PRESET_REST_TASKS: RestTask[] = [
+  { id: 'preset_1',  name: 'Get a coffee ☕',              isPreset: true, completedToday: false },
+  { id: 'preset_2',  name: 'Go for a walk 🚶',             isPreset: true, completedToday: false },
+  { id: 'preset_3',  name: 'Read for 10 mins 📖',          isPreset: true, completedToday: false },
+  { id: 'preset_4',  name: 'Stretch 🧘',                   isPreset: true, completedToday: false },
+  { id: 'preset_5',  name: 'Call a friend 📞',             isPreset: true, completedToday: false },
+  { id: 'preset_6',  name: 'Take a nap 😴',                isPreset: true, completedToday: false },
+  { id: 'preset_7',  name: 'Cook something 🍳',            isPreset: true, completedToday: false },
+  { id: 'preset_8',  name: 'Go for a run 🏃',              isPreset: true, completedToday: false },
+  { id: 'preset_9',  name: 'Journal ✍️',                   isPreset: true, completedToday: false },
+  { id: 'preset_10', name: 'Watch something you enjoy 🎬', isPreset: true, completedToday: false },
+];
+
 interface AppContextType {
   tasks: Task[];
   addTask: (task: Omit<Task, 'id'>) => void;
@@ -66,6 +86,12 @@ interface AppContextType {
 
   seenAchievements: string[];
   markAchievementSeen: (label: string) => void;
+
+  restTasks: RestTask[];
+  completedRestDays: Date[];
+  toggleRestTask: (id: string) => void;
+  addRestTask: (name: string) => void;
+  removeRestTask: (id: string) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -76,6 +102,9 @@ const STORAGE_KEYS = {
   user: 'wheelTodo.user',
   categories: 'wheelTodo.categories',
   seenAchievements: 'wheelTodo.seenAchievements',
+  restTasks: 'wheelTodo.restTasks',
+  restTasksDate: 'wheelTodo.restTasksDate',
+  completedRestDays: 'wheelTodo.completedRestDays',
 } as const;
 
 const DEFAULT_CATEGORIES = ['Work', 'Personal', 'Learning', 'Health'];
@@ -106,6 +135,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<{ name: string; email: string; initials: string } | null>(null);
   const [categories, setCategories] = useState<string[]>(DEFAULT_CATEGORIES);
   const [seenAchievements, setSeenAchievements] = useState<string[]>([]);
+  const [restTasks, setRestTasks] = useState<RestTask[]>(PRESET_REST_TASKS);
+  const [completedRestDays, setCompletedRestDays] = useState<Date[]>([]);
 
   useEffect(() => {
     const load = async () => {
@@ -129,6 +160,31 @@ export function AppProvider({ children }: { children: ReactNode }) {
         if (categoriesRaw) setCategories(JSON.parse(categoriesRaw));
         const [, seenRaw] = await AsyncStorage.getItem(STORAGE_KEYS.seenAchievements).then(v => ['', v] as const).catch(() => ['', null] as const);
         if (seenRaw) setSeenAchievements(JSON.parse(seenRaw));
+
+        const [[, restTasksRaw], [, restTasksDateRaw], [, completedRestDaysRaw]] = await AsyncStorage.multiGet([
+          STORAGE_KEYS.restTasks,
+          STORAGE_KEYS.restTasksDate,
+          STORAGE_KEYS.completedRestDays,
+        ]);
+        const todayStr = new Date().toDateString();
+        if (restTasksRaw) {
+          const parsed = JSON.parse(restTasksRaw) as RestTask[];
+          if (restTasksDateRaw === todayStr) {
+            setRestTasks(parsed);
+          } else {
+            // New day — reset completions, keep custom tasks
+            const custom = parsed.filter((t) => !t.isPreset);
+            setRestTasks([
+              ...PRESET_REST_TASKS,
+              ...custom.map((t) => ({ ...t, completedToday: false })),
+            ]);
+          }
+        }
+        if (completedRestDaysRaw) {
+          setCompletedRestDays(
+            (JSON.parse(completedRestDaysRaw) as string[]).map((d) => new Date(d))
+          );
+        }
       } catch {
         // keep defaults on parse failure
       } finally {
@@ -266,6 +322,68 @@ export function AppProvider({ children }: { children: ReactNode }) {
     AsyncStorage.setItem(STORAGE_KEYS.seenAchievements, JSON.stringify(seenAchievements)).catch(() => {});
   }, [seenAchievements, loaded]);
 
+  useEffect(() => {
+    if (!loaded) return;
+    const todayStr = new Date().toDateString();
+    AsyncStorage.multiSet([
+      [STORAGE_KEYS.restTasks, JSON.stringify(restTasks)],
+      [STORAGE_KEYS.restTasksDate, todayStr],
+    ]).catch(() => {});
+  }, [restTasks, loaded]);
+
+  useEffect(() => {
+    if (!loaded) return;
+    AsyncStorage.setItem(
+      STORAGE_KEYS.completedRestDays,
+      JSON.stringify(completedRestDays.map((d) => d.toISOString()))
+    ).catch(() => {});
+  }, [completedRestDays, loaded]);
+
+  const toggleRestTask = (id: string) => {
+    const task = restTasks.find((t) => t.id === id);
+    if (!task) return;
+    const newCompleted = !task.completedToday;
+    const newTasks = restTasks.map((t) => (t.id === id ? { ...t, completedToday: newCompleted } : t));
+    const anyWasCompleted = restTasks.some((t) => t.completedToday);
+    const anyNowCompleted = newTasks.some((t) => t.completedToday);
+    setRestTasks(newTasks);
+    if (anyNowCompleted && !anyWasCompleted) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      setCompletedRestDays((prev) => {
+        if (prev.some((d) => d.getTime() === today.getTime())) return prev;
+        return [...prev, today];
+      });
+    } else if (!anyNowCompleted && anyWasCompleted) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      setCompletedRestDays((prev) => prev.filter((d) => d.getTime() !== today.getTime()));
+    }
+  };
+
+  const addRestTask = (name: string) => {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    setRestTasks((prev) => [
+      ...prev,
+      { id: `custom_${Date.now()}`, name: trimmed, isPreset: false, completedToday: false },
+    ]);
+  };
+
+  const removeRestTask = (id: string) => {
+    const task = restTasks.find((t) => t.id === id);
+    if (!task || task.isPreset) return;
+    const newTasks = restTasks.filter((t) => t.id !== id);
+    const anyWasCompleted = restTasks.some((t) => t.completedToday);
+    const anyNowCompleted = newTasks.some((t) => t.completedToday);
+    setRestTasks(newTasks);
+    if (anyWasCompleted && !anyNowCompleted) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      setCompletedRestDays((prev) => prev.filter((d) => d.getTime() !== today.getTime()));
+    }
+  };
+
   const markAchievementSeen = (label: string) => {
     setSeenAchievements((prev) => prev.includes(label) ? prev : [...prev, label]);
   };
@@ -295,6 +413,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     user, login, logout,
     categories, addCategory, removeCategory,
     seenAchievements, markAchievementSeen,
+    restTasks, completedRestDays, toggleRestTask, addRestTask, removeRestTask,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

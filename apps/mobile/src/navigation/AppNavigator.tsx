@@ -1,43 +1,54 @@
 import React from 'react';
-import { Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Clock, ListTodo, RotateCcw, User } from 'lucide-react-native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { Clock, ListTodo, Moon, RotateCcw } from 'lucide-react-native';
 import { useApp } from '../context/AppContext';
 import { LoginScreen } from '../screens/LoginScreen';
 import { SpinScreen } from '../screens/SpinScreen';
 import { TasksScreen } from '../screens/TasksScreen';
 import { HistoryScreen } from '../screens/HistoryScreen';
+import { RestScreen } from '../screens/RestScreen';
 import { ProfileScreen } from '../screens/ProfileScreen';
 import { TOKENS } from '../theme/tokens';
+
+type RootStackParamList = {
+  MainTabs: undefined;
+  Profile: undefined;
+};
 
 type TabParamList = {
   Spin: undefined;
   Tasks: undefined;
+  Rest: undefined;
   History: undefined;
-  Profile: undefined;
 };
 
+const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<TabParamList>();
 
-const ICONS = {
+const TAB_ICONS = {
   Spin:    RotateCcw,
   Tasks:   ListTodo,
+  Rest:    Moon,
   History: Clock,
-  Profile: User,
 };
 
-export function AppNavigator() {
+function AvatarButton({ onPress }: { onPress: () => void }) {
   const { user } = useApp();
+  return (
+    <Pressable onPress={onPress} style={styles.avatarBtn} hitSlop={8}>
+      <Text style={styles.avatarText}>{user?.initials ?? 'U'}</Text>
+    </Pressable>
+  );
+}
 
-  if (!user) {
-    return <LoginScreen onLogin={() => {}} />;
-  }
-
+function MainTabs() {
   return (
     <Tab.Navigator
       initialRouteName="Spin"
       screenOptions={({ route }) => {
-        const Icon = ICONS[route.name as keyof TabParamList];
+        const Icon = TAB_ICONS[route.name as keyof TabParamList];
         return {
           headerShown: false,
           tabBarActiveTintColor: TOKENS.colors.text.primary,
@@ -59,8 +70,56 @@ export function AppNavigator() {
     >
       <Tab.Screen name="Spin"    component={SpinScreen}    />
       <Tab.Screen name="Tasks"   component={TasksScreen}   />
+      <Tab.Screen name="Rest"    component={RestScreen}    />
       <Tab.Screen name="History" component={HistoryScreen} />
-      <Tab.Screen name="Profile" component={ProfileScreen} />
     </Tab.Navigator>
   );
 }
+
+export function AppNavigator() {
+  const { user } = useApp();
+
+  if (!user) {
+    return <LoginScreen onLogin={() => {}} />;
+  }
+
+  return (
+    <Stack.Navigator>
+      <Stack.Screen
+        name="MainTabs"
+        component={MainTabs}
+        options={({ navigation }) => ({
+          headerTitle: '',
+          headerStyle: { backgroundColor: TOKENS.colors.bg.screen },
+          headerShadowVisible: false,
+          headerRight: () => (
+            <AvatarButton onPress={() => navigation.navigate('Profile')} />
+          ),
+        })}
+      />
+      <Stack.Screen
+        name="Profile"
+        component={ProfileScreen}
+        options={{ headerShown: false }}
+      />
+    </Stack.Navigator>
+  );
+}
+
+const styles = StyleSheet.create({
+  avatarBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: TOKENS.colors.action.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 4,
+  },
+  avatarText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#ffffff',
+    letterSpacing: 0.5,
+  },
+});
