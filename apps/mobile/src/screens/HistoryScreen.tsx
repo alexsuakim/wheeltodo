@@ -5,8 +5,9 @@ import { CheckCircle2 } from 'lucide-react-native';
 import { useApp, type CompletedTask } from '../context/AppContext';
 import { TOKENS } from '../theme/tokens';
 
+const MILESTONES = [7, 14, 21, 30, 60, 90, 100, 180, 365];
+
 function TaskCard({ task, onUntick }: { task: CompletedTask; onUntick: () => void }) {
-  const actualH = (task.minutesActual / 60).toFixed(1);
   return (
     <View style={styles.taskCard}>
       <Pressable onPress={onUntick} hitSlop={8}>
@@ -14,19 +15,41 @@ function TaskCard({ task, onUntick }: { task: CompletedTask; onUntick: () => voi
       </Pressable>
       <Text style={styles.taskName} numberOfLines={1}>{task.taskName}</Text>
       <Text style={styles.taskMeta}>{task.minutesEstimated}m</Text>
-      <Text style={styles.taskActual}>{actualH}h</Text>
       <View style={[styles.dot, { backgroundColor: task.color }]} />
     </View>
   );
 }
 
 export function HistoryScreen() {
-  const { completedTasks, uncompleteTask } = useApp();
+  const { completedTasks, completedRestDays, uncompleteTask, streak, bestStreak } = useApp();
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const yesterday = new Date(today);
   yesterday.setDate(yesterday.getDate() - 1);
+
+  const weekDays = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(today);
+    d.setDate(d.getDate() - (6 - i));
+    return d;
+  });
+
+  const weekActivity = weekDays.map((day) => {
+    const next = new Date(day);
+    next.setDate(next.getDate() + 1);
+    const hasTask = completedTasks.some((t) => {
+      const d = new Date(t.completedAt);
+      return d >= day && d < next;
+    });
+    const hasRest = completedRestDays.some((d) => {
+      const rd = new Date(d);
+      return rd >= day && rd < next;
+    });
+    return hasTask || hasRest;
+  });
+
+  const nextMilestone = MILESTONES.find((m) => m > streak) ?? null;
+  const daysToMilestone = nextMilestone !== null ? nextMilestone - streak : null;
 
   const todayTasks = completedTasks.filter((t) => {
     const d = new Date(t.completedAt);
@@ -40,38 +63,17 @@ export function HistoryScreen() {
     return d.getTime() === yesterday.getTime();
   });
 
-  const weekDays = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(today);
-    d.setDate(d.getDate() - (6 - i));
-    return d;
-  });
-  const weekTaskCounts = weekDays.map((day) => {
-    const next = new Date(day);
-    next.setDate(next.getDate() + 1);
-    return completedTasks.filter((t) => {
-      const d = new Date(t.completedAt);
-      return d >= day && d < next;
-    }).length;
-  });
-  const maxWeekCount = Math.max(...weekTaskCounts, 1);
-
-  const totalMinutes = completedTasks.reduce((s, t) => s + t.minutesActual, 0);
-  const totalHours = (totalMinutes / 60).toFixed(1);
-  const completionRate = completedTasks.length > 0
-    ? Math.round(
-        (completedTasks.filter((t) => t.minutesActual <= t.minutesEstimated).length /
-          completedTasks.length) * 100
-      )
-    : 0;
-
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={styles.safe} edges={['bottom']}>
       <View style={styles.header}>
-        <Text style={styles.title}>History</Text>
-        <Text style={styles.subtitle}>Your focus log</Text>
+        <Text style={styles.title}>Your progress.</Text>
+        <Text style={[styles.title, { color: TOKENS.colors.action.streak }]}>
+          Look how far you've come.
+        </Text>
       </View>
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        {/* Lifetime stats */}
         <View style={styles.statCard}>
           <View style={styles.statItem}>
             <Text style={styles.statValue}>{completedTasks.length}</Text>
@@ -79,42 +81,35 @@ export function HistoryScreen() {
           </View>
           <View style={styles.statDivider} />
           <View style={styles.statItem}>
-            <Text style={styles.statValue}>{totalHours}</Text>
-            <Text style={styles.statLabel}>Hours Focused</Text>
+            <Text style={[styles.statValue, { color: TOKENS.colors.action.streak }]}>{streak}</Text>
+            <Text style={styles.statLabel}>Current Streak</Text>
           </View>
           <View style={styles.statDivider} />
           <View style={styles.statItem}>
-            <Text style={styles.statValue}>{completionRate}%</Text>
-            <Text style={styles.statLabel}>Completion</Text>
+            <Text style={styles.statValue}>{bestStreak}</Text>
+            <Text style={styles.statLabel}>Best Streak</Text>
           </View>
         </View>
 
-        {/* This Week */}
+        {/* This week */}
         <View>
           <Text style={styles.sectionLabel}>This Week</Text>
-          <View style={styles.weekChart}>
+          <View style={styles.weekCard}>
             {weekDays.map((day, i) => {
-              const count = weekTaskCounts[i];
-              const barH = count > 0 ? Math.max((count / maxWeekCount) * 56, 8) : 0;
               const isToday = day.getTime() === today.getTime();
+              const active = weekActivity[i];
               const dayName = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'][day.getDay()];
               return (
-                <View key={i} style={styles.weekColumn}>
-                  <View style={styles.weekBarTrack}>
-                    {count > 0 && (
-                      <View
-                        style={[
-                          styles.weekBarFill,
-                          { height: barH },
-                          isToday && styles.weekBarToday,
-                        ]}
-                      />
-                    )}
-                  </View>
-                  {count > 0 && (
-                    <Text style={styles.weekBarCount}>{count}</Text>
-                  )}
-                  <Text style={[styles.weekBarLabel, isToday && styles.weekBarLabelToday]}>
+                <View key={i} style={styles.weekCol}>
+                  <View
+                    style={[
+                      styles.weekDot,
+                      active && styles.weekDotActive,
+                      isToday && active && styles.weekDotToday,
+                      isToday && !active && styles.weekDotTodayRing,
+                    ]}
+                  />
+                  <Text style={[styles.weekLabel, isToday && styles.weekLabelToday]}>
                     {dayName}
                   </Text>
                 </View>
@@ -123,17 +118,46 @@ export function HistoryScreen() {
           </View>
         </View>
 
+        {/* Next milestone */}
+        <View style={styles.milestoneCard}>
+          <Text style={styles.milestoneEmoji}>🎯</Text>
+          <View style={styles.milestoneText}>
+            {streak === 0 ? (
+              <>
+                <Text style={styles.milestoneTitle}>Start your streak</Text>
+                <Text style={styles.milestoneSub}>Complete a task today to begin!</Text>
+              </>
+            ) : daysToMilestone !== null ? (
+              <>
+                <Text style={styles.milestoneTitle}>
+                  {daysToMilestone} more day{daysToMilestone !== 1 ? 's' : ''} to {nextMilestone}
+                </Text>
+                <Text style={styles.milestoneSub}>Keep going — you're on a roll</Text>
+              </>
+            ) : (
+              <>
+                <Text style={styles.milestoneTitle}>365 days — legendary!</Text>
+                <Text style={styles.milestoneSub}>You've hit every milestone. Incredible.</Text>
+              </>
+            )}
+          </View>
+        </View>
+
         {todayTasks.length > 0 && (
           <View>
             <Text style={styles.sectionLabel}>Today</Text>
-            {todayTasks.map((t) => <TaskCard key={t.id} task={t} onUntick={() => uncompleteTask(t.id)} />)}
+            {todayTasks.map((t) => (
+              <TaskCard key={t.id} task={t} onUntick={() => uncompleteTask(t.id)} />
+            ))}
           </View>
         )}
 
         {yesterdayTasks.length > 0 && (
           <View>
             <Text style={styles.sectionLabel}>Yesterday</Text>
-            {yesterdayTasks.map((t) => <TaskCard key={t.id} task={t} onUntick={() => uncompleteTask(t.id)} />)}
+            {yesterdayTasks.map((t) => (
+              <TaskCard key={t.id} task={t} onUntick={() => uncompleteTask(t.id)} />
+            ))}
           </View>
         )}
 
@@ -150,13 +174,14 @@ export function HistoryScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: TOKENS.colors.bg.screen },
   header: { paddingHorizontal: TOKENS.spacing.screenPad, paddingTop: 12, paddingBottom: 4 },
-  title: { fontSize: 34, fontWeight: '700', color: TOKENS.colors.text.primary, letterSpacing: 0.37 },
-  subtitle: { fontSize: 15, color: TOKENS.colors.text.secondary, marginTop: 2 },
+  title: { fontSize: 26, fontWeight: '700', color: TOKENS.colors.text.primary, letterSpacing: 0.1 },
   content: {
     paddingHorizontal: TOKENS.spacing.screenPad,
     paddingBottom: 40,
     gap: TOKENS.spacing.rowGap,
   },
+
+  // Stats
   statCard: {
     backgroundColor: TOKENS.colors.bg.card,
     borderRadius: TOKENS.radius.card,
@@ -167,6 +192,57 @@ const styles = StyleSheet.create({
   statValue: { fontSize: 26, fontWeight: '700', color: TOKENS.colors.text.primary },
   statLabel: { fontSize: 12, color: TOKENS.colors.text.secondary, textAlign: 'center' },
   statDivider: { width: 1, backgroundColor: '#e8e8e8' },
+
+  // This week dots
+  weekCard: {
+    backgroundColor: TOKENS.colors.bg.card,
+    borderRadius: TOKENS.radius.card,
+    paddingVertical: 20,
+    paddingHorizontal: 12,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  weekCol: { flex: 1, alignItems: 'center', gap: 8 },
+  weekDot: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#f0f0f0',
+  },
+  weekDotActive: {
+    backgroundColor: TOKENS.colors.action.primary,
+  },
+  weekDotToday: {
+    backgroundColor: TOKENS.colors.action.streak,
+  },
+  weekDotTodayRing: {
+    backgroundColor: 'transparent',
+    borderWidth: 2,
+    borderColor: TOKENS.colors.action.streak,
+  },
+  weekLabel: { fontSize: 11, color: TOKENS.colors.text.muted },
+  weekLabelToday: { color: TOKENS.colors.action.streak, fontWeight: '600' },
+
+  // Milestone
+  milestoneCard: {
+    backgroundColor: TOKENS.colors.bg.card,
+    borderRadius: TOKENS.radius.card,
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  milestoneEmoji: { fontSize: 28 },
+  milestoneText: { flex: 1 },
+  milestoneTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: TOKENS.colors.text.primary,
+    marginBottom: 2,
+  },
+  milestoneSub: { fontSize: 13, color: TOKENS.colors.text.secondary },
+
+  // Section label
   sectionLabel: {
     fontSize: 12,
     fontWeight: '600',
@@ -175,6 +251,8 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     paddingVertical: 6,
   },
+
+  // Task cards
   taskCard: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -187,27 +265,8 @@ const styles = StyleSheet.create({
   },
   taskName: { flex: 1, fontSize: 16, color: TOKENS.colors.text.primary, fontWeight: '500' },
   taskMeta: { fontSize: 13, color: TOKENS.colors.text.secondary },
-  taskActual: { fontSize: 13, color: TOKENS.colors.text.muted },
   dot: { width: 8, height: 8, borderRadius: 4, flexShrink: 0 },
-  weekChart: {
-    backgroundColor: TOKENS.colors.bg.card,
-    borderRadius: TOKENS.radius.card,
-    padding: 16,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-end',
-  },
-  weekColumn: { flex: 1, alignItems: 'center', gap: 4 },
-  weekBarTrack: { height: 60, justifyContent: 'flex-end', alignItems: 'center' },
-  weekBarFill: {
-    width: 18,
-    borderRadius: 4,
-    backgroundColor: TOKENS.colors.action.primary,
-  },
-  weekBarToday: { backgroundColor: TOKENS.colors.action.streak },
-  weekBarCount: { fontSize: 11, color: TOKENS.colors.text.secondary, fontWeight: '600' },
-  weekBarLabel: { fontSize: 11, color: TOKENS.colors.text.muted },
-  weekBarLabelToday: { color: TOKENS.colors.action.streak, fontWeight: '600' },
+
   empty: {
     textAlign: 'center',
     color: TOKENS.colors.text.secondary,

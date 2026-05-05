@@ -1,14 +1,20 @@
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Flame, LogOut, Target, Trophy, Zap } from 'lucide-react-native';
+import { Clock, Flame, LogOut, Moon, RotateCcw, Trophy, Zap } from 'lucide-react-native';
+import type { LucideIcon } from 'lucide-react-native';
+import { ACHIEVEMENT_DEFS } from '../utils/achievements';
+
+const ICON_MAP: Record<string, LucideIcon> = {
+  Flame, Trophy, Clock, Zap, Moon, RotateCcw,
+};
 import { useApp } from '../context/AppContext';
 import { TOKENS } from '../theme/tokens';
 
 export function ProfileScreen() {
   const {
     user, logout,
-    completedTasks, completedRestDays,
+    completedTasks, streak, achievementValues, unlockedTierIds,
     defaultTimerMinutes, setDefaultTimerMinutes,
     dailyGoal, setDailyGoal,
     notificationsEnabled, setNotificationsEnabled,
@@ -27,22 +33,6 @@ export function ProfileScreen() {
       )
     : 0;
 
-  const streak = useMemo(() => {
-    if (completedTasks.length === 0 && completedRestDays.length === 0) return 0;
-    let count = 0;
-    const base = new Date();
-    base.setHours(0, 0, 0, 0);
-    for (let i = 0; i < 365; i++) {
-      const day = new Date(base);
-      day.setDate(day.getDate() - i);
-      const next = new Date(day);
-      next.setDate(next.getDate() + 1);
-      const hasTask = completedTasks.some((t) => { const d = new Date(t.completedAt); return d >= day && d < next; });
-      const hasRest = completedRestDays.some((d) => d >= day && d < next);
-      if (hasTask || hasRest) { count++; } else { break; }
-    }
-    return count;
-  }, [completedTasks, completedRestDays]);
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -51,32 +41,6 @@ export function ProfileScreen() {
     return d.getTime() === today.getTime();
   }).length;
 
-  const badges = [
-    {
-      icon: Target,
-      label: 'Daily Goal',
-      sub: `${dailyGoal} tasks/day`,
-      unlocked: todayDone >= dailyGoal,
-    },
-    {
-      icon: Flame,
-      label: 'On Fire',
-      sub: `${streak} day streak`,
-      unlocked: streak >= 3,
-    },
-    {
-      icon: Trophy,
-      label: 'Achiever',
-      sub: '10 tasks done',
-      unlocked: completedTasks.length >= 10,
-    },
-    {
-      icon: Zap,
-      label: 'Speed Run',
-      sub: 'Beat the clock',
-      unlocked: completedTasks.some((t) => t.minutesActual < t.minutesEstimated),
-    },
-  ];
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -122,24 +86,48 @@ export function ProfileScreen() {
 
         {/* Achievements */}
         <Text style={styles.sectionLabel}>Achievements</Text>
-        <View style={styles.badgeGrid}>
-          {badges.map((b) => {
-            const Icon = b.icon;
-            return (
-              <View key={b.label} style={[styles.badge, !b.unlocked && styles.badgeLocked]}>
-                <Icon
-                  size={22}
-                  color={b.unlocked ? TOKENS.colors.action.streak : TOKENS.colors.text.muted}
-                  strokeWidth={2}
-                />
-                <Text style={[styles.badgeLabel, !b.unlocked && styles.badgeLabelLocked]}>
-                  {b.label}
-                </Text>
-                <Text style={styles.badgeSub}>{b.sub}</Text>
+        {ACHIEVEMENT_DEFS.map((def) => {
+          const Icon = ICON_MAP[def.iconName] ?? Flame;
+          const current = achievementValues[def.key];
+          const nextTier = def.tiers.find((t) => current < t.target);
+          const progressLabel = nextTier
+            ? `${current} / ${nextTier.target}`
+            : 'Complete';
+          return (
+            <View key={def.key} style={styles.achievementCard}>
+              <View style={styles.achievementHeader}>
+                <View style={[styles.achievementIconWrap, { backgroundColor: def.color + '22' }]}>
+                  <Icon size={15} color={def.color} strokeWidth={2.2} />
+                </View>
+                <Text style={styles.achievementLabel}>{def.label}</Text>
+                <Text style={styles.achievementProgress}>{progressLabel}</Text>
               </View>
-            );
-          })}
-        </View>
+              <View style={styles.tiersRow}>
+                {def.tiers.map((tier) => {
+                  const unlocked = unlockedTierIds.includes(tier.id);
+                  return (
+                    <View key={tier.id} style={styles.tierItem}>
+                      <View style={[
+                        styles.tierDot,
+                        unlocked
+                          ? { backgroundColor: def.color, borderColor: def.color }
+                          : styles.tierDotLocked,
+                      ]}>
+                        {unlocked && <View style={styles.tierDotInner} />}
+                      </View>
+                      <Text style={[styles.tierBadge, unlocked && { color: def.color }]}>
+                        {tier.badge}
+                      </Text>
+                      <Text style={styles.tierTarget}>
+                        {def.description(tier.target)}
+                      </Text>
+                    </View>
+                  );
+                })}
+              </View>
+            </View>
+          );
+        })}
 
         {/* Settings */}
         <Text style={styles.sectionLabel}>Settings</Text>
@@ -286,19 +274,37 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     paddingTop: 4,
   },
-  badgeGrid: { flexDirection: 'row', gap: 8 },
-  badge: {
-    flex: 1,
+  achievementCard: {
     backgroundColor: TOKENS.colors.bg.card,
-    borderRadius: TOKENS.radius.row,
-    padding: 12,
-    alignItems: 'center',
-    gap: 4,
+    borderRadius: TOKENS.radius.card,
+    padding: 14,
+    gap: 12,
+    marginBottom: 8,
   },
-  badgeLocked: { opacity: 0.45 },
-  badgeLabel: { fontSize: 11, fontWeight: '600', color: TOKENS.colors.text.primary, textAlign: 'center' },
-  badgeLabelLocked: { color: TOKENS.colors.text.muted },
-  badgeSub: { fontSize: 10, color: TOKENS.colors.text.muted, textAlign: 'center' },
+  achievementHeader: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  achievementIconWrap: {
+    width: 28, height: 28, borderRadius: 8,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  achievementLabel: { flex: 1, fontSize: 14, fontWeight: '700', color: TOKENS.colors.text.primary },
+  achievementProgress: { fontSize: 12, color: TOKENS.colors.text.secondary, fontWeight: '500' },
+  tiersRow: { flexDirection: 'row', gap: 8 },
+  tierItem: { flex: 1, alignItems: 'center', gap: 4 },
+  tierDot: {
+    width: 28, height: 28, borderRadius: 14,
+    borderWidth: 2, alignItems: 'center', justifyContent: 'center',
+  },
+  tierDotLocked: { borderColor: '#e0e0e0', backgroundColor: 'transparent' },
+  tierDotInner: {
+    width: 10, height: 10, borderRadius: 5, backgroundColor: '#ffffff',
+  },
+  tierBadge: {
+    fontSize: 9, fontWeight: '700', color: TOKENS.colors.text.muted,
+    textAlign: 'center',
+  },
+  tierTarget: {
+    fontSize: 9, color: TOKENS.colors.text.muted, textAlign: 'center',
+  },
   settingsCard: {
     backgroundColor: TOKENS.colors.bg.card,
     borderRadius: TOKENS.radius.card,

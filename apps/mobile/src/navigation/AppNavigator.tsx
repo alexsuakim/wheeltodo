@@ -1,8 +1,8 @@
 import React from 'react';
-import { Pressable, StyleSheet, Text } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { Clock, ListTodo, Moon, RotateCcw } from 'lucide-react-native';
+import { Clock, Flame, ListTodo, Moon, RotateCcw } from 'lucide-react-native';
 import { useApp } from '../context/AppContext';
 import { LoginScreen } from '../screens/LoginScreen';
 import { SpinScreen } from '../screens/SpinScreen';
@@ -33,6 +33,27 @@ const TAB_ICONS = {
   Rest:    Moon,
   History: Clock,
 };
+
+function StreakBadge({ onPress }: { onPress: () => void }) {
+  const { streak, hasActivityToday } = useApp();
+  // Three states: no streak (grey), at risk (outline coral), protected (filled coral)
+  const hasStreak = streak > 0;
+  const atRisk = hasStreak && !hasActivityToday;
+  const flameColor = !hasStreak
+    ? TOKENS.colors.text.muted
+    : TOKENS.colors.action.streak;
+  return (
+    <Pressable onPress={atRisk ? onPress : undefined} style={styles.streakBadge} hitSlop={8}>
+      <Flame
+        size={14}
+        color={flameColor}
+        strokeWidth={2.2}
+        fill={atRisk ? 'transparent' : hasStreak ? flameColor : 'transparent'}
+      />
+      <Text style={[styles.streakText, !hasStreak && styles.streakTextMuted]}>{streak}</Text>
+    </Pressable>
+  );
+}
 
 function AvatarButton({ onPress }: { onPress: () => void }) {
   const { user } = useApp();
@@ -92,6 +113,9 @@ export function AppNavigator() {
           headerTitle: '',
           headerStyle: { backgroundColor: TOKENS.colors.bg.screen },
           headerShadowVisible: false,
+          headerLeft: () => (
+            <StreakBadge onPress={() => navigation.navigate('MainTabs', { screen: 'Rest' } as any)} />
+          ),
           headerRight: () => (
             <AvatarButton onPress={() => navigation.navigate('Profile')} />
           ),
@@ -107,6 +131,21 @@ export function AppNavigator() {
 }
 
 const styles = StyleSheet.create({
+  streakBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginLeft: 4,
+  },
+  streakText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: TOKENS.colors.action.streak,
+    letterSpacing: -0.3,
+  },
+  streakTextMuted: {
+    color: TOKENS.colors.text.muted,
+  },
   avatarBtn: {
     width: 34,
     height: 34,

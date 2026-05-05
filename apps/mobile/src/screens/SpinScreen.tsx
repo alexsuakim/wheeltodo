@@ -11,16 +11,21 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
-import { Flame, Target, Trophy, Zap } from 'lucide-react-native';
+import { Clock, Flame, Moon, RotateCcw, Trophy, Zap } from 'lucide-react-native';
 import type { LucideIcon } from 'lucide-react-native';
 import { useApp, type Task } from '../context/AppContext';
 import { SpinningWheel } from '../components/SpinningWheel';
 import { TOKENS } from '../theme/tokens';
+import { ACHIEVEMENT_DEFS, getNextAchievement } from '../utils/achievements';
+
+const ICON_MAP: Record<string, LucideIcon> = {
+  Flame, Trophy, Clock, Zap, Moon, RotateCcw,
+};
 
 type TabNav = BottomTabNavigationProp<{ Spin: undefined; Tasks: undefined; Rest: undefined; History: undefined }>;
 
 export function SpinScreen() {
-  const { tasks, startPomodoro, completedTasks, completedRestDays, dailyGoal } = useApp();
+  const { tasks, startPomodoro, completedTasks, completedRestDays, dailyGoal, streak, achievementValues, incrementSpinCount } = useApp();
   const navigation = useNavigation<TabNav>();
 
   const today = useMemo(() => {
@@ -61,48 +66,8 @@ export function SpinScreen() {
     });
   }, [completedTasks, completedRestDays, today]);
 
-  // Consecutive-day streak count — regular tasks OR rest days keep it alive
-  const streak = useMemo(() => {
-    if (completedTasks.length === 0 && completedRestDays.length === 0) return 0;
-    let count = 0;
-    for (let i = 0; i < 365; i++) {
-      const day = new Date(today);
-      day.setDate(today.getDate() - i);
-      const next = new Date(day);
-      next.setDate(next.getDate() + 1);
-      const hasTask = completedTasks.some((t) => { const d = new Date(t.completedAt); return d >= day && d < next; });
-      const hasRest = completedRestDays.some((d) => d >= day && d < next);
-      if (hasTask || hasRest) { count++; } else { break; }
-    }
-    return count;
-  }, [completedTasks, completedRestDays, today]);
 
-  const badges: { icon: LucideIcon; label: string; sub: string; unlocked: boolean }[] = [
-    {
-      icon: Target,
-      label: 'Daily Goal',
-      sub: `${dailyGoal} tasks/day`,
-      unlocked: todayDone >= dailyGoal,
-    },
-    {
-      icon: Flame,
-      label: 'On Fire',
-      sub: `${streak} day streak`,
-      unlocked: streak >= 3,
-    },
-    {
-      icon: Trophy,
-      label: 'Achiever',
-      sub: '10 tasks done',
-      unlocked: completedTasks.length >= 10,
-    },
-    {
-      icon: Zap,
-      label: 'Speed Run',
-      sub: 'Beat the clock',
-      unlocked: completedTasks.some((t) => t.minutesActual < t.minutesEstimated),
-    },
-  ];
+  const nextAchievement = getNextAchievement(achievementValues);
 
   const [picked, setPicked] = useState<Task | null>(null);
   const [resultOpen, setResultOpen] = useState(false);
@@ -134,6 +99,7 @@ export function SpinScreen() {
     setPicked(task);
     setResultOpen(true);
     showSheet();
+    incrementSpinCount();
   }
 
   return (
@@ -144,8 +110,8 @@ export function SpinScreen() {
         bounces={false}
       >
         <View style={styles.header}>
-          <Text style={styles.title}>Spin</Text>
-          <Text style={styles.subtitle}>Spin to pick your next task</Text>
+          <Text style={styles.title}>Not sure where to start?</Text>
+          <Text style={[styles.title, { color: TOKENS.colors.action.streak }]}>Spin the wheel.</Text>
           {/* M T W T F S S + streak count */}
           <View style={styles.weekRow}>
             <View style={styles.bubblesRow}>
@@ -218,28 +184,35 @@ export function SpinScreen() {
           )}
         </View>
 
-        {/* Achievements */}
-        <View style={styles.achievementsSection}>
-          <Text style={styles.sectionLabel}>Achievements</Text>
-          <View style={styles.badgeGrid}>
-            {badges.map((b) => {
-              const Icon = b.icon;
-              return (
-                <View key={b.label} style={[styles.badge, !b.unlocked && styles.badgeLocked]}>
-                  <Icon
-                    size={22}
-                    color={b.unlocked ? TOKENS.colors.action.streak : TOKENS.colors.text.muted}
-                    strokeWidth={2}
-                  />
-                  <Text style={[styles.badgeLabel, !b.unlocked && styles.badgeLabelLocked]}>
-                    {b.label}
+        {/* Next milestone */}
+        {nextAchievement && (() => {
+          const { def, tier, current, pct } = nextAchievement;
+          const Icon = ICON_MAP[def.iconName] ?? Flame;
+          const barPct = Math.min(pct, 1);
+          return (
+            <View style={styles.achievementsSection}>
+              <Text style={styles.sectionLabel}>Next milestone</Text>
+              <View style={styles.milestoneCard}>
+                <View style={styles.milestoneTop}>
+                  <View style={[styles.milestoneIconWrap, { backgroundColor: def.color + '22' }]}>
+                    <Icon size={16} color={def.color} strokeWidth={2.2} />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.milestoneName}>{tier.badge}</Text>
+                    <Text style={styles.milestoneSub}>{def.description(tier.target)}</Text>
+                  </View>
+                  <Text style={styles.milestoneProgress}>
+                    {current} / {tier.target}
                   </Text>
-                  <Text style={styles.badgeSub}>{b.sub}</Text>
                 </View>
-              );
-            })}
-          </View>
-        </View>
+                <View style={styles.milestoneBarBg}>
+                  <View style={[styles.milestoneBarFill, { width: `${barPct * 100}%` as any, backgroundColor: def.color }]} />
+                </View>
+                <Text style={styles.milestoneEarn}>Collect: {tier.badge}</Text>
+              </View>
+            </View>
+          );
+        })()}
       </ScrollView>
 
       {resultOpen && picked && (
@@ -347,6 +320,23 @@ const styles = StyleSheet.create({
     letterSpacing: 0.8,
     textTransform: 'uppercase',
   },
+  milestoneCard: {
+    backgroundColor: TOKENS.colors.bg.card,
+    borderRadius: TOKENS.radius.card,
+    padding: 14,
+    gap: 10,
+  },
+  milestoneTop: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  milestoneIconWrap: {
+    width: 32, height: 32, borderRadius: 10,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  milestoneName: { fontSize: 14, fontWeight: '700', color: TOKENS.colors.text.primary },
+  milestoneSub: { fontSize: 12, color: TOKENS.colors.text.secondary, marginTop: 1 },
+  milestoneProgress: { fontSize: 12, fontWeight: '600', color: TOKENS.colors.text.secondary },
+  milestoneBarBg: { height: 6, backgroundColor: '#ebebeb', borderRadius: 3, overflow: 'hidden' },
+  milestoneBarFill: { height: 6, borderRadius: 3 },
+  milestoneEarn: { fontSize: 11, color: TOKENS.colors.text.muted },
   badgeGrid: { flexDirection: 'row', gap: 8 },
   badge: {
     flex: 1,
@@ -360,7 +350,7 @@ const styles = StyleSheet.create({
   badgeLabel: { fontSize: 11, fontWeight: '600', color: TOKENS.colors.text.primary, textAlign: 'center' },
   badgeLabelLocked: { color: TOKENS.colors.text.muted },
   badgeSub: { fontSize: 10, color: TOKENS.colors.text.muted, textAlign: 'center' },
-  title: { fontSize: 34, fontWeight: '700', color: TOKENS.colors.text.primary, letterSpacing: 0.37 },
+  title: { fontSize: 26, fontWeight: '700', color: TOKENS.colors.text.primary, letterSpacing: 0.1 },
   subtitle: { marginTop: 4, fontSize: 15, color: TOKENS.colors.text.secondary },
   weekRow: {
     flexDirection: 'row',

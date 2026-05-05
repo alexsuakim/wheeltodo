@@ -14,16 +14,11 @@ import { useApp } from '../context/AppContext';
 import { TOKENS } from '../theme/tokens';
 
 export function RestScreen() {
-  const { restTasks, completedRestDays, toggleRestTask, addRestTask, removeRestTask } = useApp();
+  const { restTasks, completedRestDays, toggleRestTask, addRestTask, removeRestTask, streak, hasActivityToday } = useApp();
   const [inputText, setInputText] = useState('');
 
   const streakProtected = restTasks.some((t) => t.completedToday);
-
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const alreadyProtectedByRest = completedRestDays.some(
-    (d) => d.getTime() === today.getTime()
-  );
+  const atRisk = streak > 0 && !hasActivityToday;
 
   const handleAdd = () => {
     const trimmed = inputText.trim();
@@ -42,19 +37,20 @@ export function RestScreen() {
       >
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.title}>Take it easy today 🌿</Text>
-          <Text style={styles.subtitle}>Tick off a few wants. Your streak is safe.</Text>
+          <Text style={styles.title}>Need a day off?</Text>
+          <Text style={[styles.title, { color: TOKENS.colors.action.streak }]}>Take it easy today.</Text>
         </View>
 
-        {/* Streak protected badge */}
+        {/* Streak protected card */}
         {streakProtected && (
-          <View style={styles.protectedBadge}>
-            <ShieldCheck
-              size={18}
-              color={TOKENS.colors.action.success}
-              strokeWidth={2.2}
-            />
-            <Text style={styles.protectedText}>Streak protected — well done</Text>
+          <View style={styles.protectedCard}>
+            <View style={styles.protectedIconWrap}>
+              <ShieldCheck size={22} color="#2a7d4f" strokeWidth={2} />
+            </View>
+            <View style={styles.protectedBody}>
+              <Text style={styles.protectedTitle}>Streak protected today 🌿</Text>
+              <Text style={styles.protectedSub}>You've earned your rest — see you tomorrow!</Text>
+            </View>
           </View>
         )}
 
@@ -135,29 +131,46 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   title: {
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: '700',
     color: TOKENS.colors.text.primary,
-    letterSpacing: -0.3,
+    letterSpacing: 0.1,
   },
   subtitle: {
     fontSize: 14,
     color: TOKENS.colors.text.secondary,
     lineHeight: 20,
   },
-  protectedBadge: {
+  protectedCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    backgroundColor: '#e8f8ee',
-    borderRadius: TOKENS.radius.pill,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+    gap: 14,
+    backgroundColor: '#e6f4ed',
+    borderRadius: TOKENS.radius.card,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#b8dfc9',
   },
-  protectedText: {
+  protectedIconWrap: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    backgroundColor: '#cceedd',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  protectedBody: { flex: 1 },
+  protectedTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#1d6b3e',
+    marginBottom: 3,
+  },
+  protectedSub: {
     fontSize: 13,
-    fontWeight: '600',
-    color: TOKENS.colors.action.success,
+    color: '#3d8f5e',
+    lineHeight: 18,
   },
   listCard: {
     backgroundColor: TOKENS.colors.bg.card,

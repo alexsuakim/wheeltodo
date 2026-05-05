@@ -436,11 +436,11 @@ export function TasksScreen() {
   const goalPct = dailyGoal > 0 ? Math.min(Math.round((todayDone / dailyGoal) * 100), 100) : 0;
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={styles.safe} edges={['bottom']}>
       <View style={styles.navBar}>
         <View>
-          <Text style={styles.navTitle}>Tasks</Text>
-          <Text style={styles.navSubtitle}>Spin to pick a task, then focus.</Text>
+          <Text style={styles.navTitle}>Your tasks are set.</Text>
+          <Text style={[styles.navTitle, { color: TOKENS.colors.action.streak }]}>Time to get to work.</Text>
         </View>
         <Pressable onPress={() => setSheetOpen(true)} style={styles.addFab}>
           <Text style={styles.addFabText}>+</Text>
@@ -589,7 +589,7 @@ const styles = StyleSheet.create({
     paddingTop: 12,
     paddingBottom: 8,
   },
-  navTitle: { fontSize: 34, fontWeight: '700', color: TOKENS.colors.text.primary, letterSpacing: 0.37 },
+  navTitle: { fontSize: 26, fontWeight: '700', color: TOKENS.colors.text.primary, letterSpacing: 0.1 },
   navSubtitle: { fontSize: 14, color: TOKENS.colors.text.secondary, marginTop: 2 },
   addFab: {
     width: 36,

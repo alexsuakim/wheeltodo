@@ -5,8 +5,8 @@
   "scripts": {
     "start": "expo start",
     "start:dev": "expo start --dev-client",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
     "web": "expo start --web",
     "build:dev": "npx eas-cli build --profile development",
     "build:preview": "npx eas-cli build --profile preview",
@@ -19,12 +19,12 @@
     "@react-native-async-storage/async-storage": "^2.2.0",
     "@react-navigation/bottom-tabs": "^7.15.9",
     "@react-navigation/native": "^7.2.2",
+    "@react-navigation/native-stack": "^7.14.12",
     "@todo/shared": "file:../../packages/shared",
     "expo": "^55.0.17",
-    "expo-av": "^16.0.8",
     "expo-constants": "^55.0.15",
     "expo-dev-client": "^55.0.28",
-    "expo-device": "~55.0.15",
+    "expo-device": "~8.0.10",
     "expo-font": "~55.0.6",
     "expo-haptics": "^55.0.14",
     "expo-notifications": "^55.0.20",
@@ -46,7 +46,9 @@
   "expo": {
     "doctor": {
       "reactNativeDirectoryCheck": {
-        "exclude": ["expo-av"]
+        "exclude": [
+          "expo-av"
+        ]
       }
     }
   },

@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
+import { ACHIEVEMENT_DEFS, getUnlockedTierIds, type AchievementValues } from '../utils/achievements';
 
 export interface Task {
   id: string;
@@ -37,16 +38,16 @@ export interface RestTask {
 }
 
 export const PRESET_REST_TASKS: RestTask[] = [
-  { id: 'preset_1',  name: 'Get a coffee ☕',              isPreset: true, completedToday: false },
-  { id: 'preset_2',  name: 'Go for a walk 🚶',             isPreset: true, completedToday: false },
-  { id: 'preset_3',  name: 'Read for 10 mins 📖',          isPreset: true, completedToday: false },
-  { id: 'preset_4',  name: 'Stretch 🧘',                   isPreset: true, completedToday: false },
-  { id: 'preset_5',  name: 'Call a friend 📞',             isPreset: true, completedToday: false },
-  { id: 'preset_6',  name: 'Take a nap 😴',                isPreset: true, completedToday: false },
-  { id: 'preset_7',  name: 'Cook something 🍳',            isPreset: true, completedToday: false },
-  { id: 'preset_8',  name: 'Go for a run 🏃',              isPreset: true, completedToday: false },
-  { id: 'preset_9',  name: 'Journal ✍️',                   isPreset: true, completedToday: false },
-  { id: 'preset_10', name: 'Watch something you enjoy 🎬', isPreset: true, completedToday: false },
+  { id: 'preset_1',  name: 'Get a coffee',          isPreset: true, completedToday: false },
+  { id: 'preset_2',  name: 'Go for a walk',          isPreset: true, completedToday: false },
+  { id: 'preset_3',  name: 'Read for 10 mins',       isPreset: true, completedToday: false },
+  { id: 'preset_4',  name: 'Stretch',                isPreset: true, completedToday: false },
+  { id: 'preset_5',  name: 'Call a friend',          isPreset: true, completedToday: false },
+  { id: 'preset_6',  name: 'Take a nap',             isPreset: true, completedToday: false },
+  { id: 'preset_7',  name: 'Cook something',         isPreset: true, completedToday: false },
+  { id: 'preset_8',  name: 'Go for a run',           isPreset: true, completedToday: false },
+  { id: 'preset_9',  name: 'Journal',                isPreset: true, completedToday: false },
+  { id: 'preset_10', name: 'Watch something you enjoy', isPreset: true, completedToday: false },
 ];
 
 interface AppContextType {
@@ -84,6 +85,14 @@ interface AppContextType {
   addCategory: (cat: string) => void;
   removeCategory: (cat: string) => void;
 
+  streak: number;
+  bestStreak: number;
+  hasActivityToday: boolean;
+  achievementValues: AchievementValues;
+  unlockedTierIds: string[];
+  spinCount: number;
+  incrementSpinCount: () => void;
+
   seenAchievements: string[];
   markAchievementSeen: (label: string) => void;
 
@@ -102,6 +111,7 @@ const STORAGE_KEYS = {
   user: 'wheelTodo.user',
   categories: 'wheelTodo.categories',
   seenAchievements: 'wheelTodo.seenAchievements',
+  spinCount: 'wheelTodo.spinCount',
   restTasks: 'wheelTodo.restTasks',
   restTasksDate: 'wheelTodo.restTasksDate',
   completedRestDays: 'wheelTodo.completedRestDays',
@@ -137,6 +147,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [seenAchievements, setSeenAchievements] = useState<string[]>([]);
   const [restTasks, setRestTasks] = useState<RestTask[]>(PRESET_REST_TASKS);
   const [completedRestDays, setCompletedRestDays] = useState<Date[]>([]);
+  const [spinCount, setSpinCount] = useState(0);
 
   useEffect(() => {
     const load = async () => {
@@ -169,11 +180,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
         const todayStr = new Date().toDateString();
         if (restTasksRaw) {
           const parsed = JSON.parse(restTasksRaw) as RestTask[];
+          const custom = parsed.filter((t) => !t.isPreset);
           if (restTasksDateRaw === todayStr) {
-            setRestTasks(parsed);
+            // Same day — restore completedToday from storage but always use fresh preset names
+            const savedPresets = parsed.filter((t) => t.isPreset);
+            const refreshedPresets = PRESET_REST_TASKS.map((p) => ({
+              ...p,
+              completedToday: savedPresets.find((s) => s.id === p.id)?.completedToday ?? false,
+            }));
+            setRestTasks([...refreshedPresets, ...custom]);
           } else {
             // New day — reset completions, keep custom tasks
-            const custom = parsed.filter((t) => !t.isPreset);
             setRestTasks([
               ...PRESET_REST_TASKS,
               ...custom.map((t) => ({ ...t, completedToday: false })),
@@ -185,6 +202,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
             (JSON.parse(completedRestDaysRaw) as string[]).map((d) => new Date(d))
           );
         }
+        const spinRaw = await AsyncStorage.getItem(STORAGE_KEYS.spinCount);
+        if (spinRaw) setSpinCount(JSON.parse(spinRaw));
       } catch {
         // keep defaults on parse failure
       } finally {
@@ -402,6 +421,81 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setPomodoroSession(null);
   };
 
+  useEffect(() => {
+    if (!loaded) return;
+    AsyncStorage.setItem(STORAGE_KEYS.spinCount, JSON.stringify(spinCount)).catch(() => {});
+  }, [spinCount, loaded]);
+
+  const incrementSpinCount = useCallback(() => {
+    setSpinCount((n) => n + 1);
+  }, []);
+
+  const hasActivityToday = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const hasTask = completedTasks.some((t) => { const d = new Date(t.completedAt); return d >= today && d < tomorrow; });
+    const hasRest = completedRestDays.some((d) => d >= today && d < tomorrow);
+    return hasTask || hasRest;
+  }, [completedTasks, completedRestDays]);
+
+  const streak = useMemo(() => {
+    if (completedTasks.length === 0 && completedRestDays.length === 0) return 0;
+    let count = 0;
+    const base = new Date();
+    base.setHours(0, 0, 0, 0);
+    for (let i = 0; i < 365; i++) {
+      const day = new Date(base);
+      day.setDate(day.getDate() - i);
+      const next = new Date(day);
+      next.setDate(next.getDate() + 1);
+      const hasTask = completedTasks.some((t) => { const d = new Date(t.completedAt); return d >= day && d < next; });
+      const hasRest = completedRestDays.some((d) => d >= day && d < next);
+      if (hasTask || hasRest) { count++; } else { break; }
+    }
+    return count;
+  }, [completedTasks, completedRestDays]);
+
+  const bestStreak = useMemo(() => {
+    const dates = new Set<number>();
+    completedTasks.forEach((t) => {
+      const d = new Date(t.completedAt);
+      d.setHours(0, 0, 0, 0);
+      dates.add(d.getTime());
+    });
+    completedRestDays.forEach((d) => {
+      const day = new Date(d);
+      day.setHours(0, 0, 0, 0);
+      dates.add(day.getTime());
+    });
+    const sorted = Array.from(dates).sort((a, b) => a - b);
+    if (sorted.length === 0) return 0;
+    const DAY = 86400000;
+    let best = 1;
+    let current = 1;
+    for (let i = 1; i < sorted.length; i++) {
+      if (sorted[i] - sorted[i - 1] === DAY) {
+        current++;
+        if (current > best) best = current;
+      } else {
+        current = 1;
+      }
+    }
+    return best;
+  }, [completedTasks, completedRestDays]);
+
+  const achievementValues = useMemo((): AchievementValues => ({
+    streak,
+    tasks: completedTasks.length,
+    focus: completedTasks.reduce((s, t) => s + t.minutesActual, 0),
+    speed: completedTasks.filter((t) => t.minutesActual < t.minutesEstimated).length,
+    rest: completedRestDays.length,
+    spin: spinCount,
+  }), [streak, completedTasks, completedRestDays, spinCount]);
+
+  const unlockedTierIds = useMemo(() => getUnlockedTierIds(achievementValues), [achievementValues]);
+
   const value: AppContextType = {
     tasks, addTask, updateTask, deleteTask,
     completedTasks, completeTask, uncompleteTask,
@@ -412,6 +506,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     wheelSoundEnabled, setWheelSoundEnabled,
     user, login, logout,
     categories, addCategory, removeCategory,
+    streak, bestStreak, hasActivityToday, achievementValues, unlockedTierIds, spinCount, incrementSpinCount,
     seenAchievements, markAchievementSeen,
     restTasks, completedRestDays, toggleRestTask, addRestTask, removeRestTask,
   };
