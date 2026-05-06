@@ -28,9 +28,13 @@ export function HistoryScreen() {
   const yesterday = new Date(today);
   yesterday.setDate(yesterday.getDate() - 1);
 
+  // Mon–Sun ISO week, matching SpinScreen convention
+  const daysFromMonday = today.getDay() === 0 ? 6 : today.getDay() - 1;
+  const weekStart = new Date(today);
+  weekStart.setDate(today.getDate() - daysFromMonday);
   const weekDays = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(today);
-    d.setDate(d.getDate() - (6 - i));
+    const d = new Date(weekStart);
+    d.setDate(weekStart.getDate() + i);
     return d;
   });
 
@@ -98,7 +102,7 @@ export function HistoryScreen() {
             {weekDays.map((day, i) => {
               const isToday = day.getTime() === today.getTime();
               const active = weekActivity[i];
-              const dayName = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'][day.getDay()];
+              const dayName = ['M', 'T', 'W', 'T', 'F', 'S', 'S'][i];
               return (
                 <View key={i} style={styles.weekCol}>
                   <View

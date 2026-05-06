@@ -17,6 +17,7 @@ export interface CompletedTask {
   taskName: string;
   color: string;
   icon: string;
+  category?: string;
   minutesEstimated: number;
   minutesActual: number;
   completedAt: Date;
@@ -253,6 +254,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       taskName: task.name,
       color: task.color,
       icon: task.icon,
+      category: task.category,
       minutesEstimated: task.minutes,
       minutesActual,
       completedAt: new Date(),
@@ -269,6 +271,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       minutes: ct.minutesEstimated,
       color: ct.color,
       icon: ct.icon ?? 'BookOpen',
+      category: ct.category,
     }]);
     setCompletedTasks((prev) => prev.filter((t) => t.id !== completedTaskId));
   };

@@ -80,7 +80,8 @@ export function ProfileScreen() {
           <View style={styles.statDivider} />
           <View style={styles.statItem}>
             <Text style={styles.statValue}>{completionRate}%</Text>
-            <Text style={styles.statLabel}>Completion</Text>
+            <Text style={styles.statLabel}>On Time %</Text>
+            <Text style={styles.statSubLabel}>finished at or{'\n'}under estimate</Text>
           </View>
         </View>
 
@@ -265,6 +266,7 @@ const styles = StyleSheet.create({
   statItem: { flex: 1, alignItems: 'center', gap: 4 },
   statValue: { fontSize: 24, fontWeight: '700', color: TOKENS.colors.text.primary },
   statLabel: { fontSize: 12, color: TOKENS.colors.text.secondary, textAlign: 'center' },
+  statSubLabel: { fontSize: 10, color: TOKENS.colors.text.muted, textAlign: 'center', lineHeight: 13, marginTop: 1 },
   statDivider: { width: 1, backgroundColor: '#e8e8e8' },
   sectionLabel: {
     fontSize: 12,
@@ -299,11 +301,11 @@ const styles = StyleSheet.create({
     width: 10, height: 10, borderRadius: 5, backgroundColor: '#ffffff',
   },
   tierBadge: {
-    fontSize: 9, fontWeight: '700', color: TOKENS.colors.text.muted,
+    fontSize: 12, fontWeight: '700', color: TOKENS.colors.text.muted,
     textAlign: 'center',
   },
   tierTarget: {
-    fontSize: 9, color: TOKENS.colors.text.muted, textAlign: 'center',
+    fontSize: 12, color: TOKENS.colors.text.muted, textAlign: 'center',
   },
   settingsCard: {
     backgroundColor: TOKENS.colors.bg.card,

@@ -177,6 +177,7 @@ function AddTaskSheet({ onClose, onAdd, onSave, categories, onAddCategory, task 
   const [selectedCategory, setSelectedCategory] = useState(task?.category ?? '');
   const [addingCategory, setAddingCategory] = useState(false);
   const [newCategoryText, setNewCategoryText] = useState('');
+  const [durationError, setDurationError] = useState(false);
   const dragY = useRef(new Animated.Value(0)).current;
 
   const panResponder = useRef(
@@ -216,12 +217,16 @@ function AddTaskSheet({ onClose, onAdd, onSave, categories, onAddCategory, task 
 
   function handleAdd() {
     const v = name.trim();
-    if (v) {
-      if (isEdit && task && onSave) {
-        onSave(task.id, v, selectedDuration, selectedColor, selectedCategory);
-      } else {
-        onAdd(v, selectedDuration, selectedColor, selectedCategory);
-      }
+    if (!v) return close();
+    if (selectedDuration <= 0) {
+      setDurationError(true);
+      return;
+    }
+    setDurationError(false);
+    if (isEdit && task && onSave) {
+      onSave(task.id, v, selectedDuration, selectedColor, selectedCategory);
+    } else {
+      onAdd(v, selectedDuration, selectedColor, selectedCategory);
     }
     close();
   }
@@ -273,11 +278,12 @@ function AddTaskSheet({ onClose, onAdd, onSave, categories, onAddCategory, task 
               const h = parseInt(digits || '0', 10);
               const m = parseInt(durationMins || '0', 10);
               const total = h * 60 + m;
-              if (total > 0) setSelectedDuration(total);
+              setSelectedDuration(total);
+              if (total > 0) setDurationError(false);
             }}
             keyboardType="number-pad"
             maxLength={2}
-            style={sheet.durationInput}
+            style={[sheet.durationInput, durationError && sheet.durationInputError]}
             selectTextOnFocus
           />
           <Text style={sheet.durationUnit}>h</Text>
@@ -289,15 +295,19 @@ function AddTaskSheet({ onClose, onAdd, onSave, categories, onAddCategory, task 
               const h = parseInt(durationHours || '0', 10);
               const m = parseInt(digits || '0', 10);
               const total = h * 60 + m;
-              if (total > 0) setSelectedDuration(total);
+              setSelectedDuration(total);
+              if (total > 0) setDurationError(false);
             }}
             keyboardType="number-pad"
             maxLength={2}
-            style={sheet.durationInput}
+            style={[sheet.durationInput, durationError && sheet.durationInputError]}
             selectTextOnFocus
           />
           <Text style={sheet.durationUnit}>m</Text>
         </View>
+        {durationError && (
+          <Text style={sheet.durationErrorText}>Duration must be at least 1 minute.</Text>
+        )}
 
         <Text style={sheet.sectionLabel}>CATEGORY</Text>
         <View style={sheet.chipRow}>
@@ -349,6 +359,94 @@ function AddTaskSheet({ onClose, onAdd, onSave, categories, onAddCategory, task 
   );
 }
 
+// ─── Swipeable Task Row ────────────────────────────────────────────────────────
+
+interface SwipeRowProps {
+  task: Task;
+  isActive: boolean;
+  displayTime: string;
+  onFocus: () => void;
+  onComplete: () => void;
+  onDelete: () => void;
+  onEdit: () => void;
+}
+
+function SwipeableTaskRow({ task, isActive, displayTime, onFocus, onComplete, onDelete, onEdit }: SwipeRowProps) {
+  const translateX = useRef(new Animated.Value(0)).current;
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => false,
+      onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dx) > 8 && Math.abs(g.dx) > Math.abs(g.dy) * 1.5,
+      onPanResponderMove: (_, g) => translateX.setValue(g.dx),
+      onPanResponderRelease: (_, g) => {
+        const THRESHOLD = 80;
+        if (g.dx > THRESHOLD) {
+          Animated.timing(translateX, { toValue: 500, duration: 180, useNativeDriver: true }).start(() => onComplete());
+        } else if (g.dx < -THRESHOLD) {
+          Animated.timing(translateX, { toValue: -500, duration: 180, useNativeDriver: true }).start(() => onDelete());
+        } else {
+          Animated.spring(translateX, { toValue: 0, useNativeDriver: true, tension: 60, friction: 9 }).start();
+        }
+      },
+    })
+  ).current;
+
+  const rightBgOpacity = translateX.interpolate({ inputRange: [0, 60], outputRange: [0, 1], extrapolate: 'clamp' });
+  const leftBgOpacity = translateX.interpolate({ inputRange: [-60, 0], outputRange: [1, 0], extrapolate: 'clamp' });
+
+  return (
+    <View style={swipe.container}>
+      <Animated.View style={[swipe.bgRight, { opacity: rightBgOpacity }]}>
+        <Text style={swipe.bgRightLabel}>Done ✓</Text>
+      </Animated.View>
+      <Animated.View style={[swipe.bgLeft, { opacity: leftBgOpacity }]}>
+        <Text style={swipe.bgLeftLabel}>Delete ×</Text>
+      </Animated.View>
+      <Animated.View
+        style={[styles.taskCard, isActive && styles.taskCardActive, { transform: [{ translateX }] }]}
+        {...panResponder.panHandlers}
+      >
+        <View style={[styles.taskDot, { backgroundColor: task.color }]} />
+        <Pressable style={styles.taskInfo} onPress={onEdit}>
+          <Text style={styles.taskName} numberOfLines={1}>{task.name}</Text>
+          {task.category ? (
+            <Text style={styles.taskCategory}>{task.category}</Text>
+          ) : null}
+        </Pressable>
+        <Text style={styles.taskMeta}>{displayTime}</Text>
+        <Pressable onPress={onFocus} style={styles.focusBtn}>
+          <Text style={styles.focusBtnText}>Focus</Text>
+        </Pressable>
+      </Animated.View>
+    </View>
+  );
+}
+
+const swipe = StyleSheet.create({
+  container: {
+    borderRadius: TOKENS.radius.row,
+    overflow: 'hidden',
+  },
+  bgRight: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: TOKENS.colors.action.success,
+    justifyContent: 'center',
+    paddingLeft: 20,
+    borderRadius: TOKENS.radius.row,
+  },
+  bgLeft: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: TOKENS.colors.action.danger,
+    justifyContent: 'center',
+    alignItems: 'flex-end',
+    paddingRight: 20,
+    borderRadius: TOKENS.radius.row,
+  },
+  bgRightLabel: { color: '#ffffff', fontWeight: '700', fontSize: 15 },
+  bgLeftLabel: { color: '#ffffff', fontWeight: '700', fontSize: 15 },
+});
+
 // ─── Tasks Screen ──────────────────────────────────────────────────────────────
 
 export function TasksScreen() {
@@ -363,6 +461,14 @@ export function TasksScreen() {
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [showConfetti, setShowConfetti] = useState(false);
   const [achievementToast, setAchievementToast] = useState<string | null>(null);
+
+  // Guard against double-completion (auto-complete useEffect + Done ✓ button)
+  const completedRef = useRef(false);
+
+  // Reset guard whenever the session task changes
+  useEffect(() => {
+    completedRef.current = false;
+  }, [pomodoroSession?.taskId]);
 
   function checkAchievements(newCompleted: typeof completedTasks) {
     const today = new Date(); today.setHours(0, 0, 0, 0);
@@ -397,12 +503,25 @@ export function TasksScreen() {
     return () => clearInterval(id);
   }, [pomodoroSession?.isRunning, tickPomodoro]);
 
+  // Auto-complete when timer hits 0; guard prevents double-fire with Done ✓ button
   useEffect(() => {
-    if (pomodoroSession?.remainingSeconds === 0) {
+    if (pomodoroSession?.remainingSeconds === 0 && !completedRef.current) {
+      completedRef.current = true;
       completePomodoro();
       celebrate();
     }
   }, [pomodoroSession?.remainingSeconds]);
+
+  // Defer achievement check until completedTasks state has flushed
+  const prevCompletedLenRef = useRef(completedTasks.length);
+  useEffect(() => {
+    if (completedTasks.length > prevCompletedLenRef.current) {
+      checkAchievements(completedTasks);
+    }
+    prevCompletedLenRef.current = completedTasks.length;
+  // checkAchievements intentionally not listed — it reads fresh closure values each render
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [completedTasks]);
 
   const progress = pomodoroSession
     ? (pomodoroSession.totalSeconds - pomodoroSession.remainingSeconds) / pomodoroSession.totalSeconds
@@ -418,11 +537,15 @@ export function TasksScreen() {
   }
 
   function handleDone(task: Task) {
-    completeTask(task.id, task.minutes);
+    // Use actual elapsed seconds from taskProgress if available
+    const remainingSeconds = taskProgress[task.id];
+    const minutesActual = remainingSeconds !== undefined
+      ? Math.max(1, Math.ceil((task.minutes * 60 - remainingSeconds) / 60))
+      : task.minutes;
+    completeTask(task.id, minutesActual);
     deleteTask(task.id);
     celebrate();
-    const newEntry = { id: Date.now().toString(), taskId: task.id, taskName: task.name, color: task.color, icon: task.icon ?? 'BookOpen', minutesEstimated: task.minutes, minutesActual: task.minutes, completedAt: new Date() };
-    checkAchievements([newEntry, ...completedTasks]);
+    // Achievement check is deferred to the useEffect watching completedTasks
   }
 
   const today = new Date();
@@ -502,7 +625,16 @@ export function TasksScreen() {
                   {pomodoroSession.isRunning ? 'Pause' : 'Resume'}
                 </Text>
               </Pressable>
-              <Pressable onPress={() => { completePomodoro(); celebrate(); }} style={styles.earlyDoneBtn}>
+              <Pressable
+                onPress={() => {
+                  if (!completedRef.current) {
+                    completedRef.current = true;
+                    completePomodoro();
+                    celebrate();
+                  }
+                }}
+                style={styles.earlyDoneBtn}
+              >
                 <Text style={styles.earlyDoneBtnText}>Done ✓</Text>
               </Pressable>
             </View>
@@ -517,30 +649,20 @@ export function TasksScreen() {
 
         {tasks.map((task) => {
           const isActive = pomodoroSession?.taskId === task.id;
+          const displayTime = taskProgress[task.id] != null
+            ? formatMmSs(taskProgress[task.id])
+            : `${task.minutes}m`;
           return (
-          <View key={task.id} style={[styles.taskCard, isActive && styles.taskCardActive]}>
-            <View style={[styles.taskDot, { backgroundColor: task.color }]} />
-            <Pressable style={styles.taskInfo} onPress={() => setEditingTask(task)}>
-              <Text style={styles.taskName} numberOfLines={1}>{task.name}</Text>
-              {task.category ? (
-                <Text style={styles.taskCategory}>{task.category}</Text>
-              ) : null}
-            </Pressable>
-            <Text style={styles.taskMeta}>
-              {taskProgress[task.id] != null
-                ? formatMmSs(taskProgress[task.id])
-                : `${task.minutes}m`}
-            </Text>
-            <Pressable onPress={() => startPomodoro(task)} style={styles.focusBtn}>
-              <Text style={styles.focusBtnText}>Focus</Text>
-            </Pressable>
-            <Pressable onPress={() => handleDone(task)} style={styles.checkBtn}>
-              <Text style={styles.checkBtnText}>✓</Text>
-            </Pressable>
-            <Pressable onPress={() => deleteTask(task.id)} style={styles.deleteBtn}>
-              <Text style={styles.deleteBtnText}>×</Text>
-            </Pressable>
-          </View>
+            <SwipeableTaskRow
+              key={task.id}
+              task={task}
+              isActive={isActive}
+              displayTime={displayTime}
+              onFocus={() => startPomodoro(task)}
+              onComplete={() => handleDone(task)}
+              onDelete={() => deleteTask(task.id)}
+              onEdit={() => setEditingTask(task)}
+            />
           );
         })}
 
@@ -590,7 +712,6 @@ const styles = StyleSheet.create({
     paddingBottom: 8,
   },
   navTitle: { fontSize: 26, fontWeight: '700', color: TOKENS.colors.text.primary, letterSpacing: 0.1 },
-  navSubtitle: { fontSize: 14, color: TOKENS.colors.text.secondary, marginTop: 2 },
   addFab: {
     width: 36,
     height: 36,
@@ -620,18 +741,6 @@ const styles = StyleSheet.create({
     borderRadius: TOKENS.radius.card,
     padding: 20,
     marginBottom: 4,
-  },
-  focusingTopRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 2,
-  },
-  focusingLabel: {
-    fontSize: 11,
-    fontWeight: '600',
-    letterSpacing: 1,
-    color: 'rgba(255,255,255,0.45)',
   },
   categoryBadge: {
     backgroundColor: 'rgba(255,255,255,0.15)',
@@ -709,18 +818,6 @@ const styles = StyleSheet.create({
     borderRadius: TOKENS.radius.pill,
   },
   focusBtnText: { fontSize: 13, color: '#ffffff', fontWeight: '600' },
-  checkBtn: {
-    width: 32, height: 32, borderRadius: 16,
-    backgroundColor: 'rgba(34,167,34,0.1)',
-    alignItems: 'center', justifyContent: 'center',
-  },
-  checkBtnText: { color: TOKENS.colors.action.success, fontWeight: '700', fontSize: 16 },
-  deleteBtn: {
-    width: 32, height: 32, borderRadius: 16,
-    backgroundColor: 'rgba(255,92,77,0.1)',
-    alignItems: 'center', justifyContent: 'center',
-  },
-  deleteBtnText: { color: TOKENS.colors.action.danger, fontWeight: '700', fontSize: 18 },
   emptyHint: { textAlign: 'center', color: TOKENS.colors.text.secondary, fontSize: 15, marginTop: 8 },
 
   // Stat card
@@ -806,7 +903,7 @@ const sheet = StyleSheet.create({
   durationRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 8,
     gap: 8,
   },
   durationInput: {
@@ -820,6 +917,17 @@ const sheet = StyleSheet.create({
     minWidth: 110,
     textAlign: 'center',
     letterSpacing: 2,
+  },
+  durationInputError: {
+    backgroundColor: '#fff0f0',
+    borderWidth: 1.5,
+    borderColor: TOKENS.colors.action.danger,
+  },
+  durationErrorText: {
+    fontSize: 12,
+    color: TOKENS.colors.action.danger,
+    marginBottom: 12,
+    marginTop: 2,
   },
   durationUnit: {
     fontSize: 22,

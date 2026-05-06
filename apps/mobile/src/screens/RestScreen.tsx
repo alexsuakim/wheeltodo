@@ -19,6 +19,7 @@ export function RestScreen() {
 
   const streakProtected = restTasks.some((t) => t.completedToday);
   const atRisk = streak > 0 && !hasActivityToday;
+  const allDone = restTasks.length > 0 && restTasks.every((t) => t.completedToday);
 
   const handleAdd = () => {
     const trimmed = inputText.trim();
@@ -38,7 +39,9 @@ export function RestScreen() {
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.title}>Need a day off?</Text>
-          <Text style={[styles.title, { color: TOKENS.colors.action.streak }]}>Take it easy today.</Text>
+          <Text style={[styles.title, { color: TOKENS.colors.action.streak }]}>
+            {atRisk ? 'Streak at risk!' : 'Take it easy today.'}
+          </Text>
         </View>
 
         {/* Streak protected card */}
@@ -87,6 +90,14 @@ export function RestScreen() {
             </View>
           ))}
         </View>
+
+        {/* All-done celebration */}
+        {allDone && (
+          <View style={styles.celebrationCard}>
+            <Text style={styles.celebrationTitle}>You're fully rested today! 🎉</Text>
+            <Text style={styles.celebrationSub}>Amazing work taking care of yourself.</Text>
+          </View>
+        )}
 
         {/* Add custom task */}
         <View style={styles.addCard}>
@@ -242,5 +253,26 @@ const styles = StyleSheet.create({
   },
   addBtnDisabled: {
     backgroundColor: '#cccccc',
+  },
+  celebrationCard: {
+    backgroundColor: '#fff8e1',
+    borderRadius: TOKENS.radius.card,
+    padding: 18,
+    alignItems: 'center',
+    gap: 6,
+    borderWidth: 1,
+    borderColor: '#ffe082',
+  },
+  celebrationTitle: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: '#b45309',
+    textAlign: 'center',
+  },
+  celebrationSub: {
+    fontSize: 13,
+    color: '#92400e',
+    textAlign: 'center',
+    lineHeight: 18,
   },
 });

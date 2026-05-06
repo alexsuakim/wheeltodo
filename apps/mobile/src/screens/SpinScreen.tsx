@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import {
   Animated,
   Easing,
@@ -9,14 +9,14 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { Clock, Flame, Moon, RotateCcw, Trophy, Zap } from 'lucide-react-native';
 import type { LucideIcon } from 'lucide-react-native';
 import { useApp, type Task } from '../context/AppContext';
 import { SpinningWheel } from '../components/SpinningWheel';
 import { TOKENS } from '../theme/tokens';
-import { ACHIEVEMENT_DEFS, getNextAchievement } from '../utils/achievements';
+import { getNextAchievement } from '../utils/achievements';
 
 const ICON_MAP: Record<string, LucideIcon> = {
   Flame, Trophy, Clock, Zap, Moon, RotateCcw,
@@ -25,33 +25,36 @@ const ICON_MAP: Record<string, LucideIcon> = {
 type TabNav = BottomTabNavigationProp<{ Spin: undefined; Tasks: undefined; Rest: undefined; History: undefined }>;
 
 export function SpinScreen() {
-  const { tasks, startPomodoro, completedTasks, completedRestDays, dailyGoal, streak, achievementValues, incrementSpinCount } = useApp();
+  const { tasks, startPomodoro, completedTasks, completedRestDays, dailyGoal, achievementValues, incrementSpinCount } = useApp();
   const navigation = useNavigation<TabNav>();
 
-  const today = useMemo(() => {
+  // Recalculate today whenever the screen comes into focus so the date never goes stale
+  const [today, setToday] = useState(() => {
     const d = new Date();
     d.setHours(0, 0, 0, 0);
     return d;
-  }, []);
+  });
 
-  const todayTasks = useMemo(() =>
-    completedTasks.filter((t) => {
-      const d = new Date(t.completedAt); d.setHours(0, 0, 0, 0);
-      return d.getTime() === today.getTime();
-    }),
-  [completedTasks, today]);
+  useFocusEffect(useCallback(() => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    setToday(d);
+  }, []));
+
+  const todayTasks = completedTasks.filter((t) => {
+    const d = new Date(t.completedAt); d.setHours(0, 0, 0, 0);
+    return d.getTime() === today.getTime();
+  });
 
   const todayDone = todayTasks.length;
-  const todayMinutes = useMemo(() =>
-    todayTasks.reduce((sum, t) => sum + t.minutesActual, 0),
-  [todayTasks]);
+  const todayMinutes = todayTasks.reduce((sum, t) => sum + t.minutesActual, 0);
 
   // M T W T F S S bubbles for current week (Mon–Sun)
-  const weekActivity = useMemo(() => {
+  const weekActivity = (() => {
     const DAY_LABELS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
     const weekStart = new Date(today);
     const daysFromMonday = today.getDay() === 0 ? 6 : today.getDay() - 1;
-    weekStart.setDate(today.getDate() - daysFromMonday); // back to Monday
+    weekStart.setDate(today.getDate() - daysFromMonday);
     return DAY_LABELS.map((label, i) => {
       const day = new Date(weekStart);
       day.setDate(weekStart.getDate() + i);
@@ -64,8 +67,7 @@ export function SpinScreen() {
       const isFuture = day > today;
       return { label, active, isToday, isFuture };
     });
-  }, [completedTasks, completedRestDays, today]);
-
+  })();
 
   const nextAchievement = getNextAchievement(achievementValues);
 
@@ -95,6 +97,7 @@ export function SpinScreen() {
     });
   }
 
+  // Called after the wheel animation completes — counts as a real spin
   function handleTaskSelected(task: Task) {
     setPicked(task);
     setResultOpen(true);
@@ -102,17 +105,23 @@ export function SpinScreen() {
     incrementSpinCount();
   }
 
+  // Called when the user taps a slice directly — does NOT count as a spin
+  function handleSliceClick(task: Task) {
+    setPicked(task);
+    setResultOpen(true);
+    showSheet();
+  }
+
   return (
     <SafeAreaView style={styles.safe} edges={['bottom']}>
       <ScrollView
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
-        bounces={false}
       >
         <View style={styles.header}>
           <Text style={styles.title}>Not sure where to start?</Text>
           <Text style={[styles.title, { color: TOKENS.colors.action.streak }]}>Spin the wheel.</Text>
-          {/* M T W T F S S + streak count */}
+          {/* M T W T F S S bubbles — streak count lives in the header badge */}
           <View style={styles.weekRow}>
             <View style={styles.bubblesRow}>
               {weekActivity.map((day, i) => (
@@ -139,19 +148,13 @@ export function SpinScreen() {
                 </View>
               ))}
             </View>
-            {streak > 0 && (
-              <View style={styles.streakBadge}>
-                <Flame size={18} color={TOKENS.colors.action.streak} strokeWidth={2} />
-                <Text style={styles.streakCount}>{streak}</Text>
-              </View>
-            )}
           </View>
         </View>
 
         <SpinningWheel
           tasks={tasks}
           onTaskSelected={handleTaskSelected}
-          onSliceClick={handleTaskSelected}
+          onSliceClick={handleSliceClick}
           dailyGoal={dailyGoal}
           todayDone={todayDone}
           style={styles.wheel}
@@ -307,7 +310,7 @@ const styles = StyleSheet.create({
     color: TOKENS.colors.text.secondary,
     fontWeight: '500',
   },
-  wheel: { flex: undefined, height: 420, marginTop: 24 },
+  wheel: { flex: undefined, height: 340, marginTop: 24 },
   achievementsSection: {
     paddingHorizontal: TOKENS.spacing.screenPad,
     paddingTop: 24,
@@ -337,33 +340,19 @@ const styles = StyleSheet.create({
   milestoneBarBg: { height: 6, backgroundColor: '#ebebeb', borderRadius: 3, overflow: 'hidden' },
   milestoneBarFill: { height: 6, borderRadius: 3 },
   milestoneEarn: { fontSize: 11, color: TOKENS.colors.text.muted },
-  badgeGrid: { flexDirection: 'row', gap: 8 },
-  badge: {
-    flex: 1,
-    backgroundColor: TOKENS.colors.bg.card,
-    borderRadius: TOKENS.radius.row,
-    padding: 12,
-    alignItems: 'center',
-    gap: 4,
-  },
-  badgeLocked: { opacity: 0.45 },
-  badgeLabel: { fontSize: 11, fontWeight: '600', color: TOKENS.colors.text.primary, textAlign: 'center' },
-  badgeLabelLocked: { color: TOKENS.colors.text.muted },
-  badgeSub: { fontSize: 10, color: TOKENS.colors.text.muted, textAlign: 'center' },
   title: { fontSize: 26, fontWeight: '700', color: TOKENS.colors.text.primary, letterSpacing: 0.1 },
-  subtitle: { marginTop: 4, fontSize: 15, color: TOKENS.colors.text.secondary },
   weekRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     marginTop: 16,
   },
   bubblesRow: {
     flexDirection: 'row',
+    flex: 1,
     gap: 5,
   },
   dayBubble: {
-    width: 38,
+    flex: 1,
     height: 38,
     borderRadius: 11,
     alignItems: 'center',
@@ -392,16 +381,6 @@ const styles = StyleSheet.create({
   dayLabelFaded: {
     color: '#BCBAB6',
     fontWeight: '600',
-  },
-  streakBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  streakCount: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: TOKENS.colors.text.primary,
   },
 
   // Bottom sheet
