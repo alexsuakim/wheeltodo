@@ -257,7 +257,13 @@ const styles = StyleSheet.create({
   },
   avatarPressable: {
     marginRight: 4,
-    alignSelf: 'center',
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    overflow: 'hidden',
+    backgroundColor: TOKENS.colors.action.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   avatarBtn: {
     width: 36,
