@@ -785,7 +785,7 @@ const styles = StyleSheet.create({
   addFabText: { fontSize: 26, color: '#ffffff', lineHeight: 26 },
   content: {
     paddingHorizontal: TOKENS.spacing.screenPad,
-    paddingBottom: 16,
+    paddingBottom: 4,
     gap: TOKENS.spacing.rowGap,
   },
   sectionLabel: {
