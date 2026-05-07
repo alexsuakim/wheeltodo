@@ -12,7 +12,8 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Check, ChevronDown, ChevronUp, Plus, Timer, X } from 'lucide-react-native';
+import { Activity, Brain, Check, ChevronDown, ChevronUp, Coffee, Frown, Meh, MessageCircle, PenLine, Plus, Timer, X, Zap } from 'lucide-react-native';
+import type { LucideIcon } from 'lucide-react-native';
 import { useApp, type RestTask, type DailyMood, type RestCategory, type ActiveRestTimer } from '../context/AppContext';
 import { TOKENS } from '../theme/tokens';
 import { formatMmSs } from '../utils/task';
@@ -70,12 +71,12 @@ function RestConfetti({ onDone }: { onDone: () => void }) {
 
 // ─── Category info ─────────────────────────────────────────────────────────────
 
-const CATEGORY_META: Record<RestCategory, { icon: string; color: string; bg: string }> = {
-  Physical:    { icon: '🏃', color: TOKENS.colors.rest.physical,    bg: '#FFF4EC' },
-  Mental:      { icon: '🧠', color: TOKENS.colors.rest.mental,      bg: '#F5F3FF' },
-  Social:      { icon: '💬', color: TOKENS.colors.rest.social,      bg: '#EDFAFA' },
-  Nourishment: { icon: '☕', color: TOKENS.colors.rest.nourishment, bg: '#FFFDE8' },
-  'My Tasks':  { icon: '✏️', color: TOKENS.colors.rest.custom,      bg: '#EFF6FF' },
+const CATEGORY_META: Record<RestCategory, { icon: LucideIcon; color: string; bg: string }> = {
+  Physical:    { icon: Activity,       color: TOKENS.colors.rest.physical,    bg: '#FFF4EC' },
+  Mental:      { icon: Brain,          color: TOKENS.colors.rest.mental,      bg: '#F5F3FF' },
+  Social:      { icon: MessageCircle,  color: TOKENS.colors.rest.social,      bg: '#EDFAFA' },
+  Nourishment: { icon: Coffee,         color: TOKENS.colors.rest.nourishment, bg: '#FFFDE8' },
+  'My Tasks':  { icon: PenLine,        color: TOKENS.colors.rest.custom,      bg: '#EFF6FF' },
 };
 
 const MOOD_ORDER: Record<DailyMood & string, string[]> = {
@@ -91,10 +92,10 @@ interface EnergyCheckInProps {
 }
 
 function EnergyCheckIn({ onSelect }: EnergyCheckInProps) {
-  const moods: { key: DailyMood; label: string; emoji: string }[] = [
-    { key: 'drained', label: 'Drained', emoji: '😔' },
-    { key: 'okay',    label: 'Okay',    emoji: '😌' },
-    { key: 'restless',label: 'Restless',emoji: '😤' },
+  const moods: { key: DailyMood; label: string; icon: LucideIcon; color: string }[] = [
+    { key: 'drained',  label: 'Drained',  icon: Frown, color: TOKENS.colors.rest.mental },
+    { key: 'okay',     label: 'Okay',     icon: Meh,   color: TOKENS.colors.rest.social },
+    { key: 'restless', label: 'Restless', icon: Zap,   color: TOKENS.colors.rest.physical },
   ];
 
   return (
@@ -102,12 +103,15 @@ function EnergyCheckIn({ onSelect }: EnergyCheckInProps) {
       <Text style={styles.checkInTitle}>How are you feeling?</Text>
       <Text style={styles.checkInSub}>We'll suggest the best activities for you.</Text>
       <View style={styles.moodRow}>
-        {moods.map((m) => (
-          <Pressable key={m.key} style={styles.moodBtn} onPress={() => onSelect(m.key)}>
-            <Text style={styles.moodEmoji}>{m.emoji}</Text>
-            <Text style={styles.moodLabel}>{m.label}</Text>
-          </Pressable>
-        ))}
+        {moods.map((m) => {
+          const MoodIcon = m.icon;
+          return (
+            <Pressable key={m.key} style={styles.moodBtn} onPress={() => onSelect(m.key)}>
+              <MoodIcon size={24} color={m.color} strokeWidth={2} />
+              <Text style={styles.moodLabel}>{m.label}</Text>
+            </Pressable>
+          );
+        })}
       </View>
     </View>
   );
@@ -268,13 +272,14 @@ function CategorySection({
   activeRestTimer, onStartTimer, onCancelTimer, onRemove,
 }: CategorySectionProps) {
   const meta = CATEGORY_META[category];
+  const CatIcon = meta.icon;
   const doneCount = tasks.filter((t) => t.completedToday).length;
 
   return (
     <View style={catStyles.container}>
       <Pressable style={catStyles.header} onPress={onToggleCollapse}>
         <View style={[catStyles.iconWrap, { backgroundColor: meta.bg }]}>
-          <Text style={catStyles.icon}>{meta.icon}</Text>
+          <CatIcon size={16} color={meta.color} strokeWidth={2} />
         </View>
         <Text style={[catStyles.title, { color: meta.color }]}>{category}</Text>
         <Text style={catStyles.progress}>{doneCount}/{tasks.length}</Text>
@@ -324,7 +329,6 @@ const catStyles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
     flexShrink: 0,
   },
-  icon: { fontSize: 16 },
   title: { flex: 1, fontSize: 14, fontWeight: '700' },
   progress: { fontSize: 13, color: TOKENS.colors.text.muted },
   body: {},
@@ -743,6 +747,5 @@ const styles = StyleSheet.create({
     backgroundColor: TOKENS.colors.bg.input,
     gap: 6,
   },
-  moodEmoji: { fontSize: 24 },
   moodLabel: { fontSize: 13, fontWeight: '600', color: TOKENS.colors.text.secondary },
 });

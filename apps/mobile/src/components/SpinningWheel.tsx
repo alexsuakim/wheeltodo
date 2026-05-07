@@ -14,11 +14,11 @@ const iconMap: Record<string, LucideIcon> = {
   Briefcase, Coffee, Dumbbell, ShoppingCart, Heart, GraduationCap,
 };
 
-const SIZE = 280;
+const SIZE = 250;
 const CX = SIZE / 2;
 const R = SIZE / 2;
-const ICON_R = 85;
-const HUB_R = 45;
+const ICON_R = 74;
+const HUB_R = 44;
 
 interface SpinningWheelProps {
   tasks: Task[];
@@ -168,11 +168,10 @@ export function SpinningWheel({
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 36,
+    gap: 16,
     paddingHorizontal: 24,
+    paddingVertical: 12,
   },
   wheelWrap: { width: SIZE, height: SIZE },
   pointerWrap: {

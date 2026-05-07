@@ -144,7 +144,7 @@ function StreakBadge({ onPress }: { onPress: () => void }) {
     ? TOKENS.colors.text.muted
     : TOKENS.colors.action.streak;
   return (
-    <Pressable onPress={atRisk ? onPress : undefined} style={styles.streakBadge} hitSlop={8}>
+    <Pressable onPress={onPress} style={styles.streakBadge} hitSlop={8}>
       <Flame
         size={14}
         color={flameColor}
@@ -171,7 +171,6 @@ function MainTabs() {
       initialRouteName="Spin"
       screenOptions={({ route }) => {
         const Icon = TAB_ICONS[route.name as keyof TabParamList];
-        const showLabel = route.name === 'Rest';
         return {
           headerShown: false,
           tabBarActiveTintColor: TOKENS.colors.text.primary,
@@ -187,12 +186,7 @@ function MainTabs() {
           tabBarIcon: ({ focused, color, size }) => (
             <Icon size={size} color={color} strokeWidth={focused ? 2.5 : 1.8} />
           ),
-          tabBarLabel: showLabel ? 'Rest' : () => null,
-          tabBarLabelStyle: {
-            fontSize: 11,
-            fontWeight: '600',
-            marginTop: -2,
-          },
+          tabBarLabel: () => null,
         };
       }}
     >
@@ -222,7 +216,7 @@ export function AppNavigator() {
             headerStyle: { backgroundColor: TOKENS.colors.bg.screen },
             headerShadowVisible: false,
             headerLeft: () => (
-              <StreakBadge onPress={() => navigation.navigate('MainTabs', { screen: 'Rest' } as any)} />
+              <StreakBadge onPress={() => navigation.navigate('MainTabs', { screen: 'History' } as any)} />
             ),
             headerRight: () => (
               <AvatarButton onPress={() => navigation.navigate('Profile')} />
@@ -273,5 +267,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#ffffff',
     letterSpacing: 0.5,
+    textAlign: 'center',
+    lineHeight: 14,
   },
 });

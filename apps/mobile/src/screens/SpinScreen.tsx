@@ -90,6 +90,7 @@ const accordionStyles = StyleSheet.create({
     borderRadius: TOKENS.radius.card,
     overflow: 'hidden',
     marginHorizontal: TOKENS.spacing.screenPad,
+    marginBottom: 4,
   },
   header: {
     flexDirection: 'row',
@@ -315,7 +316,7 @@ const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: TOKENS.colors.bg.screen },
   scroll: { paddingBottom: 32 },
   header: { paddingHorizontal: TOKENS.spacing.screenPad, paddingTop: 12, paddingBottom: 8 },
-  wheel: { flex: undefined, height: 340, marginTop: 24 },
+  wheel: { marginTop: 4 },
   achievementsSection: {
     paddingHorizontal: TOKENS.spacing.screenPad,
     paddingTop: 24,

@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Target, Flame, Timer, Trophy, Zap } from 'lucide-react-native';
+import { ChevronDown, ChevronUp, Target, Flame, Timer, Trophy, Zap } from 'lucide-react-native';
 import { useApp, COLORS, type Task } from '../context/AppContext';
 import { formatMmSs } from '../utils/task';
 import { TOKENS } from '../theme/tokens';
@@ -458,6 +458,53 @@ const swipe = StyleSheet.create({
   bgLeftLabel: { color: '#ffffff', fontWeight: '700', fontSize: 15 },
 });
 
+// ─── Tasks FAQ Accordion ───────────────────────────────────────────────────────
+
+function TasksFaqAccordion() {
+  const [expanded, setExpanded] = useState(false);
+  return (
+    <View style={faqStyles.card}>
+      <Pressable style={faqStyles.header} onPress={() => setExpanded((v) => !v)}>
+        <Text style={faqStyles.headerText}>How do tasks work?</Text>
+        {expanded
+          ? <ChevronUp size={16} color={TOKENS.colors.text.secondary} strokeWidth={2} />
+          : <ChevronDown size={16} color={TOKENS.colors.text.secondary} strokeWidth={2} />
+        }
+      </Pressable>
+      {expanded && (
+        <View style={faqStyles.body}>
+          <Text style={faqStyles.bodyText}>
+            Tap the timer icon to start a focus session. Swipe right to mark a task done, swipe left to delete it. Tap a task name to edit it.
+          </Text>
+        </View>
+      )}
+    </View>
+  );
+}
+
+const faqStyles = StyleSheet.create({
+  card: {
+    backgroundColor: TOKENS.colors.bg.card,
+    borderRadius: TOKENS.radius.card,
+    overflow: 'hidden',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 14,
+    gap: 8,
+  },
+  headerText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: TOKENS.colors.text.primary,
+    flex: 1,
+  },
+  body: { paddingHorizontal: 14, paddingBottom: 14 },
+  bodyText: { fontSize: 13, color: TOKENS.colors.text.secondary, lineHeight: 20 },
+});
+
 // ─── Tasks Screen ──────────────────────────────────────────────────────────────
 
 export function TasksScreen() {
@@ -584,6 +631,8 @@ export function TasksScreen() {
       </View>
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <TasksFaqAccordion />
+
         {/* Your stats */}
         {todayDone > 0 && (
           <>
