@@ -521,13 +521,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const cancelRestTimer = useCallback(() => {
-    setActiveRestTimer((timer) => {
-      if (!timer) return null;
-      setRestTasks((prev) =>
-        prev.map((t) => t.id === timer.taskId ? { ...t, skippedToday: true } : t)
-      );
-      return null;
-    });
+    setActiveRestTimer(null);
   }, []);
 
   const tickRestTimer = useCallback(() => {
