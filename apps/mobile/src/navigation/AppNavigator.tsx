@@ -1,5 +1,8 @@
 import React, { useRef, useState } from 'react';
 import { Animated, Easing, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Clock, Flame, ListTodo, Moon, RotateCcw } from 'lucide-react-native';
@@ -159,10 +162,8 @@ function StreakBadge({ onPress }: { onPress: () => void }) {
 function AvatarButton({ onPress }: { onPress: () => void }) {
   const { user } = useApp();
   return (
-    <Pressable onPress={onPress} style={styles.avatarPressable}>
-      <View style={styles.avatarBtn}>
-        <Text style={styles.avatarText}>{user?.initials ?? 'U'}</Text>
-      </View>
+    <Pressable onPress={onPress} style={styles.avatarBtn} hitSlop={8}>
+      <Text style={styles.avatarText}>{user?.initials ?? 'U'}</Text>
     </Pressable>
   );
 }
@@ -200,6 +201,27 @@ function MainTabs() {
   );
 }
 
+// Custom header rendered in plain React Native — bypasses the native UIBarButtonItem
+// container that caused the white ring around the avatar.
+function MainTabsWithHeader() {
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const insets = useSafeAreaInsets();
+
+  return (
+    <View style={{ flex: 1, backgroundColor: TOKENS.colors.bg.screen }}>
+      <View style={[styles.headerBar, { paddingTop: insets.top }]}>
+        <StreakBadge
+          onPress={() => (navigation as any).navigate('MainTabs', { screen: 'History' })}
+        />
+        <AvatarButton onPress={() => navigation.navigate('Profile')} />
+      </View>
+      <View style={{ flex: 1 }}>
+        <MainTabs />
+      </View>
+    </View>
+  );
+}
+
 export function AppNavigator() {
   const { user, hasSeenOnboarding, markOnboardingSeen } = useApp();
 
@@ -212,18 +234,8 @@ export function AppNavigator() {
       <Stack.Navigator>
         <Stack.Screen
           name="MainTabs"
-          component={MainTabs}
-          options={({ navigation }) => ({
-            headerTitle: '',
-            headerStyle: { backgroundColor: TOKENS.colors.bg.screen },
-            headerShadowVisible: false,
-            headerLeft: () => (
-              <StreakBadge onPress={() => navigation.navigate('MainTabs', { screen: 'History' } as any)} />
-            ),
-            headerRight: () => (
-              <AvatarButton onPress={() => navigation.navigate('Profile')} />
-            ),
-          })}
+          component={MainTabsWithHeader}
+          options={{ headerShown: false }}
         />
         <Stack.Screen
           name="Profile"
@@ -240,11 +252,18 @@ export function AppNavigator() {
 }
 
 const styles = StyleSheet.create({
+  headerBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: TOKENS.spacing.screenPad,
+    height: 44,
+    backgroundColor: TOKENS.colors.bg.screen,
+  },
   streakBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    marginLeft: 4,
   },
   streakText: {
     fontSize: 15,
@@ -254,12 +273,6 @@ const styles = StyleSheet.create({
   },
   streakTextMuted: {
     color: TOKENS.colors.text.muted,
-  },
-  avatarPressable: {
-    marginRight: 4,
-    backgroundColor: TOKENS.colors.bg.screen,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   avatarBtn: {
     width: 36,
