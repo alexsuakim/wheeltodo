@@ -316,7 +316,7 @@ const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: TOKENS.colors.bg.screen },
   scroll: { paddingBottom: 32 },
   header: { paddingHorizontal: TOKENS.spacing.screenPad, paddingTop: 12, paddingBottom: 8 },
-  wheel: { marginTop: 4 },
+  wheel: { marginTop: 14 },
   achievementsSection: {
     paddingHorizontal: TOKENS.spacing.screenPad,
     paddingTop: 24,

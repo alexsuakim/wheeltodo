@@ -14,11 +14,11 @@ const iconMap: Record<string, LucideIcon> = {
   Briefcase, Coffee, Dumbbell, ShoppingCart, Heart, GraduationCap,
 };
 
-const SIZE = 250;
+const SIZE = 266;
 const CX = SIZE / 2;
 const R = SIZE / 2;
-const ICON_R = 74;
-const HUB_R = 44;
+const ICON_R = 79;
+const HUB_R = 46;
 
 interface SpinningWheelProps {
   tasks: Task[];
