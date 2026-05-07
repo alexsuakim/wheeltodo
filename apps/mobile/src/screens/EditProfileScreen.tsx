@@ -4,9 +4,9 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
-  Apple, Bird, Cake, Candy, Cat, Cherry, Coffee, Cookie,
-  Crown, Diamond, Feather, Fish, Flame, Flower, Gem,
-  Heart, Leaf, Moon, Rocket, Sparkles, Star, Sun, Trophy, Turtle, Zap,
+  Apple, Bird, Bug, Cat, Cherry, Coffee, Dog,
+  Fish, Flower, Leaf, PawPrint, Pizza, Rabbit,
+  Rainbow, Rat, Shrimp, Snail, Squirrel, Turtle, Worm,
 } from 'lucide-react-native';
 import type { LucideIcon } from 'lucide-react-native';
 import { useApp } from '../context/AppContext';
@@ -22,26 +22,29 @@ interface AvatarDef {
 }
 
 const AVATARS: AvatarDef[] = [
-  { id: 'flame',    Icon: Flame,    bg: '#FF5C4D', fg: '#ffffff' },
-  { id: 'heart',    Icon: Heart,    bg: '#FF5C4D', fg: '#ffffff' },
+  // Red
   { id: 'cherry',   Icon: Cherry,   bg: '#FF5C4D', fg: '#ffffff' },
   { id: 'apple',    Icon: Apple,    bg: '#FF5C4D', fg: '#ffffff' },
-  { id: 'star',     Icon: Star,     bg: '#FF5C4D', fg: '#ffffff' },
-  { id: 'cookie',   Icon: Cookie,   bg: '#FF9B50', fg: '#ffffff' },
-  { id: 'candy',    Icon: Candy,    bg: '#FF9B50', fg: '#ffffff' },
-  { id: 'cake',     Icon: Cake,     bg: '#FF9B50', fg: '#ffffff' },
-  { id: 'trophy',   Icon: Trophy,   bg: '#FF9B50', fg: '#ffffff' },
-  { id: 'zap',      Icon: Zap,      bg: '#FF9B50', fg: '#ffffff' },
-  { id: 'sun',      Icon: Sun,      bg: '#111111', fg: '#FFE66D' },
-  { id: 'moon',     Icon: Moon,     bg: '#111111', fg: '#ffffff' },
-  { id: 'crown',    Icon: Crown,    bg: '#111111', fg: '#FFE66D' },
-  { id: 'gem',      Icon: Gem,      bg: '#111111', fg: '#A78BFA' },
-  { id: 'diamond',  Icon: Diamond,  bg: '#111111', fg: '#4ECDC4' },
-  { id: 'flower',   Icon: Flower,   bg: '#E8E0D5', fg: '#FF5C4D' },
-  { id: 'leaf',     Icon: Leaf,     bg: '#E8E0D5', fg: '#111111' },
+  { id: 'cat',      Icon: Cat,      bg: '#FF5C4D', fg: '#ffffff' },
+  { id: 'dog',      Icon: Dog,      bg: '#FF5C4D', fg: '#ffffff' },
+  { id: 'rabbit',   Icon: Rabbit,   bg: '#FF5C4D', fg: '#ffffff' },
+  // Black
+  { id: 'fish',     Icon: Fish,     bg: '#111111', fg: '#ffffff' },
+  { id: 'squirrel', Icon: Squirrel, bg: '#111111', fg: '#ffffff' },
+  { id: 'snail',    Icon: Snail,    bg: '#111111', fg: '#ffffff' },
+  { id: 'rat',      Icon: Rat,      bg: '#111111', fg: '#ffffff' },
+  { id: 'bug',      Icon: Bug,      bg: '#111111', fg: '#ffffff' },
+  // Beige
   { id: 'bird',     Icon: Bird,     bg: '#E8E0D5', fg: '#111111' },
   { id: 'turtle',   Icon: Turtle,   bg: '#E8E0D5', fg: '#111111' },
-  { id: 'sparkles', Icon: Sparkles, bg: '#E8E0D5', fg: '#FF5C4D' },
+  { id: 'flower',   Icon: Flower,   bg: '#E8E0D5', fg: '#FF5C4D' },
+  { id: 'leaf',     Icon: Leaf,     bg: '#E8E0D5', fg: '#111111' },
+  { id: 'pawprint', Icon: PawPrint, bg: '#E8E0D5', fg: '#111111' },
+  { id: 'shrimp',   Icon: Shrimp,   bg: '#E8E0D5', fg: '#FF5C4D' },
+  { id: 'worm',     Icon: Worm,     bg: '#E8E0D5', fg: '#FF5C4D' },
+  { id: 'pizza',    Icon: Pizza,    bg: '#E8E0D5', fg: '#111111' },
+  { id: 'coffee',   Icon: Coffee,   bg: '#E8E0D5', fg: '#111111' },
+  { id: 'rainbow',  Icon: Rainbow,  bg: '#E8E0D5', fg: '#FF5C4D' },
 ];
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

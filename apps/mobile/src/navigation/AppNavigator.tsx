@@ -5,7 +5,7 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { Apple, Bird, Cake, Candy, Cherry, Clock, Cookie, Crown, Diamond, Flame, Flower, Gem, Heart, Leaf, ListTodo, Moon, RotateCcw, Sparkles, Star, Sun, Trophy, Turtle, Zap } from 'lucide-react-native';
+import { Apple, Bird, Bug, Cat, Cherry, Clock, Coffee, Dog, Fish, Flame, Flower, Leaf, ListTodo, Moon, PawPrint, Pizza, Rabbit, Rainbow, Rat, RotateCcw, Shrimp, Snail, Squirrel, Turtle, Worm } from 'lucide-react-native';
 import type { LucideIcon } from 'lucide-react-native';
 import { useApp } from '../context/AppContext';
 import { LoginScreen } from '../screens/LoginScreen';
@@ -34,26 +34,26 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<TabParamList>();
 
 const AVATAR_ICON_MAP: Record<string, { Icon: LucideIcon; bg: string; fg: string }> = {
-  flame:    { Icon: Flame,    bg: '#FF5C4D', fg: '#ffffff' },
-  heart:    { Icon: Heart,    bg: '#FF5C4D', fg: '#ffffff' },
   cherry:   { Icon: Cherry,   bg: '#FF5C4D', fg: '#ffffff' },
   apple:    { Icon: Apple,    bg: '#FF5C4D', fg: '#ffffff' },
-  star:     { Icon: Star,     bg: '#FF5C4D', fg: '#ffffff' },
-  cookie:   { Icon: Cookie,   bg: '#FF9B50', fg: '#ffffff' },
-  candy:    { Icon: Candy,    bg: '#FF9B50', fg: '#ffffff' },
-  cake:     { Icon: Cake,     bg: '#FF9B50', fg: '#ffffff' },
-  trophy:   { Icon: Trophy,   bg: '#FF9B50', fg: '#ffffff' },
-  zap:      { Icon: Zap,      bg: '#FF9B50', fg: '#ffffff' },
-  sun:      { Icon: Sun,      bg: '#111111', fg: '#FFE66D' },
-  moon:     { Icon: Moon,     bg: '#111111', fg: '#ffffff' },
-  crown:    { Icon: Crown,    bg: '#111111', fg: '#FFE66D' },
-  gem:      { Icon: Gem,      bg: '#111111', fg: '#A78BFA' },
-  diamond:  { Icon: Diamond,  bg: '#111111', fg: '#4ECDC4' },
-  flower:   { Icon: Flower,   bg: '#E8E0D5', fg: '#FF5C4D' },
-  leaf:     { Icon: Leaf,     bg: '#E8E0D5', fg: '#111111' },
+  cat:      { Icon: Cat,      bg: '#FF5C4D', fg: '#ffffff' },
+  dog:      { Icon: Dog,      bg: '#FF5C4D', fg: '#ffffff' },
+  rabbit:   { Icon: Rabbit,   bg: '#FF5C4D', fg: '#ffffff' },
+  fish:     { Icon: Fish,     bg: '#111111', fg: '#ffffff' },
+  squirrel: { Icon: Squirrel, bg: '#111111', fg: '#ffffff' },
+  snail:    { Icon: Snail,    bg: '#111111', fg: '#ffffff' },
+  rat:      { Icon: Rat,      bg: '#111111', fg: '#ffffff' },
+  bug:      { Icon: Bug,      bg: '#111111', fg: '#ffffff' },
   bird:     { Icon: Bird,     bg: '#E8E0D5', fg: '#111111' },
   turtle:   { Icon: Turtle,   bg: '#E8E0D5', fg: '#111111' },
-  sparkles: { Icon: Sparkles, bg: '#E8E0D5', fg: '#FF5C4D' },
+  flower:   { Icon: Flower,   bg: '#E8E0D5', fg: '#FF5C4D' },
+  leaf:     { Icon: Leaf,     bg: '#E8E0D5', fg: '#111111' },
+  pawprint: { Icon: PawPrint, bg: '#E8E0D5', fg: '#111111' },
+  shrimp:   { Icon: Shrimp,   bg: '#E8E0D5', fg: '#FF5C4D' },
+  worm:     { Icon: Worm,     bg: '#E8E0D5', fg: '#FF5C4D' },
+  pizza:    { Icon: Pizza,    bg: '#E8E0D5', fg: '#111111' },
+  coffee:   { Icon: Coffee,   bg: '#E8E0D5', fg: '#111111' },
+  rainbow:  { Icon: Rainbow,  bg: '#E8E0D5', fg: '#FF5C4D' },
 };
 
 const TAB_ICONS: Record<keyof TabParamList, any> = {
