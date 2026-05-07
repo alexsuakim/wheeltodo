@@ -7,11 +7,12 @@ import {
   StyleSheet,
   Text,
   View,
+  TouchableOpacity,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
-import { Clock, Flame, Moon, RotateCcw, Trophy, Zap } from 'lucide-react-native';
+import { ArrowUpRight, Clock, Flame, Moon, RotateCcw, Trophy, Zap } from 'lucide-react-native';
 import type { LucideIcon } from 'lucide-react-native';
 import { useApp, type Task } from '../context/AppContext';
 import { SpinningWheel } from '../components/SpinningWheel';
@@ -24,8 +25,74 @@ const ICON_MAP: Record<string, LucideIcon> = {
 
 type TabNav = BottomTabNavigationProp<{ Spin: undefined; Tasks: undefined; Rest: undefined; History: undefined }>;
 
+// ─── Empty State ───────────────────────────────────────────────────────────────
+
+function EmptyWheelState({ onAddTask }: { onAddTask: () => void }) {
+  return (
+    <View style={emptyStyles.container}>
+      <Text style={emptyStyles.emoji}>◎</Text>
+      <Text style={emptyStyles.title}>Your wheel is empty</Text>
+      <Text style={emptyStyles.sub}>Add tasks to start spinning. Tap the (+) button to get going.</Text>
+      <View style={emptyStyles.arrowRow}>
+        <ArrowUpRight size={28} color={TOKENS.colors.action.streak} strokeWidth={2.5} />
+        <Text style={emptyStyles.arrowLabel}>Add your first task</Text>
+      </View>
+    </View>
+  );
+}
+
+const emptyStyles = StyleSheet.create({
+  container: {
+    alignItems: 'center',
+    paddingVertical: 48,
+    paddingHorizontal: 32,
+    gap: 10,
+  },
+  emoji: { fontSize: 56, color: TOKENS.colors.text.muted },
+  title: { fontSize: 20, fontWeight: '700', color: TOKENS.colors.text.primary, textAlign: 'center' },
+  sub: { fontSize: 14, color: TOKENS.colors.text.secondary, textAlign: 'center', lineHeight: 20 },
+  arrowRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 8,
+  },
+  arrowLabel: { fontSize: 14, fontWeight: '600', color: TOKENS.colors.action.streak },
+});
+
+// ─── Spin Hint ─────────────────────────────────────────────────────────────────
+
+function SpinHint({ onDismiss }: { onDismiss: () => void }) {
+  return (
+    <View style={hintStyles.container}>
+      <Text style={hintStyles.text}>💡 Tap a slice to pick a task, or spin the wheel</Text>
+      <Pressable onPress={onDismiss} style={hintStyles.closeBtn} hitSlop={8}>
+        <Text style={hintStyles.closeText}>✕</Text>
+      </Pressable>
+    </View>
+  );
+}
+
+const hintStyles = StyleSheet.create({
+  container: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff8e1',
+    borderRadius: TOKENS.radius.row,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    marginHorizontal: TOKENS.spacing.screenPad,
+    gap: 10,
+    borderWidth: 1,
+    borderColor: '#ffe082',
+  },
+  text: { flex: 1, fontSize: 13, color: '#92400e', lineHeight: 18 },
+  closeBtn: {},
+  closeText: { fontSize: 14, color: '#b45309', fontWeight: '600' },
+});
+
 export function SpinScreen() {
-  const { tasks, startPomodoro, completedTasks, completedRestDays, dailyGoal, achievementValues, incrementSpinCount } = useApp();
+  const { tasks, startPomodoro, completedTasks, completedRestDays, dailyGoal, achievementValues, incrementSpinCount, hasSeenSpinHint, markSpinHintSeen } = useApp();
   const navigation = useNavigation<TabNav>();
 
   // Recalculate today whenever the screen comes into focus so the date never goes stale
@@ -120,7 +187,7 @@ export function SpinScreen() {
       >
         <View style={styles.header}>
           <Text style={styles.title}>Not sure where to start?</Text>
-          <Text style={[styles.title, { color: TOKENS.colors.action.streak }]}>Spin the wheel.</Text>
+          <Text style={[styles.title, { color: TOKENS.colors.accent.heading }]}>Spin the wheel.</Text>
           {/* M T W T F S S bubbles — streak count lives in the header badge */}
           <View style={styles.weekRow}>
             <View style={styles.bubblesRow}>
@@ -151,14 +218,23 @@ export function SpinScreen() {
           </View>
         </View>
 
-        <SpinningWheel
-          tasks={tasks}
-          onTaskSelected={handleTaskSelected}
-          onSliceClick={handleSliceClick}
-          dailyGoal={dailyGoal}
-          todayDone={todayDone}
-          style={styles.wheel}
-        />
+        {/* First-launch spin hint */}
+        {tasks.length > 0 && !hasSeenSpinHint && (
+          <SpinHint onDismiss={markSpinHintSeen} />
+        )}
+
+        {tasks.length === 0 ? (
+          <EmptyWheelState onAddTask={() => navigation.navigate('Tasks')} />
+        ) : (
+          <SpinningWheel
+            tasks={tasks}
+            onTaskSelected={handleTaskSelected}
+            onSliceClick={handleSliceClick}
+            dailyGoal={dailyGoal}
+            todayDone={todayDone}
+            style={styles.wheel}
+          />
+        )}
 
         {/* Productivity */}
         <View style={styles.achievementsSection}>
@@ -285,7 +361,7 @@ const styles = StyleSheet.create({
     width: 52,
     height: 52,
     borderRadius: 26,
-    backgroundColor: '#FF5C4D',
+    backgroundColor: TOKENS.colors.accent.heading,
     alignItems: 'center',
     justifyContent: 'center',
   },

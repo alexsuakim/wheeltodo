@@ -1,17 +1,72 @@
 import React, { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
+import { Modal, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Clock, Flame, LogOut, Moon, RotateCcw, Trophy, Zap } from 'lucide-react-native';
+import { Clock, Flame, LogOut, Moon, RotateCcw, Trophy, X, Zap } from 'lucide-react-native';
 import type { LucideIcon } from 'lucide-react-native';
 import { ACHIEVEMENT_DEFS } from '../utils/achievements';
+import { useApp, REST_GOAL_MINUTES, type RestGoalTier } from '../context/AppContext';
+import { TOKENS } from '../theme/tokens';
 
 const ICON_MAP: Record<string, LucideIcon> = {
   Flame, Trophy, Clock, Zap, Moon, RotateCcw,
 };
-import { useApp } from '../context/AppContext';
-import { TOKENS } from '../theme/tokens';
 
-export function ProfileScreen() {
+interface Props {
+  navigation?: any;
+}
+
+function ComingSoonModal({ visible, onClose }: { visible: boolean; onClose: () => void }) {
+  return (
+    <Modal visible={visible} transparent animationType="fade">
+      <View style={modalStyles.overlay}>
+        <View style={modalStyles.card}>
+          <Text style={modalStyles.title}>Coming Soon</Text>
+          <Text style={modalStyles.sub}>
+            Sign-up and full account sync are coming in a future update. For now, your data is stored locally on your device.
+          </Text>
+          <Pressable style={modalStyles.btn} onPress={onClose}>
+            <Text style={modalStyles.btnText}>Got it</Text>
+          </Pressable>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
+const modalStyles = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  card: {
+    backgroundColor: '#fff',
+    borderRadius: TOKENS.radius.card,
+    padding: 28,
+    marginHorizontal: 32,
+    gap: 14,
+    alignItems: 'center',
+  },
+  title: { fontSize: 20, fontWeight: '700', color: TOKENS.colors.text.primary, textAlign: 'center' },
+  sub: { fontSize: 14, color: TOKENS.colors.text.secondary, textAlign: 'center', lineHeight: 20 },
+  btn: {
+    backgroundColor: TOKENS.colors.action.primary,
+    borderRadius: TOKENS.radius.pill,
+    paddingHorizontal: 32,
+    paddingVertical: 12,
+    marginTop: 4,
+  },
+  btnText: { fontSize: 16, fontWeight: '600', color: '#ffffff' },
+});
+
+const REST_GOAL_TIERS: { key: RestGoalTier; label: string; minutes: number }[] = [
+  { key: 'easy',     label: 'Easy',      minutes: 15 },
+  { key: 'standard', label: 'Standard',  minutes: 30 },
+  { key: 'dedicated',label: 'Dedicated', minutes: 45 },
+];
+
+export function ProfileScreen({ navigation }: Props) {
   const {
     user, logout,
     completedTasks, streak, achievementValues, unlockedTierIds,
@@ -20,10 +75,12 @@ export function ProfileScreen() {
     notificationsEnabled, setNotificationsEnabled,
     wheelSoundEnabled, setWheelSoundEnabled,
     categories, addCategory, removeCategory,
+    restGoalTier, setRestGoalTier,
   } = useApp();
 
   const [addingLabel, setAddingLabel] = useState(false);
   const [newLabel, setNewLabel] = useState('');
+  const [showComingSoon, setShowComingSoon] = useState(false);
 
   const totalMinutes = completedTasks.reduce((s, t) => s + t.minutesActual, 0);
   const completionRate = completedTasks.length > 0
@@ -33,19 +90,17 @@ export function ProfileScreen() {
       )
     : 0;
 
-
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const todayDone = completedTasks.filter((t) => {
-    const d = new Date(t.completedAt); d.setHours(0, 0, 0, 0);
-    return d.getTime() === today.getTime();
-  }).length;
-
+  const handleClose = () => {
+    if (navigation?.goBack) navigation.goBack();
+  };
 
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.header}>
         <Text style={styles.title}>Profile</Text>
+        <Pressable onPress={handleClose} style={styles.closeBtn} hitSlop={10}>
+          <X size={20} color={TOKENS.colors.text.primary} strokeWidth={2} />
+        </Pressable>
       </View>
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
@@ -180,6 +235,39 @@ export function ProfileScreen() {
           </View>
         </View>
 
+        {/* Rest Goal */}
+        <Text style={styles.sectionLabel}>Rest Goal</Text>
+        <View style={styles.restGoalCard}>
+          <Text style={styles.restGoalDescription}>
+            How many minutes of rest do you need to protect your streak?
+          </Text>
+          <View style={styles.restGoalTiers}>
+            {REST_GOAL_TIERS.map((tier) => (
+              <Pressable
+                key={tier.key}
+                style={[
+                  styles.restGoalTierBtn,
+                  restGoalTier === tier.key && styles.restGoalTierBtnActive,
+                ]}
+                onPress={() => setRestGoalTier(tier.key)}
+              >
+                <Text style={[
+                  styles.restGoalTierLabel,
+                  restGoalTier === tier.key && styles.restGoalTierLabelActive,
+                ]}>
+                  {tier.label}
+                </Text>
+                <Text style={[
+                  styles.restGoalTierMins,
+                  restGoalTier === tier.key && styles.restGoalTierMinsActive,
+                ]}>
+                  {tier.minutes}m
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+        </View>
+
         {/* Task Labels */}
         <Text style={styles.sectionLabel}>Task Labels</Text>
         <View style={styles.labelsCard}>
@@ -220,20 +308,42 @@ export function ProfileScreen() {
           )}
         </View>
 
+        {/* Sign Up */}
+        <Pressable style={styles.signUpBtn} onPress={() => setShowComingSoon(true)}>
+          <Text style={styles.signUpText}>Create an account to sync across devices →</Text>
+        </Pressable>
+
         {/* Sign out */}
         <Pressable onPress={logout} style={styles.signOutBtn}>
           <LogOut size={16} color={TOKENS.colors.action.danger} strokeWidth={2} />
           <Text style={styles.signOutText}>Sign out</Text>
         </Pressable>
       </ScrollView>
+
+      <ComingSoonModal visible={showComingSoon} onClose={() => setShowComingSoon(false)} />
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: TOKENS.colors.bg.screen },
-  header: { paddingHorizontal: TOKENS.spacing.screenPad, paddingTop: 12, paddingBottom: 4 },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: TOKENS.spacing.screenPad,
+    paddingTop: 12,
+    paddingBottom: 4,
+  },
   title: { fontSize: 34, fontWeight: '700', color: TOKENS.colors.text.primary, letterSpacing: 0.37 },
+  closeBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#f0f0f0',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   content: {
     paddingHorizontal: TOKENS.spacing.screenPad,
     paddingBottom: 40,
@@ -329,6 +439,32 @@ const styles = StyleSheet.create({
   stepBtnText: { fontSize: 18, color: TOKENS.colors.text.primary, lineHeight: 22 },
   stepValue: { fontSize: 15, color: TOKENS.colors.text.secondary, minWidth: 56, textAlign: 'center' },
   rowDivider: { height: 1, backgroundColor: '#f0f0f0', marginLeft: 18 },
+
+  // Rest goal
+  restGoalCard: {
+    backgroundColor: TOKENS.colors.bg.card,
+    borderRadius: TOKENS.radius.card,
+    padding: 16,
+    gap: 12,
+  },
+  restGoalDescription: { fontSize: 13, color: TOKENS.colors.text.secondary, lineHeight: 18 },
+  restGoalTiers: { flexDirection: 'row', gap: 8 },
+  restGoalTierBtn: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderRadius: TOKENS.radius.row,
+    backgroundColor: '#f0f0f0',
+    gap: 4,
+  },
+  restGoalTierBtnActive: {
+    backgroundColor: TOKENS.colors.action.primary,
+  },
+  restGoalTierLabel: { fontSize: 13, fontWeight: '700', color: TOKENS.colors.text.secondary },
+  restGoalTierLabelActive: { color: '#ffffff' },
+  restGoalTierMins: { fontSize: 12, color: TOKENS.colors.text.muted },
+  restGoalTierMinsActive: { color: 'rgba(255,255,255,0.7)' },
+
   labelsCard: {
     backgroundColor: TOKENS.colors.bg.card,
     borderRadius: TOKENS.radius.card,
@@ -351,7 +487,19 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   labelAddBtn: { paddingHorizontal: 18, paddingVertical: 14 },
-  labelAddText: { fontSize: 16, color: '#FF5C4D', fontWeight: '500' },
+  labelAddText: { fontSize: 16, color: TOKENS.colors.accent.heading, fontWeight: '500' },
+
+  signUpBtn: {
+    backgroundColor: TOKENS.colors.bg.card,
+    borderRadius: TOKENS.radius.card,
+    padding: 16,
+    alignItems: 'center',
+  },
+  signUpText: {
+    fontSize: 14,
+    color: TOKENS.colors.action.primary,
+    fontWeight: '600',
+  },
   signOutBtn: {
     flexDirection: 'row',
     alignItems: 'center',

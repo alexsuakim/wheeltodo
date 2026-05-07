@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
+  Alert,
   Animated,
   Dimensions,
   Easing,
@@ -13,10 +14,11 @@ import {
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Target, Flame, Trophy, Zap } from 'lucide-react-native';
+import { Target, Flame, Timer, Trophy, Zap } from 'lucide-react-native';
 import { useApp, COLORS, type Task } from '../context/AppContext';
 import { formatMmSs } from '../utils/task';
 import { TOKENS } from '../theme/tokens';
+import { showPomodoroNotification, dismissPomodoroNotification } from '../utils/notifications';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CONFETTI_COLORS = ['#FF5C4D', '#FF9B50', '#4ECDC4', '#FFE66D', '#A78BFA', '#F9A8D4', '#60D394', '#118AB2'];
@@ -77,7 +79,6 @@ function Confetti({ onDone }: { onDone: () => void }) {
 }
 
 const ICON_NAMES = ['PenLine', 'Code', 'Palette', 'Users', 'Mail', 'BookOpen', 'Briefcase', 'Coffee'];
-
 
 function randomFrom<T>(arr: readonly T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
@@ -346,7 +347,7 @@ function AddTaskSheet({ onClose, onAdd, onSave, categories, onAddCategory, task 
             />
           ) : (
             <Pressable style={sheet.chip} onPress={() => setAddingCategory(true)}>
-              <Text style={[sheet.chipText, { color: '#FF5C4D' }]}>+ Add</Text>
+              <Text style={[sheet.chipText, { color: TOKENS.colors.accent.heading }]}>+ Add</Text>
             </Pressable>
           )}
         </View>
@@ -369,9 +370,52 @@ interface SwipeRowProps {
   onComplete: () => void;
   onDelete: () => void;
   onEdit: () => void;
+  isFirstTask: boolean;
 }
 
-function SwipeableTaskRow({ task, isActive, displayTime, onFocus, onComplete, onDelete, onEdit }: SwipeRowProps) {
+// Pulse animation for the first-use timer icon
+function TimerButton({ onPress, isFirstTask }: { onPress: () => void; isFirstTask: boolean }) {
+  const pulseScale = useRef(new Animated.Value(1)).current;
+  const pulseOpacity = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (!isFirstTask) return;
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.parallel([
+          Animated.timing(pulseScale, { toValue: 1.6, duration: 800, useNativeDriver: true }),
+          Animated.timing(pulseOpacity, { toValue: 0.4, duration: 400, useNativeDriver: true }),
+        ]),
+        Animated.parallel([
+          Animated.timing(pulseScale, { toValue: 1, duration: 400, useNativeDriver: true }),
+          Animated.timing(pulseOpacity, { toValue: 0, duration: 400, useNativeDriver: true }),
+        ]),
+      ])
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [isFirstTask]);
+
+  return (
+    <Pressable
+      onPress={onPress}
+      style={styles.focusIconBtn}
+      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+    >
+      {isFirstTask && (
+        <Animated.View
+          style={[
+            styles.focusIconPulse,
+            { transform: [{ scale: pulseScale }], opacity: pulseOpacity },
+          ]}
+        />
+      )}
+      <Timer size={20} color={TOKENS.colors.action.primary} strokeWidth={1.8} />
+    </Pressable>
+  );
+}
+
+function SwipeableTaskRow({ task, isActive, displayTime, onFocus, onComplete, onDelete, onEdit, isFirstTask }: SwipeRowProps) {
   const translateX = useRef(new Animated.Value(0)).current;
 
   const panResponder = useRef(
@@ -415,9 +459,7 @@ function SwipeableTaskRow({ task, isActive, displayTime, onFocus, onComplete, on
           ) : null}
         </Pressable>
         <Text style={styles.taskMeta}>{displayTime}</Text>
-        <Pressable onPress={onFocus} style={styles.focusBtn}>
-          <Text style={styles.focusBtnText}>Focus</Text>
-        </Pressable>
+        <TimerButton onPress={onFocus} isFirstTask={isFirstTask} />
       </Animated.View>
     </View>
   );
@@ -454,43 +496,20 @@ export function TasksScreen() {
     tasks, addTask, updateTask, deleteTask, completeTask, startPomodoro,
     pomodoroSession, pausePomodoro, resumePomodoro, completePomodoro, tickPomodoro,
     completedTasks, dailyGoal, categories, addCategory,
-    seenAchievements, markAchievementSeen, taskProgress,
+    taskProgress, pendingAchievementToast, clearAchievementToast,
+    notificationsEnabled,
   } = useApp();
 
   const [sheetOpen, setSheetOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [showConfetti, setShowConfetti] = useState(false);
-  const [achievementToast, setAchievementToast] = useState<string | null>(null);
 
-  // Guard against double-completion (auto-complete useEffect + Done ✓ button)
   const completedRef = useRef(false);
+  const prevRemainingRef = useRef<number | null>(null);
 
-  // Reset guard whenever the session task changes
   useEffect(() => {
     completedRef.current = false;
   }, [pomodoroSession?.taskId]);
-
-  function checkAchievements(newCompleted: typeof completedTasks) {
-    const today = new Date(); today.setHours(0, 0, 0, 0);
-    const todayCount = newCompleted.filter((t) => {
-      const d = new Date(t.completedAt); d.setHours(0, 0, 0, 0);
-      return d.getTime() === today.getTime();
-    }).length;
-
-    const checks = [
-      { label: 'Daily Goal', unlocked: todayCount >= dailyGoal },
-      { label: 'Achiever', unlocked: newCompleted.length >= 10 },
-      { label: 'Speed Run', unlocked: newCompleted.some((t) => t.minutesActual < t.minutesEstimated) },
-    ];
-
-    for (const { label, unlocked } of checks) {
-      if (unlocked && !seenAchievements.includes(label)) {
-        markAchievementSeen(label);
-        setAchievementToast(label);
-        return;
-      }
-    }
-  }
 
   function celebrate() {
     setShowConfetti(true);
@@ -503,7 +522,25 @@ export function TasksScreen() {
     return () => clearInterval(id);
   }, [pomodoroSession?.isRunning, tickPomodoro]);
 
-  // Auto-complete when timer hits 0; guard prevents double-fire with Done ✓ button
+  // Update live notification every minute
+  useEffect(() => {
+    if (!pomodoroSession || !notificationsEnabled) return;
+    const remaining = pomodoroSession.remainingSeconds;
+    if (prevRemainingRef.current === null || Math.floor(prevRemainingRef.current / 60) !== Math.floor(remaining / 60)) {
+      showPomodoroNotification(pomodoroSession.taskName, remaining).catch(() => {});
+    }
+    prevRemainingRef.current = remaining;
+  }, [pomodoroSession?.remainingSeconds, pomodoroSession?.taskName, notificationsEnabled]);
+
+  // Dismiss notification when session ends
+  useEffect(() => {
+    if (!pomodoroSession) {
+      dismissPomodoroNotification().catch(() => {});
+      prevRemainingRef.current = null;
+    }
+  }, [pomodoroSession]);
+
+  // Auto-complete when timer hits 0
   useEffect(() => {
     if (pomodoroSession?.remainingSeconds === 0 && !completedRef.current) {
       completedRef.current = true;
@@ -511,17 +548,6 @@ export function TasksScreen() {
       celebrate();
     }
   }, [pomodoroSession?.remainingSeconds]);
-
-  // Defer achievement check until completedTasks state has flushed
-  const prevCompletedLenRef = useRef(completedTasks.length);
-  useEffect(() => {
-    if (completedTasks.length > prevCompletedLenRef.current) {
-      checkAchievements(completedTasks);
-    }
-    prevCompletedLenRef.current = completedTasks.length;
-  // checkAchievements intentionally not listed — it reads fresh closure values each render
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [completedTasks]);
 
   const progress = pomodoroSession
     ? (pomodoroSession.totalSeconds - pomodoroSession.remainingSeconds) / pomodoroSession.totalSeconds
@@ -537,7 +563,6 @@ export function TasksScreen() {
   }
 
   function handleDone(task: Task) {
-    // Use actual elapsed seconds from taskProgress if available
     const remainingSeconds = taskProgress[task.id];
     const minutesActual = remainingSeconds !== undefined
       ? Math.max(1, Math.ceil((task.minutes * 60 - remainingSeconds) / 60))
@@ -545,7 +570,22 @@ export function TasksScreen() {
     completeTask(task.id, minutesActual);
     deleteTask(task.id);
     celebrate();
-    // Achievement check is deferred to the useEffect watching completedTasks
+  }
+
+  function handleFocus(task: Task) {
+    if (pomodoroSession && pomodoroSession.taskId !== task.id) {
+      const minsLeft = Math.ceil(pomodoroSession.remainingSeconds / 60);
+      Alert.alert(
+        'Active session running',
+        `You have ${minsLeft} minute${minsLeft !== 1 ? 's' : ''} left on "${pomodoroSession.taskName}". Start a new session?`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Switch', style: 'destructive', onPress: () => startPomodoro(task) },
+        ]
+      );
+    } else {
+      startPomodoro(task);
+    }
   }
 
   const today = new Date();
@@ -563,9 +603,13 @@ export function TasksScreen() {
       <View style={styles.navBar}>
         <View>
           <Text style={styles.navTitle}>Your tasks are set.</Text>
-          <Text style={[styles.navTitle, { color: TOKENS.colors.action.streak }]}>Time to get to work.</Text>
+          <Text style={[styles.navTitle, { color: TOKENS.colors.accent.heading }]}>Time to get to work.</Text>
         </View>
-        <Pressable onPress={() => setSheetOpen(true)} style={styles.addFab}>
+        <Pressable
+          onPress={() => setSheetOpen(true)}
+          style={styles.addFab}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        >
           <Text style={styles.addFabText}>+</Text>
         </Pressable>
       </View>
@@ -647,7 +691,7 @@ export function TasksScreen() {
           <Text style={styles.sectionLabel}>TODAY'S TASKS</Text>
         )}
 
-        {tasks.map((task) => {
+        {tasks.map((task, index) => {
           const isActive = pomodoroSession?.taskId === task.id;
           const displayTime = taskProgress[task.id] != null
             ? formatMmSs(taskProgress[task.id])
@@ -658,10 +702,11 @@ export function TasksScreen() {
               task={task}
               isActive={isActive}
               displayTime={displayTime}
-              onFocus={() => startPomodoro(task)}
+              onFocus={() => handleFocus(task)}
               onComplete={() => handleDone(task)}
               onDelete={() => deleteTask(task.id)}
               onEdit={() => setEditingTask(task)}
+              isFirstTask={index === 0}
             />
           );
         })}
@@ -669,7 +714,6 @@ export function TasksScreen() {
         {tasks.length === 0 && (
           <Text style={styles.emptyHint}>No tasks yet. Tap + to add one.</Text>
         )}
-
       </ScrollView>
 
       {sheetOpen && (
@@ -691,10 +735,10 @@ export function TasksScreen() {
         />
       )}
       {showConfetti && <Confetti onDone={() => setShowConfetti(false)} />}
-      {achievementToast && (
+      {pendingAchievementToast && (
         <AchievementToast
-          label={achievementToast}
-          onDone={() => setAchievementToast(null)}
+          label={pendingAchievementToast}
+          onDone={clearAchievementToast}
         />
       )}
     </SafeAreaView>
@@ -713,14 +757,14 @@ const styles = StyleSheet.create({
   },
   navTitle: { fontSize: 26, fontWeight: '700', color: TOKENS.colors.text.primary, letterSpacing: 0.1 },
   addFab: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     backgroundColor: TOKENS.colors.action.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  addFabText: { fontSize: 22, color: '#ffffff', lineHeight: 22 },
+  addFabText: { fontSize: 26, color: '#ffffff', lineHeight: 26 },
   content: {
     paddingHorizontal: TOKENS.spacing.screenPad,
     paddingBottom: 40,
@@ -811,13 +855,20 @@ const styles = StyleSheet.create({
   taskName: { fontSize: 16, color: TOKENS.colors.text.primary, fontWeight: '500' },
   taskCategory: { fontSize: 12, color: TOKENS.colors.text.muted, fontWeight: '500' },
   taskMeta: { fontSize: 14, color: TOKENS.colors.text.secondary },
-  focusBtn: {
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    backgroundColor: TOKENS.colors.action.primary,
-    borderRadius: TOKENS.radius.pill,
+  focusIconBtn: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
   },
-  focusBtnText: { fontSize: 13, color: '#ffffff', fontWeight: '600' },
+  focusIconPulse: {
+    position: 'absolute',
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: TOKENS.colors.action.primary,
+  },
   emptyHint: { textAlign: 'center', color: TOKENS.colors.text.secondary, fontSize: 15, marginTop: 8 },
 
   // Stat card

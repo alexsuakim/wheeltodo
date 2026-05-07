@@ -10,6 +10,8 @@ export type PushRegistrationResult =
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,
+    shouldShowBanner: true,
+    shouldShowList: true,
     shouldPlaySound: false,
     shouldSetBadge: false,
   }),
@@ -35,13 +37,15 @@ export async function registerForPushNotificationsAsync(): Promise<PushRegistrat
       });
     }
 
-    const { status: existingStatus } = await Notifications.getPermissionsAsync();
-    const finalStatus =
-      existingStatus === 'granted'
-        ? existingStatus
-        : (await Notifications.requestPermissionsAsync()).status;
+    const existingPerms: any = await Notifications.getPermissionsAsync();
+    const existingGranted = existingPerms.status === 'granted';
+    let finalGranted = existingGranted;
+    if (!existingGranted) {
+      const requested: any = await Notifications.requestPermissionsAsync();
+      finalGranted = requested.status === 'granted';
+    }
 
-    if (finalStatus !== 'granted') return { ok: false, reason: 'permission-denied' };
+    if (!finalGranted) return { ok: false, reason: 'permission-denied' };
 
     const projectId = getEasProjectId();
     const token = await Notifications.getExpoPushTokenAsync(projectId ? { projectId } : undefined);
@@ -51,3 +55,57 @@ export async function registerForPushNotificationsAsync(): Promise<PushRegistrat
   }
 }
 
+// ─── Live Pomodoro Notification ───────────────────────────────────────────────
+
+const POMODORO_CHANNEL_ID = 'pomodoro-timer';
+const POMODORO_NOTIF_ID = 'pomodoro-live';
+
+async function ensurePomodoroChannel() {
+  if (Platform.OS === 'android') {
+    await Notifications.setNotificationChannelAsync(POMODORO_CHANNEL_ID, {
+      name: 'Pomodoro Timer',
+      importance: Notifications.AndroidImportance.LOW,
+      sound: null,
+      vibrationPattern: null,
+      enableLights: false,
+    });
+  }
+}
+
+async function ensureNotificationPermission(): Promise<boolean> {
+  if (!Device.isDevice) return false;
+  const perms: any = await Notifications.getPermissionsAsync();
+  if (perms.status === 'granted') return true;
+  const requested: any = await Notifications.requestPermissionsAsync();
+  return requested.status === 'granted';
+}
+
+function formatRemaining(seconds: number): string {
+  const s = Math.max(0, seconds);
+  const m = Math.floor(s / 60);
+  const ss = s % 60;
+  return `${String(m).padStart(2, '0')}:${String(ss).padStart(2, '0')}`;
+}
+
+export async function showPomodoroNotification(taskName: string, remainingSeconds: number): Promise<void> {
+  const granted = await ensureNotificationPermission();
+  if (!granted) return;
+  await ensurePomodoroChannel();
+
+  await Notifications.dismissNotificationAsync(POMODORO_NOTIF_ID).catch(() => {});
+  await Notifications.scheduleNotificationAsync({
+    identifier: POMODORO_NOTIF_ID,
+    content: {
+      title: `Focus: ${taskName}`,
+      body: `${formatRemaining(remainingSeconds)} remaining`,
+      data: { type: 'pomodoro' },
+      sticky: true,
+      autoDismiss: false,
+    },
+    trigger: null,
+  });
+}
+
+export async function dismissPomodoroNotification(): Promise<void> {
+  await Notifications.dismissNotificationAsync(POMODORO_NOTIF_ID).catch(() => {});
+}

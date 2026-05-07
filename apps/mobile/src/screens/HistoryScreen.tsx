@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { CheckCircle2 } from 'lucide-react-native';
+import { CheckCircle2, ChevronLeft, ChevronRight, ChevronDown, ChevronUp } from 'lucide-react-native';
 import { useApp, type CompletedTask } from '../context/AppContext';
 import { TOKENS } from '../theme/tokens';
 
@@ -20,18 +20,60 @@ function TaskCard({ task, onUntick }: { task: CompletedTask; onUntick: () => voi
   );
 }
 
+// ─── Streak Explanation Card ───────────────────────────────────────────────────
+
+function StreakExplanationCard({ onDismiss }: { onDismiss: () => void }) {
+  const [expanded, setExpanded] = useState(true);
+
+  return (
+    <View style={styles.explanationCard}>
+      <Pressable style={styles.explanationHeader} onPress={() => setExpanded((v) => !v)}>
+        <Text style={styles.explanationTitle}>🔥 How streaks work</Text>
+        {expanded
+          ? <ChevronUp size={16} color={TOKENS.colors.text.secondary} strokeWidth={2} />
+          : <ChevronDown size={16} color={TOKENS.colors.text.secondary} strokeWidth={2} />
+        }
+      </Pressable>
+      {expanded && (
+        <View style={styles.explanationBody}>
+          <Text style={styles.explanationText}>
+            Your streak counts consecutive days where you either completed a task <Text style={styles.explanationBold}>or</Text> hit your Rest Mode goal.
+          </Text>
+          <Text style={styles.explanationText}>
+            Rest days protect your streak — so taking a break never breaks your momentum. 🌿
+          </Text>
+          <Pressable onPress={onDismiss} style={styles.explanationDismiss}>
+            <Text style={styles.explanationDismissText}>Got it, don't show again</Text>
+          </Pressable>
+        </View>
+      )}
+    </View>
+  );
+}
+
 export function HistoryScreen() {
-  const { completedTasks, completedRestDays, uncompleteTask, streak, bestStreak } = useApp();
+  const {
+    completedTasks, completedRestDays, partialRestDays, uncompleteTask,
+    streak, bestStreak, restStreak, bestRestStreak,
+    hasSeenStreakExplanation, markStreakExplanationSeen,
+  } = useApp();
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const yesterday = new Date(today);
-  yesterday.setDate(yesterday.getDate() - 1);
 
-  // Mon–Sun ISO week, matching SpinScreen convention
-  const daysFromMonday = today.getDay() === 0 ? 6 : today.getDay() - 1;
-  const weekStart = new Date(today);
-  weekStart.setDate(today.getDate() - daysFromMonday);
+  // Week offset — 0 = current week, -1 = last week, etc.
+  const [weekOffset, setWeekOffset] = useState(0);
+
+  const baseWeekStart = (() => {
+    const daysFromMonday = today.getDay() === 0 ? 6 : today.getDay() - 1;
+    const d = new Date(today);
+    d.setDate(today.getDate() - daysFromMonday);
+    return d;
+  })();
+
+  const weekStart = new Date(baseWeekStart);
+  weekStart.setDate(baseWeekStart.getDate() + weekOffset * 7);
+
   const weekDays = Array.from({ length: 7 }, (_, i) => {
     const d = new Date(weekStart);
     d.setDate(weekStart.getDate() + i);
@@ -49,11 +91,18 @@ export function HistoryScreen() {
       const rd = new Date(d);
       return rd >= day && rd < next;
     });
-    return hasTask || hasRest;
+    const partial = partialRestDays.find((d) => {
+      const rd = new Date(d.date);
+      return rd >= day && rd < next;
+    });
+    return { hasTask, hasRest, partialPct: partial?.pct ?? null };
   });
 
   const nextMilestone = MILESTONES.find((m) => m > streak) ?? null;
   const daysToMilestone = nextMilestone !== null ? nextMilestone - streak : null;
+
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
 
   const todayTasks = completedTasks.filter((t) => {
     const d = new Date(t.completedAt);
@@ -67,16 +116,28 @@ export function HistoryScreen() {
     return d.getTime() === yesterday.getTime();
   });
 
+  const weekLabelStr = weekOffset === 0
+    ? 'This Week'
+    : weekOffset === -1
+    ? 'Last Week'
+    : `Week of ${weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
+
   return (
     <SafeAreaView style={styles.safe} edges={['bottom']}>
       <View style={styles.header}>
         <Text style={styles.title}>Your progress.</Text>
-        <Text style={[styles.title, { color: TOKENS.colors.action.streak }]}>
+        <Text style={[styles.title, { color: TOKENS.colors.accent.heading }]}>
           Look how far you've come.
         </Text>
       </View>
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+
+        {/* Streak explanation card — one-time */}
+        {!hasSeenStreakExplanation && (
+          <StreakExplanationCard onDismiss={markStreakExplanationSeen} />
+        )}
+
         {/* Lifetime stats */}
         <View style={styles.statCard}>
           <View style={styles.statItem}>
@@ -86,33 +147,72 @@ export function HistoryScreen() {
           <View style={styles.statDivider} />
           <View style={styles.statItem}>
             <Text style={[styles.statValue, { color: TOKENS.colors.action.streak }]}>{streak}</Text>
-            <Text style={styles.statLabel}>Current Streak</Text>
+            <Text style={styles.statLabel}>🔥 Streak</Text>
+          </View>
+          <View style={styles.statDivider} />
+          <View style={styles.statItem}>
+            <Text style={styles.statValue}>{restStreak}</Text>
+            <Text style={styles.statLabel}>🌙 Rest Streak</Text>
           </View>
           <View style={styles.statDivider} />
           <View style={styles.statItem}>
             <Text style={styles.statValue}>{bestStreak}</Text>
-            <Text style={styles.statLabel}>Best Streak</Text>
+            <Text style={styles.statLabel}>Best</Text>
           </View>
         </View>
 
-        {/* This week */}
+        {/* Week selector + dots */}
         <View>
-          <Text style={styles.sectionLabel}>This Week</Text>
+          <View style={styles.weekSelectorRow}>
+            <Pressable
+              onPress={() => setWeekOffset((o) => o - 1)}
+              style={styles.weekNavBtn}
+              hitSlop={8}
+            >
+              <ChevronLeft size={18} color={TOKENS.colors.text.secondary} strokeWidth={2} />
+            </Pressable>
+            <Text style={styles.sectionLabel}>{weekLabelStr}</Text>
+            <Pressable
+              onPress={() => setWeekOffset((o) => Math.min(o + 1, 0))}
+              style={[styles.weekNavBtn, weekOffset >= 0 && styles.weekNavBtnDisabled]}
+              hitSlop={8}
+              disabled={weekOffset >= 0}
+            >
+              <ChevronRight
+                size={18}
+                color={weekOffset >= 0 ? TOKENS.colors.text.muted : TOKENS.colors.text.secondary}
+                strokeWidth={2}
+              />
+            </Pressable>
+          </View>
           <View style={styles.weekCard}>
             {weekDays.map((day, i) => {
               const isToday = day.getTime() === today.getTime();
-              const active = weekActivity[i];
+              const isFuture = day > today;
+              const { hasTask, hasRest, partialPct } = weekActivity[i];
+              const active = hasTask || hasRest;
               const dayName = ['M', 'T', 'W', 'T', 'F', 'S', 'S'][i];
+              const isRestOnly = !hasTask && hasRest;
+              const isPartial = !active && partialPct !== null;
               return (
                 <View key={i} style={styles.weekCol}>
                   <View
                     style={[
                       styles.weekDot,
-                      active && styles.weekDotActive,
+                      active && (isRestOnly ? styles.weekDotRest : styles.weekDotActive),
                       isToday && active && styles.weekDotToday,
                       isToday && !active && styles.weekDotTodayRing,
+                      isPartial && styles.weekDotPartial,
+                      isFuture && styles.weekDotFuture,
                     ]}
-                  />
+                  >
+                    {isRestOnly && !isToday && (
+                      <Text style={styles.moonIcon}>🌙</Text>
+                    )}
+                    {isPartial && partialPct !== null && (
+                      <Text style={styles.partialIcon}>🌙</Text>
+                    )}
+                  </View>
                   <Text style={[styles.weekLabel, isToday && styles.weekLabelToday]}>
                     {dayName}
                   </Text>
@@ -185,6 +285,25 @@ const styles = StyleSheet.create({
     gap: TOKENS.spacing.rowGap,
   },
 
+  // Streak explanation
+  explanationCard: {
+    backgroundColor: TOKENS.colors.bg.card,
+    borderRadius: TOKENS.radius.card,
+    overflow: 'hidden',
+  },
+  explanationHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 14,
+  },
+  explanationTitle: { fontSize: 14, fontWeight: '700', color: TOKENS.colors.text.primary },
+  explanationBody: { paddingHorizontal: 14, paddingBottom: 14, gap: 8 },
+  explanationText: { fontSize: 13, color: TOKENS.colors.text.secondary, lineHeight: 20 },
+  explanationBold: { fontWeight: '700', color: TOKENS.colors.text.primary },
+  explanationDismiss: { paddingTop: 4 },
+  explanationDismissText: { fontSize: 13, color: TOKENS.colors.accent.heading, fontWeight: '600' },
+
   // Stats
   statCard: {
     backgroundColor: TOKENS.colors.bg.card,
@@ -193,11 +312,22 @@ const styles = StyleSheet.create({
     paddingVertical: 20,
   },
   statItem: { flex: 1, alignItems: 'center', gap: 4 },
-  statValue: { fontSize: 26, fontWeight: '700', color: TOKENS.colors.text.primary },
-  statLabel: { fontSize: 12, color: TOKENS.colors.text.secondary, textAlign: 'center' },
+  statValue: { fontSize: 22, fontWeight: '700', color: TOKENS.colors.text.primary },
+  statLabel: { fontSize: 11, color: TOKENS.colors.text.secondary, textAlign: 'center' },
   statDivider: { width: 1, backgroundColor: '#e8e8e8' },
 
-  // This week dots
+  // Week selector
+  weekSelectorRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 4,
+    marginBottom: 4,
+  },
+  weekNavBtn: { padding: 6 },
+  weekNavBtnDisabled: { opacity: 0.3 },
+
+  // Week dots
   weekCard: {
     backgroundColor: TOKENS.colors.bg.card,
     borderRadius: TOKENS.radius.card,
@@ -212,18 +342,21 @@ const styles = StyleSheet.create({
     height: 28,
     borderRadius: 14,
     backgroundColor: '#f0f0f0',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  weekDotActive: {
-    backgroundColor: TOKENS.colors.action.primary,
-  },
-  weekDotToday: {
-    backgroundColor: TOKENS.colors.action.streak,
-  },
+  weekDotActive: { backgroundColor: TOKENS.colors.action.primary },
+  weekDotRest: { backgroundColor: '#A78BFA' },
+  weekDotToday: { backgroundColor: TOKENS.colors.action.streak },
   weekDotTodayRing: {
     backgroundColor: 'transparent',
     borderWidth: 2,
     borderColor: TOKENS.colors.action.streak,
   },
+  weekDotPartial: { backgroundColor: '#e8e8e8' },
+  weekDotFuture: { backgroundColor: '#f5f5f5' },
+  moonIcon: { fontSize: 12 },
+  partialIcon: { fontSize: 12, opacity: 0.45 },
   weekLabel: { fontSize: 11, color: TOKENS.colors.text.muted },
   weekLabelToday: { color: TOKENS.colors.action.streak, fontWeight: '600' },
 
@@ -261,7 +394,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: TOKENS.colors.bg.card,
-    borderRadius: 14,
+    borderRadius: TOKENS.radius.row,
     paddingHorizontal: 16,
     paddingVertical: 14,
     marginBottom: 6,
