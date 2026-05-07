@@ -206,6 +206,12 @@ export function SpinScreen() {
         <View style={styles.header}>
           <Text style={styles.title}>Not sure where to start?</Text>
           <Text style={[styles.title, { color: TOKENS.colors.accent.heading }]}>Spin the wheel.</Text>
+        </View>
+
+        {/* How-to accordion */}
+        <SpinHintAccordion />
+
+        <View style={styles.header}>
           {/* M T W T F S S bubbles — streak count lives in the header badge */}
           <View style={styles.weekRow}>
             <View style={styles.bubblesRow}>
@@ -235,9 +241,6 @@ export function SpinScreen() {
             </View>
           </View>
         </View>
-
-        {/* How-to accordion */}
-        <SpinHintAccordion />
 
         {tasks.length === 0 ? (
           <EmptyWheelState onAddTask={() => navigation.navigate('Tasks')} />
