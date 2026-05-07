@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { CircleCheck, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Info } from 'lucide-react-native';
+import { CircleCheck, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Flame, Info, Moon, Target } from 'lucide-react-native';
 import { useApp, type CompletedTask } from '../context/AppContext';
 import { TOKENS } from '../theme/tokens';
 
@@ -142,12 +142,18 @@ export function HistoryScreen() {
           <View style={styles.statDivider} />
           <View style={styles.statItem}>
             <Text style={[styles.statValue, { color: TOKENS.colors.action.streak }]}>{streak}</Text>
-            <Text style={styles.statLabel}>🔥 Streak</Text>
+            <View style={styles.statLabelRow}>
+              <Flame size={11} color={TOKENS.colors.action.streak} strokeWidth={2} />
+              <Text style={styles.statLabel}>Streak</Text>
+            </View>
           </View>
           <View style={styles.statDivider} />
           <View style={styles.statItem}>
             <Text style={styles.statValue}>{restStreak}</Text>
-            <Text style={styles.statLabel}>🌙 Rest Streak</Text>
+            <View style={styles.statLabelRow}>
+              <Moon size={11} color={TOKENS.colors.text.secondary} strokeWidth={2} />
+              <Text style={styles.statLabel}>Rest Streak</Text>
+            </View>
           </View>
           <View style={styles.statDivider} />
           <View style={styles.statItem}>
@@ -202,10 +208,10 @@ export function HistoryScreen() {
                     ]}
                   >
                     {isRestOnly && !isToday && (
-                      <Text style={styles.moonIcon}>🌙</Text>
+                      <Moon size={12} color="#ffffff" strokeWidth={2} />
                     )}
                     {isPartial && partialPct !== null && (
-                      <Text style={styles.partialIcon}>🌙</Text>
+                      <Moon size={12} color={TOKENS.colors.text.muted} strokeWidth={2} />
                     )}
                   </View>
                   <Text style={[styles.weekLabel, isToday && styles.weekLabelToday]}>
@@ -219,7 +225,7 @@ export function HistoryScreen() {
 
         {/* Next milestone */}
         <View style={styles.milestoneCard}>
-          <Text style={styles.milestoneEmoji}>🎯</Text>
+          <Target size={28} color={TOKENS.colors.accent.heading} strokeWidth={1.8} />
           <View style={styles.milestoneText}>
             {streak === 0 ? (
               <>
@@ -307,6 +313,7 @@ const styles = StyleSheet.create({
   statItem: { flex: 1, alignItems: 'center', gap: 4 },
   statValue: { fontSize: 22, fontWeight: '700', color: TOKENS.colors.text.primary },
   statLabel: { fontSize: 11, color: TOKENS.colors.text.secondary, textAlign: 'center' },
+  statLabelRow: { flexDirection: 'row', alignItems: 'center', gap: 3 },
   statDivider: { width: 1, backgroundColor: '#e8e8e8' },
 
   // Week selector
@@ -348,8 +355,6 @@ const styles = StyleSheet.create({
   },
   weekDotPartial: { backgroundColor: '#e8e8e8' },
   weekDotFuture: { backgroundColor: '#f5f5f5' },
-  moonIcon: { fontSize: 12 },
-  partialIcon: { fontSize: 12, opacity: 0.45 },
   weekLabel: { fontSize: 11, color: TOKENS.colors.text.muted },
   weekLabelToday: { color: TOKENS.colors.action.streak, fontWeight: '600' },
 
@@ -362,7 +367,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
   },
-  milestoneEmoji: { fontSize: 28 },
   milestoneText: { flex: 1 },
   milestoneTitle: {
     fontSize: 15,
