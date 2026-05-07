@@ -616,7 +616,7 @@ export function TasksScreen() {
   const goalPct = dailyGoal > 0 ? Math.min(Math.round((todayDone / dailyGoal) * 100), 100) : 0;
 
   return (
-    <SafeAreaView style={styles.safe} edges={['bottom']}>
+    <SafeAreaView style={styles.safe}>
       <View style={styles.navBar}>
         <View>
           <Text style={styles.navTitle}>Your tasks are set.</Text>

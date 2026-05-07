@@ -120,7 +120,7 @@ export function HistoryScreen() {
     : `Week of ${weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
 
   return (
-    <SafeAreaView style={styles.safe} edges={['bottom']}>
+    <SafeAreaView style={styles.safe}>
       <View style={styles.header}>
         <Text style={styles.title}>Your progress.</Text>
         <Text style={[styles.title, { color: TOKENS.colors.accent.heading }]}>
