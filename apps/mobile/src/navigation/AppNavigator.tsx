@@ -257,6 +257,7 @@ const styles = StyleSheet.create({
   },
   avatarPressable: {
     marginRight: 4,
+    alignSelf: 'center',
   },
   avatarBtn: {
     width: 36,
