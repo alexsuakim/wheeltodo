@@ -124,33 +124,24 @@ interface RestTaskRowProps {
   isTimerActive: boolean;
   timerRemaining: number;
   timerTotal: number;
+  onToggle: () => void;
   onStart: () => void;
   onCancel: () => void;
   onRemove: () => void;
 }
 
-function RestTaskRow({ task, isTimerActive, timerRemaining, timerTotal, onStart, onCancel, onRemove }: RestTaskRowProps) {
+function RestTaskRow({ task, isTimerActive, timerRemaining, timerTotal, onToggle, onStart, onCancel, onRemove }: RestTaskRowProps) {
   const timerPct = timerTotal > 0 ? (timerTotal - timerRemaining) / timerTotal : 0;
 
   if (task.completedToday) {
     return (
       <View style={rowStyles.row}>
-        <View style={rowStyles.checkboxDone}>
-          <Check size={13} color="#fff" strokeWidth={3} />
-        </View>
+        <Pressable onPress={onToggle} hitSlop={8}>
+          <View style={rowStyles.checkboxDone}>
+            <Check size={13} color="#fff" strokeWidth={3} />
+          </View>
+        </Pressable>
         <Text style={rowStyles.taskNameDone} numberOfLines={1}>{task.name}</Text>
-        <Text style={rowStyles.duration}>{task.durationMinutes}m</Text>
-      </View>
-    );
-  }
-
-  if (task.skippedToday) {
-    return (
-      <View style={rowStyles.row}>
-        <View style={rowStyles.checkboxSkipped}>
-          <X size={11} color={TOKENS.colors.text.muted} strokeWidth={2.5} />
-        </View>
-        <Text style={rowStyles.taskNameSkipped} numberOfLines={1}>{task.name}</Text>
         <Text style={rowStyles.duration}>{task.durationMinutes}m</Text>
       </View>
     );
@@ -178,7 +169,9 @@ function RestTaskRow({ task, isTimerActive, timerRemaining, timerTotal, onStart,
 
   return (
     <View style={rowStyles.row}>
-      <View style={rowStyles.checkbox} />
+      <Pressable onPress={onToggle} hitSlop={8}>
+        <View style={rowStyles.checkbox} />
+      </Pressable>
       <Text style={rowStyles.taskName} numberOfLines={1}>{task.name}</Text>
       <Text style={rowStyles.duration}>{task.durationMinutes}m</Text>
       <Pressable onPress={onStart} style={rowStyles.startBtn} hitSlop={6}>
@@ -262,6 +255,7 @@ interface CategorySectionProps {
   isCollapsed: boolean;
   onToggleCollapse: () => void;
   activeRestTimer: ActiveRestTimer | null;
+  onToggleTask: (id: string) => void;
   onStartTimer: (id: string) => void;
   onCancelTimer: () => void;
   onRemove: (id: string) => void;
@@ -269,7 +263,7 @@ interface CategorySectionProps {
 
 function CategorySection({
   category, tasks, isCollapsed, onToggleCollapse,
-  activeRestTimer, onStartTimer, onCancelTimer, onRemove,
+  activeRestTimer, onToggleTask, onStartTimer, onCancelTimer, onRemove,
 }: CategorySectionProps) {
   const meta = CATEGORY_META[category];
   const CatIcon = meta.icon;
@@ -299,6 +293,7 @@ function CategorySection({
                 isTimerActive={activeRestTimer?.taskId === task.id}
                 timerRemaining={activeRestTimer?.taskId === task.id ? activeRestTimer.remainingSeconds : 0}
                 timerTotal={activeRestTimer?.taskId === task.id ? activeRestTimer.totalSeconds : 0}
+                onToggle={() => onToggleTask(task.id)}
                 onStart={() => onStartTimer(task.id)}
                 onCancel={onCancelTimer}
                 onRemove={() => onRemove(task.id)}
@@ -498,6 +493,7 @@ export function RestScreen() {
   const {
     restTasks,
     completedRestDays,
+    toggleRestTask,
     addRestTask,
     removeRestTask,
     activeRestTimer,
@@ -622,6 +618,7 @@ export function RestScreen() {
               isCollapsed={collapsed[cat] ?? false}
               onToggleCollapse={() => toggleCollapse(cat)}
               activeRestTimer={activeRestTimer}
+              onToggleTask={toggleRestTask}
               onStartTimer={(id) => startRestTimer(id)}
               onCancelTimer={cancelRestTimer}
               onRemove={removeRestTask}
