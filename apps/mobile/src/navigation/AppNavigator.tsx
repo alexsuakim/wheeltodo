@@ -159,8 +159,10 @@ function StreakBadge({ onPress }: { onPress: () => void }) {
 function AvatarButton({ onPress }: { onPress: () => void }) {
   const { user } = useApp();
   return (
-    <Pressable onPress={onPress} style={styles.avatarBtn}>
-      <Text style={styles.avatarText}>{user?.initials ?? 'U'}</Text>
+    <Pressable onPress={onPress} style={styles.avatarPressable}>
+      <View style={styles.avatarBtn}>
+        <Text style={styles.avatarText}>{user?.initials ?? 'U'}</Text>
+      </View>
     </Pressable>
   );
 }
@@ -253,8 +255,13 @@ const styles = StyleSheet.create({
   streakTextMuted: {
     color: TOKENS.colors.text.muted,
   },
-  avatarBtn: {
+  avatarPressable: {
     marginRight: 4,
+    backgroundColor: TOKENS.colors.bg.screen,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarBtn: {
     width: 36,
     height: 36,
     borderRadius: 18,
