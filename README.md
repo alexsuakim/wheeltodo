@@ -1,60 +1,174 @@
-## Monorepo (Web + iOS + Android)
+# WheelTodo
 
-This repo contains:
+**Spin. Focus. Done.**
 
-- `apps/web`: Next.js web app
-- `apps/mobile`: Expo (React Native) app for iOS + Android
-- `packages/shared`: shared TypeScript code (types/schemas) used by both apps
+A React Native productivity app that turns your task list into a spinning wheel — so you stop overthinking and start doing. Built with Expo for iOS and Android.
 
-### Run (after install)
+---
+
+## Table of Contents
+
+- [Overview](#overview)
+- [Screenshots](#screenshots)
+- [Features at a Glance](#features-at-a-glance)
+- [Tech Stack](#tech-stack)
+- [Project Structure](#project-structure)
+- [Quick Start](#quick-start)
+- [Development](#development)
+- [Documentation](#documentation)
+- [Platform Notes](#platform-notes)
+
+---
+
+## Overview
+
+WheelTodo solves decision paralysis. Instead of staring at a long task list, you add your tasks to a wheel, give it a spin, and let it decide. The selected task immediately launches into a Pomodoro-style focus timer so you get straight to work.
+
+On days when you need to rest, **Rest Mode** lets you log recovery activities (stretching, reading, napping) that count towards your streak — so a rest day never breaks your momentum.
+
+---
+
+## Screenshots
+
+> *Coming soon — add device screenshots or a GIF of the wheel spinning here*
+
+---
+
+## Features at a Glance
+
+| Feature | Description |
+|---------|-------------|
+| **Task Wheel** | Visual spinning wheel of your active tasks — spin to randomise or tap a slice to choose |
+| **Pomodoro Timer** | Focus sessions with configurable duration, pause/resume, live progress bar and push notifications |
+| **Streak System** | Consecutive daily activity tracked across task completions and rest days |
+| **Rest Mode** | 10 preset rest activities across 5 categories, plus custom tasks; mood-based suggestions |
+| **Achievement System** | 6 achievement tracks (streak, tasks, focus, speed, rest, spins) with unlockable badge tiers |
+| **Custom Avatars** | 20 icon-based avatars in brand colour groups (red, black, beige) |
+| **Task Categories** | User-defined labels to organise tasks, filterable in the wheel |
+| **Weekly Activity Grid** | 7-day bubble grid showing task and rest activity at a glance |
+| **Daily Goal** | Configurable target task count per day |
+| **History** | Completed task log, week-by-week navigation, next streak milestone card |
+| **Onboarding** | 3-step walkthrough on first launch |
+| **Offline First** | All data stored locally via AsyncStorage — no account required |
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Framework | [Expo](https://expo.dev) (SDK 52+) |
+| Language | TypeScript |
+| Navigation | React Navigation v6 (Native Stack + Bottom Tabs) |
+| State | React Context + `useReducer`-style hooks |
+| Persistence | AsyncStorage |
+| Icons | [lucide-react-native](https://lucide.dev) |
+| Notifications | expo-notifications |
+| Safe Area | react-native-safe-area-context |
+
+---
+
+## Project Structure
+
+```
+wheeltodo/
+├── apps/
+│   └── mobile/                   # Expo React Native app
+│       ├── src/
+│       │   ├── context/
+│       │   │   └── AppContext.tsx # Global state + all business logic
+│       │   ├── navigation/
+│       │   │   └── AppNavigator.tsx
+│       │   ├── screens/
+│       │   │   ├── LoginScreen.tsx
+│       │   │   ├── SpinScreen.tsx
+│       │   │   ├── TasksScreen.tsx
+│       │   │   ├── RestScreen.tsx
+│       │   │   ├── HistoryScreen.tsx
+│       │   │   ├── ProfileScreen.tsx
+│       │   │   └── EditProfileScreen.tsx
+│       │   ├── theme/
+│       │   │   └── tokens.ts     # Design tokens (colours, spacing, radii)
+│       │   └── utils/
+│       │       ├── task.ts
+│       │       ├── achievements.ts
+│       │       └── notifications.ts
+│       └── App.tsx
+├── apps/web/                     # Next.js web app (separate)
+├── packages/shared/              # Shared TypeScript types
+└── docs/                         # Full documentation
+    ├── FEATURES.md
+    ├── ARCHITECTURE.md
+    ├── SCREENS.md
+    └── DATA_MODEL.md
+```
+
+---
+
+## Quick Start
+
+**Prerequisites:** Node 20+, Expo CLI, iOS Simulator or Android Emulator (or the Expo Go app)
 
 ```bash
+# Clone and install
+git clone https://github.com/your-username/wheeltodo.git
+cd wheeltodo
 npm install
-npm run dev:web
+
+# Start the mobile app
 npm run dev:mobile
 ```
 
-### Notes
+Then scan the QR code with Expo Go, or press `i` for iOS simulator / `a` for Android emulator.
 
-Your existing static site files are still at the repo root (`index.html`, `styles.css`, `app.js`, etc.). We can migrate them into `apps/web` whenever you’re ready.
+---
 
-### Node version
-
-Expo / React Native tooling in this setup expects a newer Node 20+ (or Node 22). This repo includes an `.nvmrc` so you can run:
+## Development
 
 ```bash
-nvm use
+# Run mobile app (Expo dev server)
+npm run dev:mobile
+
+# Run web app
+npm run dev:web
+
+# TypeScript check (from apps/mobile)
+cd apps/mobile && npx tsc --noEmit
 ```
 
-If `node -v` still shows an older Node after `nvm use`, you likely have another Node installation earlier in your `PATH` (commonly Conda). In that case:
+**Node version:** This repo includes `.nvmrc`. Run `nvm use` from the root before starting.
 
-```bash
-which node
-echo $PATH
-```
+**Push notifications:** Expo Notifications is wired up. For standalone builds you'll need APNs credentials (iOS) and a Firebase project + `google-services.json` (Android). See [push notification setup](https://docs.expo.dev/push-notifications/overview/).
 
-and make sure `~/.nvm/versions/node/.../bin` comes before the Conda `bin` directory in your shell init.
+---
 
-### Push notifications (recommended approach)
+## Documentation
 
-For early-stage mobile apps, the simplest, most reliable option is **Expo Notifications** (`expo-notifications`) using the **Expo Push Token**. This works well with EAS builds and keeps your server-side logic simple (you send messages to Expo’s push API using the Expo push token).
+Full product and technical documentation lives in [`/docs`](./docs):
 
-To enable push in standalone builds you’ll still need platform credentials:
+| Document | Contents |
+|----------|---------|
+| [FEATURES.md](./docs/FEATURES.md) | Complete feature reference — every interaction, every screen, iOS vs Android notes |
+| [ARCHITECTURE.md](./docs/ARCHITECTURE.md) | Navigation structure, data flow, streak logic — with Mermaid diagrams |
+| [SCREENS.md](./docs/SCREENS.md) | Screen-by-screen breakdown with component inventory and state |
+| [DATA_MODEL.md](./docs/DATA_MODEL.md) | TypeScript types, AsyncStorage keys, context API reference |
 
-- **iOS (APNs)**: configure an APNs key in your Apple Developer account / App Store Connect (EAS can guide credential setup).
-- **Android (FCM)**: create a Firebase project and add `google-services.json` to your Expo config (EAS will also guide you).
+---
 
-Next steps (run from `apps/mobile`):
+## Platform Notes
 
-```bash
-node ./node_modules/eas-cli/bin/run login
-node ./node_modules/eas-cli/bin/run init
-```
+WheelTodo targets iOS 15+ and Android 10+. The codebase is a single React Native / Expo project — feature parity is 100% across platforms with the following minor notes:
 
-Then you can build an installable dev client:
+| Area | iOS | Android |
+|------|-----|---------|
+| Safe area handling | `useSafeAreaInsets` (dynamic island / notch aware) | Status bar height via same API |
+| Sign-in buttons | Apple Sign In button shown | Apple button hidden; Google shown |
+| Notifications | APNs via Expo | FCM via Expo |
+| Bottom nav | iOS tab bar styling | Android-style bottom nav |
+| Haptics | Not currently used | Not currently used |
 
-```bash
-npm run build:dev
-npm run start:dev
-```
+---
 
+## License
+
+MIT
