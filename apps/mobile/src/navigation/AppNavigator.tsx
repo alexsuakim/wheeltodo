@@ -257,7 +257,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: TOKENS.spacing.screenPad,
-    height: 44,
+    paddingBottom: 10,
     backgroundColor: TOKENS.colors.bg.screen,
   },
   streakBadge: {
