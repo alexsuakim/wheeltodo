@@ -278,7 +278,7 @@ export function HistoryScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: TOKENS.colors.bg.screen },
-  header: { paddingHorizontal: TOKENS.spacing.screenPad, paddingTop: 12, paddingBottom: 4 },
+  header: { paddingHorizontal: TOKENS.spacing.screenPad, paddingTop: 12, paddingBottom: 8 },
   title: { fontSize: 26, fontWeight: '700', color: TOKENS.colors.text.primary, letterSpacing: 0.1 },
   content: {
     paddingHorizontal: TOKENS.spacing.screenPad,

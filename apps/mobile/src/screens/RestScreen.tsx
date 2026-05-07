@@ -668,13 +668,14 @@ const styles = StyleSheet.create({
   },
   scroll: { flex: 1 },
   content: {
-    padding: TOKENS.spacing.screenPad,
+    paddingHorizontal: TOKENS.spacing.screenPad,
     gap: 12,
     paddingBottom: 40,
   },
   header: {
+    paddingTop: 12,
+    paddingBottom: 8,
     gap: 4,
-    marginBottom: 4,
   },
   title: {
     fontSize: 26,
