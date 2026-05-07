@@ -12,7 +12,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
-import { ArrowUpRight, ChevronDown, ChevronUp, Clock, Flame, Moon, RotateCcw, Trophy, Zap } from 'lucide-react-native';
+import { ArrowUpRight, ChevronDown, ChevronUp, Clock, Flame, Info, Moon, RotateCcw, Trophy, Zap } from 'lucide-react-native';
 import type { LucideIcon } from 'lucide-react-native';
 import { useApp, type Task } from '../context/AppContext';
 import { SpinningWheel } from '../components/SpinningWheel';
@@ -67,6 +67,7 @@ function SpinHintAccordion() {
   return (
     <View style={accordionStyles.card}>
       <Pressable style={accordionStyles.header} onPress={() => setExpanded((v) => !v)}>
+        <Info size={15} color={TOKENS.colors.accent.heading} strokeWidth={2} />
         <Text style={accordionStyles.headerText}>How do I use the wheel?</Text>
         {expanded
           ? <ChevronUp size={16} color={TOKENS.colors.text.secondary} strokeWidth={2} />
@@ -97,6 +98,7 @@ const accordionStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: 14,
+    gap: 8,
   },
   headerText: {
     fontSize: 14,

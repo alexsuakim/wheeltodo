@@ -12,7 +12,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Activity, Brain, Check, ChevronDown, ChevronUp, Coffee, Frown, Meh, MessageCircle, PenLine, Plus, Timer, X, Zap } from 'lucide-react-native';
+import { Activity, Brain, Check, ChevronDown, ChevronUp, Coffee, Frown, Info, Meh, MessageCircle, PenLine, Plus, Timer, X, Zap } from 'lucide-react-native';
 import type { LucideIcon } from 'lucide-react-native';
 import { useApp, type RestTask, type DailyMood, type RestCategory, type ActiveRestTimer } from '../context/AppContext';
 import { TOKENS } from '../theme/tokens';
@@ -449,6 +449,7 @@ function RestFaqAccordion() {
   return (
     <View style={faqStyles.card}>
       <Pressable style={faqStyles.header} onPress={() => setExpanded((v) => !v)}>
+        <Info size={15} color={TOKENS.colors.accent.heading} strokeWidth={2} />
         <Text style={faqStyles.headerText}>How does Rest Mode protect my streak?</Text>
         {expanded
           ? <ChevronUp size={16} color={TOKENS.colors.text.secondary} strokeWidth={2} />

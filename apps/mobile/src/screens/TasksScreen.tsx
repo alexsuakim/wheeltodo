@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ChevronDown, ChevronUp, Target, Flame, Timer, Trophy, Zap } from 'lucide-react-native';
+import { ChevronDown, ChevronUp, Info, Target, Flame, Timer, Trophy, Zap } from 'lucide-react-native';
 import { useApp, COLORS, type Task } from '../context/AppContext';
 import { formatMmSs } from '../utils/task';
 import { TOKENS } from '../theme/tokens';
@@ -465,6 +465,7 @@ function TasksFaqAccordion() {
   return (
     <View style={faqStyles.card}>
       <Pressable style={faqStyles.header} onPress={() => setExpanded((v) => !v)}>
+        <Info size={15} color={TOKENS.colors.accent.heading} strokeWidth={2} />
         <Text style={faqStyles.headerText}>How do tasks work?</Text>
         {expanded
           ? <ChevronUp size={16} color={TOKENS.colors.text.secondary} strokeWidth={2} />
