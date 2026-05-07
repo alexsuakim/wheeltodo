@@ -282,7 +282,7 @@ const styles = StyleSheet.create({
   title: { fontSize: 26, fontWeight: '700', color: TOKENS.colors.text.primary, letterSpacing: 0.1 },
   content: {
     paddingHorizontal: TOKENS.spacing.screenPad,
-    paddingBottom: 40,
+    paddingBottom: 16,
     gap: TOKENS.spacing.rowGap,
   },
 

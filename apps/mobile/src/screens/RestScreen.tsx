@@ -670,7 +670,7 @@ const styles = StyleSheet.create({
   content: {
     paddingHorizontal: TOKENS.spacing.screenPad,
     gap: 12,
-    paddingBottom: 40,
+    paddingBottom: 16,
   },
   header: {
     paddingTop: 12,
