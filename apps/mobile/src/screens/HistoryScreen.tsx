@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { CheckCircle2, ChevronLeft, ChevronRight, ChevronDown, ChevronUp } from 'lucide-react-native';
+import { CircleCheck, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Info } from 'lucide-react-native';
 import { useApp, type CompletedTask } from '../context/AppContext';
 import { TOKENS } from '../theme/tokens';
 
@@ -11,7 +11,7 @@ function TaskCard({ task, onUntick }: { task: CompletedTask; onUntick: () => voi
   return (
     <View style={styles.taskCard}>
       <Pressable onPress={onUntick} hitSlop={8}>
-        <CheckCircle2 size={20} color={TOKENS.colors.action.success} strokeWidth={2.5} />
+        <CircleCheck size={20} color={TOKENS.colors.action.success} strokeWidth={2.5} />
       </Pressable>
       <Text style={styles.taskName} numberOfLines={1}>{task.taskName}</Text>
       <Text style={styles.taskMeta}>{task.minutesEstimated}m</Text>
@@ -22,13 +22,14 @@ function TaskCard({ task, onUntick }: { task: CompletedTask; onUntick: () => voi
 
 // ─── Streak Explanation Card ───────────────────────────────────────────────────
 
-function StreakExplanationCard({ onDismiss }: { onDismiss: () => void }) {
-  const [expanded, setExpanded] = useState(true);
+function StreakExplanationCard() {
+  const [expanded, setExpanded] = useState(false);
 
   return (
     <View style={styles.explanationCard}>
       <Pressable style={styles.explanationHeader} onPress={() => setExpanded((v) => !v)}>
-        <Text style={styles.explanationTitle}>🔥 How streaks work</Text>
+        <Info size={15} color={TOKENS.colors.accent.heading} strokeWidth={2} />
+        <Text style={[styles.explanationTitle, { flex: 1 }]}>How do streaks work?</Text>
         {expanded
           ? <ChevronUp size={16} color={TOKENS.colors.text.secondary} strokeWidth={2} />
           : <ChevronDown size={16} color={TOKENS.colors.text.secondary} strokeWidth={2} />
@@ -40,11 +41,8 @@ function StreakExplanationCard({ onDismiss }: { onDismiss: () => void }) {
             Your streak counts consecutive days where you either completed a task <Text style={styles.explanationBold}>or</Text> hit your Rest Mode goal.
           </Text>
           <Text style={styles.explanationText}>
-            Rest days protect your streak — so taking a break never breaks your momentum. 🌿
+            Rest days protect your streak — so taking a break never breaks your momentum.
           </Text>
-          <Pressable onPress={onDismiss} style={styles.explanationDismiss}>
-            <Text style={styles.explanationDismissText}>Got it, don't show again</Text>
-          </Pressable>
         </View>
       )}
     </View>
@@ -55,7 +53,6 @@ export function HistoryScreen() {
   const {
     completedTasks, completedRestDays, partialRestDays, uncompleteTask,
     streak, bestStreak, restStreak, bestRestStreak,
-    hasSeenStreakExplanation, markStreakExplanationSeen,
   } = useApp();
 
   const today = new Date();
@@ -133,10 +130,8 @@ export function HistoryScreen() {
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
 
-        {/* Streak explanation card — one-time */}
-        {!hasSeenStreakExplanation && (
-          <StreakExplanationCard onDismiss={markStreakExplanationSeen} />
-        )}
+        {/* Streak explanation accordion */}
+        <StreakExplanationCard />
 
         {/* Lifetime stats */}
         <View style={styles.statCard}>
@@ -296,14 +291,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: 14,
+    gap: 8,
   },
   explanationTitle: { fontSize: 14, fontWeight: '700', color: TOKENS.colors.text.primary },
   explanationBody: { paddingHorizontal: 14, paddingBottom: 14, gap: 8 },
   explanationText: { fontSize: 13, color: TOKENS.colors.text.secondary, lineHeight: 20 },
   explanationBold: { fontWeight: '700', color: TOKENS.colors.text.primary },
-  explanationDismiss: { paddingTop: 4 },
-  explanationDismissText: { fontSize: 13, color: TOKENS.colors.accent.heading, fontWeight: '600' },
-
   // Stats
   statCard: {
     backgroundColor: TOKENS.colors.bg.card,

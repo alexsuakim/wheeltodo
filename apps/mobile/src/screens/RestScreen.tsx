@@ -12,7 +12,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Check, ChevronDown, ChevronUp, Plus, ShieldCheck, Timer, X } from 'lucide-react-native';
+import { Check, ChevronDown, ChevronUp, Plus, Timer, X } from 'lucide-react-native';
 import { useApp, type RestTask, type DailyMood, type RestCategory, type ActiveRestTimer } from '../context/AppContext';
 import { TOKENS } from '../theme/tokens';
 import { formatMmSs } from '../utils/task';
@@ -438,51 +438,51 @@ const celebStyles = StyleSheet.create({
   btnText: { fontSize: 16, fontWeight: '600', color: '#ffffff' },
 });
 
-// ─── First Launch Tooltip ──────────────────────────────────────────────────────
+// ─── Rest FAQ Accordion ────────────────────────────────────────────────────────
 
-function RestTooltip({ onDismiss }: { onDismiss: () => void }) {
+function RestFaqAccordion() {
+  const [expanded, setExpanded] = useState(false);
   return (
-    <View style={tooltipStyles.container}>
-      <View style={tooltipStyles.card}>
-        <View style={tooltipStyles.iconWrap}>
-          <ShieldCheck size={22} color="#2a7d4f" strokeWidth={2} />
-        </View>
-        <View style={tooltipStyles.body}>
-          <Text style={tooltipStyles.title}>Rest days count too</Text>
-          <Text style={tooltipStyles.sub}>
-            Complete your daily rest goal to protect your streak — even on off days.
+    <View style={faqStyles.card}>
+      <Pressable style={faqStyles.header} onPress={() => setExpanded((v) => !v)}>
+        <Text style={faqStyles.headerText}>How does Rest Mode protect my streak?</Text>
+        {expanded
+          ? <ChevronUp size={16} color={TOKENS.colors.text.secondary} strokeWidth={2} />
+          : <ChevronDown size={16} color={TOKENS.colors.text.secondary} strokeWidth={2} />
+        }
+      </Pressable>
+      {expanded && (
+        <View style={faqStyles.body}>
+          <Text style={faqStyles.bodyText}>
+            Complete your daily rest goal to protect your streak — even on off days. Rest days count towards consecutive days, so taking a break never breaks your momentum.
           </Text>
         </View>
-        <Pressable onPress={onDismiss} style={tooltipStyles.closeBtn} hitSlop={8}>
-          <X size={14} color={TOKENS.colors.text.muted} strokeWidth={2} />
-        </Pressable>
-      </View>
+      )}
     </View>
   );
 }
 
-const tooltipStyles = StyleSheet.create({
-  container: { marginBottom: 4 },
+const faqStyles = StyleSheet.create({
   card: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 12,
-    backgroundColor: '#e6f4ed',
+    backgroundColor: TOKENS.colors.bg.card,
     borderRadius: TOKENS.radius.card,
+    overflow: 'hidden',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     padding: 14,
-    borderWidth: 1,
-    borderColor: '#b8dfc9',
+    gap: 8,
   },
-  iconWrap: {
-    width: 40, height: 40, borderRadius: 20,
-    backgroundColor: '#cceedd',
-    alignItems: 'center', justifyContent: 'center',
-    flexShrink: 0,
+  headerText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: TOKENS.colors.text.primary,
+    flex: 1,
   },
-  body: { flex: 1, gap: 3 },
-  title: { fontSize: 14, fontWeight: '700', color: '#1d6b3e' },
-  sub: { fontSize: 13, color: '#3d8f5e', lineHeight: 18 },
-  closeBtn: { padding: 2, flexShrink: 0 },
+  body: { paddingHorizontal: 14, paddingBottom: 14 },
+  bodyText: { fontSize: 13, color: TOKENS.colors.text.secondary, lineHeight: 20 },
 });
 
 // ─── Main RestScreen ───────────────────────────────────────────────────────────
@@ -503,8 +503,6 @@ export function RestScreen() {
     setTodayMood,
     restMinutesToday,
     restGoalMinutes,
-    hasSeenRestTooltip,
-    markRestTooltipSeen,
     streak,
     hasActivityToday,
     restStreak,
@@ -586,10 +584,8 @@ export function RestScreen() {
           </Text>
         </View>
 
-        {/* First-launch streak tooltip */}
-        {!hasSeenRestTooltip && (
-          <RestTooltip onDismiss={markRestTooltipSeen} />
-        )}
+        {/* Rest FAQ accordion */}
+        <RestFaqAccordion />
 
         {/* Rest Meter */}
         <RestMeter minutesDone={restMinutesToday} goalMinutes={restGoalMinutes} />

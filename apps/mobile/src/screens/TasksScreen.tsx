@@ -370,52 +370,21 @@ interface SwipeRowProps {
   onComplete: () => void;
   onDelete: () => void;
   onEdit: () => void;
-  isFirstTask: boolean;
 }
 
-// Pulse animation for the first-use timer icon
-function TimerButton({ onPress, isFirstTask }: { onPress: () => void; isFirstTask: boolean }) {
-  const pulseScale = useRef(new Animated.Value(1)).current;
-  const pulseOpacity = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    if (!isFirstTask) return;
-    const loop = Animated.loop(
-      Animated.sequence([
-        Animated.parallel([
-          Animated.timing(pulseScale, { toValue: 1.6, duration: 800, useNativeDriver: true }),
-          Animated.timing(pulseOpacity, { toValue: 0.4, duration: 400, useNativeDriver: true }),
-        ]),
-        Animated.parallel([
-          Animated.timing(pulseScale, { toValue: 1, duration: 400, useNativeDriver: true }),
-          Animated.timing(pulseOpacity, { toValue: 0, duration: 400, useNativeDriver: true }),
-        ]),
-      ])
-    );
-    loop.start();
-    return () => loop.stop();
-  }, [isFirstTask]);
-
+function TimerButton({ onPress }: { onPress: () => void }) {
   return (
     <Pressable
       onPress={onPress}
       style={styles.focusIconBtn}
       hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
     >
-      {isFirstTask && (
-        <Animated.View
-          style={[
-            styles.focusIconPulse,
-            { transform: [{ scale: pulseScale }], opacity: pulseOpacity },
-          ]}
-        />
-      )}
       <Timer size={20} color={TOKENS.colors.action.primary} strokeWidth={1.8} />
     </Pressable>
   );
 }
 
-function SwipeableTaskRow({ task, isActive, displayTime, onFocus, onComplete, onDelete, onEdit, isFirstTask }: SwipeRowProps) {
+function SwipeableTaskRow({ task, isActive, displayTime, onFocus, onComplete, onDelete, onEdit }: SwipeRowProps) {
   const translateX = useRef(new Animated.Value(0)).current;
 
   const panResponder = useRef(
@@ -459,7 +428,7 @@ function SwipeableTaskRow({ task, isActive, displayTime, onFocus, onComplete, on
           ) : null}
         </Pressable>
         <Text style={styles.taskMeta}>{displayTime}</Text>
-        <TimerButton onPress={onFocus} isFirstTask={isFirstTask} />
+        <TimerButton onPress={onFocus} />
       </Animated.View>
     </View>
   );
@@ -691,7 +660,7 @@ export function TasksScreen() {
           <Text style={styles.sectionLabel}>TODAY'S TASKS</Text>
         )}
 
-        {tasks.map((task, index) => {
+        {tasks.map((task) => {
           const isActive = pomodoroSession?.taskId === task.id;
           const displayTime = taskProgress[task.id] != null
             ? formatMmSs(taskProgress[task.id])
@@ -706,7 +675,6 @@ export function TasksScreen() {
               onComplete={() => handleDone(task)}
               onDelete={() => deleteTask(task.id)}
               onEdit={() => setEditingTask(task)}
-              isFirstTask={index === 0}
             />
           );
         })}
@@ -861,13 +829,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
-  },
-  focusIconPulse: {
-    position: 'absolute',
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: TOKENS.colors.action.primary,
   },
   emptyHint: { textAlign: 'center', color: TOKENS.colors.text.secondary, fontSize: 15, marginTop: 8 },
 

@@ -12,7 +12,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
-import { ArrowUpRight, Clock, Flame, Moon, RotateCcw, Trophy, Zap } from 'lucide-react-native';
+import { ArrowUpRight, ChevronDown, ChevronUp, Clock, Flame, Moon, RotateCcw, Trophy, Zap } from 'lucide-react-native';
 import type { LucideIcon } from 'lucide-react-native';
 import { useApp, type Task } from '../context/AppContext';
 import { SpinningWheel } from '../components/SpinningWheel';
@@ -60,39 +60,55 @@ const emptyStyles = StyleSheet.create({
   arrowLabel: { fontSize: 14, fontWeight: '600', color: TOKENS.colors.action.streak },
 });
 
-// ─── Spin Hint ─────────────────────────────────────────────────────────────────
+// ─── Spin Hint Accordion ───────────────────────────────────────────────────────
 
-function SpinHint({ onDismiss }: { onDismiss: () => void }) {
+function SpinHintAccordion() {
+  const [expanded, setExpanded] = useState(false);
   return (
-    <View style={hintStyles.container}>
-      <Text style={hintStyles.text}>💡 Tap a slice to pick a task, or spin the wheel</Text>
-      <Pressable onPress={onDismiss} style={hintStyles.closeBtn} hitSlop={8}>
-        <Text style={hintStyles.closeText}>✕</Text>
+    <View style={accordionStyles.card}>
+      <Pressable style={accordionStyles.header} onPress={() => setExpanded((v) => !v)}>
+        <Text style={accordionStyles.headerText}>How do I use the wheel?</Text>
+        {expanded
+          ? <ChevronUp size={16} color={TOKENS.colors.text.secondary} strokeWidth={2} />
+          : <ChevronDown size={16} color={TOKENS.colors.text.secondary} strokeWidth={2} />
+        }
       </Pressable>
+      {expanded && (
+        <View style={accordionStyles.body}>
+          <Text style={accordionStyles.bodyText}>
+            Tap a slice to pick a task, or spin the wheel to get a random one. Then start a focus session to track your time.
+          </Text>
+        </View>
+      )}
     </View>
   );
 }
 
-const hintStyles = StyleSheet.create({
-  container: {
+const accordionStyles = StyleSheet.create({
+  card: {
+    backgroundColor: TOKENS.colors.bg.card,
+    borderRadius: TOKENS.radius.card,
+    overflow: 'hidden',
+    marginHorizontal: TOKENS.spacing.screenPad,
+  },
+  header: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff8e1',
-    borderRadius: TOKENS.radius.row,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    marginHorizontal: TOKENS.spacing.screenPad,
-    gap: 10,
-    borderWidth: 1,
-    borderColor: '#ffe082',
+    justifyContent: 'space-between',
+    padding: 14,
   },
-  text: { flex: 1, fontSize: 13, color: '#92400e', lineHeight: 18 },
-  closeBtn: {},
-  closeText: { fontSize: 14, color: '#b45309', fontWeight: '600' },
+  headerText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: TOKENS.colors.text.primary,
+    flex: 1,
+  },
+  body: { paddingHorizontal: 14, paddingBottom: 14 },
+  bodyText: { fontSize: 13, color: TOKENS.colors.text.secondary, lineHeight: 20 },
 });
 
 export function SpinScreen() {
-  const { tasks, startPomodoro, completedTasks, completedRestDays, dailyGoal, achievementValues, incrementSpinCount, hasSeenSpinHint, markSpinHintSeen } = useApp();
+  const { tasks, startPomodoro, completedTasks, completedRestDays, dailyGoal, achievementValues, incrementSpinCount } = useApp();
   const navigation = useNavigation<TabNav>();
 
   // Recalculate today whenever the screen comes into focus so the date never goes stale
@@ -114,7 +130,6 @@ export function SpinScreen() {
   });
 
   const todayDone = todayTasks.length;
-  const todayMinutes = todayTasks.reduce((sum, t) => sum + t.minutesActual, 0);
 
   // M T W T F S S bubbles for current week (Mon–Sun)
   const weekActivity = (() => {
@@ -218,10 +233,8 @@ export function SpinScreen() {
           </View>
         </View>
 
-        {/* First-launch spin hint */}
-        {tasks.length > 0 && !hasSeenSpinHint && (
-          <SpinHint onDismiss={markSpinHintSeen} />
-        )}
+        {/* How-to accordion */}
+        <SpinHintAccordion />
 
         {tasks.length === 0 ? (
           <EmptyWheelState onAddTask={() => navigation.navigate('Tasks')} />
@@ -235,33 +248,6 @@ export function SpinScreen() {
             style={styles.wheel}
           />
         )}
-
-        {/* Productivity */}
-        <View style={styles.achievementsSection}>
-          <Text style={styles.sectionLabel}>Productivity</Text>
-          {todayMinutes > 0 ? (
-            <View style={styles.focusSummary}>
-              <View style={styles.focusSummaryLeft}>
-                <Text style={styles.focusSummaryEyebrow}>Today you have focused for</Text>
-                <Text style={styles.focusSummaryValue}>
-                  {todayMinutes >= 60
-                    ? `${Math.floor(todayMinutes / 60)}h ${todayMinutes % 60 > 0 ? `${todayMinutes % 60}m` : ''}`.trim()
-                    : `${todayMinutes}m`}
-                </Text>
-              </View>
-              <View style={styles.focusSummaryRight}>
-                <View style={styles.focusSummaryBubble}>
-                  <Text style={styles.focusSummaryTaskCount}>{todayDone}</Text>
-                </View>
-                <Text style={styles.focusSummaryTaskLabel}>{todayDone === 1 ? 'task' : 'tasks'} done</Text>
-              </View>
-            </View>
-          ) : (
-            <View style={styles.focusSummaryEmpty}>
-              <Text style={styles.focusSummaryEmptyText}>Start your first focus session today!</Text>
-            </View>
-          )}
-        </View>
 
         {/* Next milestone */}
         {nextAchievement && (() => {
@@ -329,63 +315,6 @@ const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: TOKENS.colors.bg.screen },
   scroll: { paddingBottom: 32 },
   header: { paddingHorizontal: TOKENS.spacing.screenPad, paddingTop: 12, paddingBottom: 8 },
-  focusSummary: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 16,
-    paddingHorizontal: 18,
-    backgroundColor: TOKENS.colors.bg.card,
-    borderRadius: TOKENS.radius.card,
-  },
-  focusSummaryLeft: {
-    gap: 4,
-  },
-  focusSummaryEyebrow: {
-    fontSize: 12,
-    color: TOKENS.colors.text.secondary,
-    fontWeight: '500',
-  },
-  focusSummaryValue: {
-    fontSize: 40,
-    fontWeight: '800',
-    color: TOKENS.colors.text.primary,
-    letterSpacing: -1,
-    lineHeight: 44,
-  },
-  focusSummaryRight: {
-    alignItems: 'center',
-    gap: 6,
-  },
-  focusSummaryBubble: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    backgroundColor: TOKENS.colors.accent.heading,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  focusSummaryTaskCount: {
-    fontSize: 24,
-    fontWeight: '800',
-    color: '#ffffff',
-  },
-  focusSummaryTaskLabel: {
-    fontSize: 12,
-    color: TOKENS.colors.text.secondary,
-    textAlign: 'center',
-  },
-  focusSummaryEmpty: {
-    alignItems: 'center',
-    paddingVertical: 20,
-    backgroundColor: TOKENS.colors.bg.card,
-    borderRadius: TOKENS.radius.card,
-  },
-  focusSummaryEmptyText: {
-    fontSize: 14,
-    color: TOKENS.colors.text.secondary,
-    fontWeight: '500',
-  },
   wheel: { flex: undefined, height: 340, marginTop: 24 },
   achievementsSection: {
     paddingHorizontal: TOKENS.spacing.screenPad,
