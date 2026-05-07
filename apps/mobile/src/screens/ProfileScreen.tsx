@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Clock, Flame, LogOut, Moon, RotateCcw, Trophy, X, Zap } from 'lucide-react-native';
+import { Apple, Bird, Cake, Candy, Cherry, ChevronRight, Clock, Cookie, Crown, Diamond, Feather, Fish, Flame, Flower, Gem, Heart, Leaf, LogOut, Moon, Rocket, RotateCcw, Sparkles, Star, Sun, Trophy, Turtle, X, Zap } from 'lucide-react-native';
 import type { LucideIcon } from 'lucide-react-native';
 import { ACHIEVEMENT_DEFS } from '../utils/achievements';
 import { useApp, REST_GOAL_MINUTES, type RestGoalTier } from '../context/AppContext';
@@ -9,6 +9,29 @@ import { TOKENS } from '../theme/tokens';
 
 const ICON_MAP: Record<string, LucideIcon> = {
   Flame, Trophy, Clock, Zap, Moon, RotateCcw,
+};
+
+const AVATAR_MAP: Record<string, { Icon: LucideIcon; bg: string; fg: string }> = {
+  flame:    { Icon: Flame,    bg: '#FF5C4D', fg: '#ffffff' },
+  heart:    { Icon: Heart,    bg: '#FF5C4D', fg: '#ffffff' },
+  cherry:   { Icon: Cherry,   bg: '#FF5C4D', fg: '#ffffff' },
+  apple:    { Icon: Apple,    bg: '#FF5C4D', fg: '#ffffff' },
+  star:     { Icon: Star,     bg: '#FF5C4D', fg: '#ffffff' },
+  cookie:   { Icon: Cookie,   bg: '#FF9B50', fg: '#ffffff' },
+  candy:    { Icon: Candy,    bg: '#FF9B50', fg: '#ffffff' },
+  cake:     { Icon: Cake,     bg: '#FF9B50', fg: '#ffffff' },
+  trophy:   { Icon: Trophy,   bg: '#FF9B50', fg: '#ffffff' },
+  zap:      { Icon: Zap,      bg: '#FF9B50', fg: '#ffffff' },
+  sun:      { Icon: Sun,      bg: '#111111', fg: '#FFE66D' },
+  moon:     { Icon: Moon,     bg: '#111111', fg: '#ffffff' },
+  crown:    { Icon: Crown,    bg: '#111111', fg: '#FFE66D' },
+  gem:      { Icon: Gem,      bg: '#111111', fg: '#A78BFA' },
+  diamond:  { Icon: Diamond,  bg: '#111111', fg: '#4ECDC4' },
+  flower:   { Icon: Flower,   bg: '#E8E0D5', fg: '#FF5C4D' },
+  leaf:     { Icon: Leaf,     bg: '#E8E0D5', fg: '#111111' },
+  bird:     { Icon: Bird,     bg: '#E8E0D5', fg: '#111111' },
+  turtle:   { Icon: Turtle,   bg: '#E8E0D5', fg: '#111111' },
+  sparkles: { Icon: Sparkles, bg: '#E8E0D5', fg: '#FF5C4D' },
 };
 
 interface Props {
@@ -104,22 +127,26 @@ export function ProfileScreen({ navigation }: Props) {
       </View>
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Avatar row */}
-        <View style={styles.avatarRow}>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>{user?.initials ?? 'U'}</Text>
-          </View>
+        {/* Avatar row — tap to edit */}
+        <Pressable style={styles.avatarRow} onPress={() => navigation?.navigate('EditProfile')}>
+          {(() => {
+            const av = user?.avatarId ? AVATAR_MAP[user.avatarId] : null;
+            return av ? (
+              <View style={[styles.avatar, { backgroundColor: av.bg }]}>
+                <av.Icon size={26} color={av.fg} strokeWidth={1.8} />
+              </View>
+            ) : (
+              <View style={styles.avatar}>
+                <Text style={styles.avatarText}>{user?.initials ?? 'U'}</Text>
+              </View>
+            );
+          })()}
           <View style={{ flex: 1 }}>
             <Text style={styles.userName}>{user?.name ?? 'User'}</Text>
             <Text style={styles.userEmail}>{user?.email ?? ''}</Text>
           </View>
-          {streak > 0 && (
-            <View style={styles.streakPill}>
-              <Flame size={18} color={TOKENS.colors.action.streak} strokeWidth={2} />
-              <Text style={styles.streakText}>{streak}</Text>
-            </View>
-          )}
-        </View>
+          <ChevronRight size={18} color={TOKENS.colors.text.muted} strokeWidth={2} />
+        </Pressable>
 
         {/* Stats */}
         <View style={styles.statCard}>

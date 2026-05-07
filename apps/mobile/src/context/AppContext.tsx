@@ -98,9 +98,10 @@ interface AppContextType {
   wheelSoundEnabled: boolean;
   setWheelSoundEnabled: (enabled: boolean) => void;
 
-  user: { name: string; email: string; initials: string } | null;
+  user: { name: string; email: string; initials: string; avatarId?: string } | null;
   login: (email: string, password: string) => void;
   logout: () => void;
+  updateUser: (name: string, email: string, avatarId?: string) => void;
 
   categories: string[];
   addCategory: (cat: string) => void;
@@ -199,7 +200,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [dailyGoal, setDailyGoal] = useState(6);
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [wheelSoundEnabled, setWheelSoundEnabled] = useState(true);
-  const [user, setUser] = useState<{ name: string; email: string; initials: string } | null>(null);
+  const [user, setUser] = useState<{ name: string; email: string; initials: string; avatarId?: string } | null>(null);
   const [categories, setCategories] = useState<string[]>(DEFAULT_CATEGORIES);
   const [seenAchievements, setSeenAchievements] = useState<string[]>([]);
   const [pendingAchievementToast, setPendingAchievementToast] = useState<string | null>(null);
@@ -422,6 +423,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const name = email.split('@')[0];
     const initials = name.slice(0, 2).toUpperCase();
     setUser({ name, email, initials });
+  };
+
+  const updateUser = (name: string, email: string, avatarId?: string) => {
+    const initials = name.trim().slice(0, 2).toUpperCase() || 'U';
+    const updated = { name: name.trim(), email: email.trim(), initials, avatarId };
+    setUser(updated);
+    AsyncStorage.setItem(STORAGE_KEYS.user, JSON.stringify(updated)).catch(() => {});
   };
 
   useEffect(() => {
@@ -743,7 +751,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     dailyGoal, setDailyGoal,
     notificationsEnabled, setNotificationsEnabled,
     wheelSoundEnabled, setWheelSoundEnabled,
-    user, login, logout,
+    user, login, logout, updateUser,
     categories, addCategory, removeCategory,
     streak, bestStreak, hasActivityToday, achievementValues, unlockedTierIds, spinCount, incrementSpinCount,
     seenAchievements, markAchievementSeen,

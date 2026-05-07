@@ -5,7 +5,8 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { Clock, Flame, ListTodo, Moon, RotateCcw } from 'lucide-react-native';
+import { Apple, Bird, Cake, Candy, Cherry, Clock, Cookie, Crown, Diamond, Flame, Flower, Gem, Heart, Leaf, ListTodo, Moon, RotateCcw, Sparkles, Star, Sun, Trophy, Turtle, Zap } from 'lucide-react-native';
+import type { LucideIcon } from 'lucide-react-native';
 import { useApp } from '../context/AppContext';
 import { LoginScreen } from '../screens/LoginScreen';
 import { SpinScreen } from '../screens/SpinScreen';
@@ -13,11 +14,13 @@ import { TasksScreen } from '../screens/TasksScreen';
 import { HistoryScreen } from '../screens/HistoryScreen';
 import { RestScreen } from '../screens/RestScreen';
 import { ProfileScreen } from '../screens/ProfileScreen';
+import { EditProfileScreen } from '../screens/EditProfileScreen';
 import { TOKENS } from '../theme/tokens';
 
 type RootStackParamList = {
   MainTabs: undefined;
   Profile: undefined;
+  EditProfile: undefined;
 };
 
 type TabParamList = {
@@ -29,6 +32,29 @@ type TabParamList = {
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<TabParamList>();
+
+const AVATAR_ICON_MAP: Record<string, { Icon: LucideIcon; bg: string; fg: string }> = {
+  flame:    { Icon: Flame,    bg: '#FF5C4D', fg: '#ffffff' },
+  heart:    { Icon: Heart,    bg: '#FF5C4D', fg: '#ffffff' },
+  cherry:   { Icon: Cherry,   bg: '#FF5C4D', fg: '#ffffff' },
+  apple:    { Icon: Apple,    bg: '#FF5C4D', fg: '#ffffff' },
+  star:     { Icon: Star,     bg: '#FF5C4D', fg: '#ffffff' },
+  cookie:   { Icon: Cookie,   bg: '#FF9B50', fg: '#ffffff' },
+  candy:    { Icon: Candy,    bg: '#FF9B50', fg: '#ffffff' },
+  cake:     { Icon: Cake,     bg: '#FF9B50', fg: '#ffffff' },
+  trophy:   { Icon: Trophy,   bg: '#FF9B50', fg: '#ffffff' },
+  zap:      { Icon: Zap,      bg: '#FF9B50', fg: '#ffffff' },
+  sun:      { Icon: Sun,      bg: '#111111', fg: '#FFE66D' },
+  moon:     { Icon: Moon,     bg: '#111111', fg: '#ffffff' },
+  crown:    { Icon: Crown,    bg: '#111111', fg: '#FFE66D' },
+  gem:      { Icon: Gem,      bg: '#111111', fg: '#A78BFA' },
+  diamond:  { Icon: Diamond,  bg: '#111111', fg: '#4ECDC4' },
+  flower:   { Icon: Flower,   bg: '#E8E0D5', fg: '#FF5C4D' },
+  leaf:     { Icon: Leaf,     bg: '#E8E0D5', fg: '#111111' },
+  bird:     { Icon: Bird,     bg: '#E8E0D5', fg: '#111111' },
+  turtle:   { Icon: Turtle,   bg: '#E8E0D5', fg: '#111111' },
+  sparkles: { Icon: Sparkles, bg: '#E8E0D5', fg: '#FF5C4D' },
+};
 
 const TAB_ICONS: Record<keyof TabParamList, any> = {
   Spin:    RotateCcw,
@@ -161,9 +187,18 @@ function StreakBadge({ onPress }: { onPress: () => void }) {
 
 function AvatarButton({ onPress }: { onPress: () => void }) {
   const { user } = useApp();
+  const av = user?.avatarId ? AVATAR_ICON_MAP[user.avatarId] : null;
   return (
-    <Pressable onPress={onPress} style={styles.avatarBtn} hitSlop={8}>
-      <Text style={styles.avatarText}>{user?.initials ?? 'U'}</Text>
+    <Pressable
+      onPress={onPress}
+      style={[styles.avatarBtn, av ? { backgroundColor: av.bg } : null]}
+      hitSlop={8}
+    >
+      {av ? (
+        <av.Icon size={20} color={av.fg} strokeWidth={1.8} />
+      ) : (
+        <Text style={styles.avatarText}>{user?.initials ?? 'U'}</Text>
+      )}
     </Pressable>
   );
 }
@@ -240,6 +275,11 @@ export function AppNavigator() {
         <Stack.Screen
           name="Profile"
           component={ProfileScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="EditProfile"
+          component={EditProfileScreen}
           options={{ headerShown: false }}
         />
       </Stack.Navigator>
