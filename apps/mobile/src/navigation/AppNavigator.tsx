@@ -149,7 +149,7 @@ function StreakBadge({ onPress }: { onPress: () => void }) {
   return (
     <Pressable onPress={onPress} style={styles.streakBadge} hitSlop={8}>
       <Flame
-        size={14}
+        size={18}
         color={flameColor}
         strokeWidth={2.2}
         fill={atRisk ? 'transparent' : hasStreak ? flameColor : 'transparent'}
@@ -266,7 +266,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   streakText: {
-    fontSize: 15,
+    fontSize: 17,
     fontWeight: '700',
     color: TOKENS.colors.action.streak,
     letterSpacing: -0.3,
@@ -275,16 +275,16 @@ const styles = StyleSheet.create({
     color: TOKENS.colors.text.muted,
   },
   avatarBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
     backgroundColor: TOKENS.colors.action.primary,
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
   },
   avatarText: {
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: '700',
     color: '#ffffff',
     textAlign: 'center',
