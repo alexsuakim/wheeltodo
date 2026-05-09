@@ -9,7 +9,9 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.105.4",
     "@todo/shared": "file:../../packages/shared",
+    "lucide-react": "^1.14.0",
     "next": "16.2.2",
     "react": "19.2.0",
     "react-dom": "19.2.0"

@@ -1,0 +1,581 @@
+"use client";
+
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+export interface Task {
+  id: string;
+  name: string;
+  minutes: number;
+  color: string;
+  icon: string;
+  category?: string;
+}
+
+export interface CompletedTask {
+  id: string;
+  taskId: string;
+  taskName: string;
+  color: string;
+  icon: string;
+  category?: string;
+  minutesEstimated: number;
+  minutesActual: number;
+  completedAt: Date;
+}
+
+export interface PomodoroSession {
+  taskId: string;
+  taskName: string;
+  totalSeconds: number;
+  remainingSeconds: number;
+  isRunning: boolean;
+}
+
+export type RestCategory = "Physical" | "Mental" | "Social" | "Nourishment" | "My Tasks";
+export type DailyMood = "drained" | "okay" | "restless" | null;
+export type RestGoalTier = "easy" | "standard" | "dedicated";
+
+export const REST_GOAL_MINUTES: Record<RestGoalTier, number> = {
+  easy: 15,
+  standard: 30,
+  dedicated: 45,
+};
+
+export interface RestTask {
+  id: string;
+  name: string;
+  isPreset: boolean;
+  completedToday: boolean;
+  durationMinutes: number;
+  category: RestCategory;
+  skippedToday?: boolean;
+}
+
+export interface ActiveRestTimer {
+  taskId: string;
+  totalSeconds: number;
+  remainingSeconds: number;
+  isRunning: boolean;
+}
+
+export const PRESET_REST_TASKS: RestTask[] = [
+  { id: "preset_1",  name: "Get a coffee",              isPreset: true, completedToday: false, durationMinutes: 5,  category: "Nourishment" },
+  { id: "preset_2",  name: "Go for a walk",             isPreset: true, completedToday: false, durationMinutes: 20, category: "Physical"    },
+  { id: "preset_3",  name: "Read",                      isPreset: true, completedToday: false, durationMinutes: 10, category: "Mental"      },
+  { id: "preset_4",  name: "Stretch",                   isPreset: true, completedToday: false, durationMinutes: 10, category: "Physical"    },
+  { id: "preset_5",  name: "Call a friend",             isPreset: true, completedToday: false, durationMinutes: 15, category: "Social"      },
+  { id: "preset_6",  name: "Take a nap",                isPreset: true, completedToday: false, durationMinutes: 30, category: "Physical"    },
+  { id: "preset_7",  name: "Cook something",            isPreset: true, completedToday: false, durationMinutes: 20, category: "Nourishment" },
+  { id: "preset_8",  name: "Go for a run",              isPreset: true, completedToday: false, durationMinutes: 30, category: "Physical"    },
+  { id: "preset_9",  name: "Journal",                   isPreset: true, completedToday: false, durationMinutes: 10, category: "Mental"      },
+  { id: "preset_10", name: "Watch something you enjoy", isPreset: true, completedToday: false, durationMinutes: 30, category: "Mental"      },
+];
+
+export const COLORS = ["#FF5C4D", "#FF9B50", "#4ECDC4", "#FFE66D", "#A78BFA", "#F9A8D4"];
+
+const DEFAULT_CATEGORIES = ["Work", "Personal", "Learning", "Health"];
+
+const defaultTasks: Task[] = [
+  { id: "1", name: "Write blog post",  minutes: 25, color: "#FF5C4D", icon: "PenLine"  },
+  { id: "2", name: "Review code",      minutes: 15, color: "#FF9B50", icon: "Code"     },
+  { id: "3", name: "Design mockups",   minutes: 30, color: "#4ECDC4", icon: "Palette"  },
+  { id: "4", name: "Team meeting",     minutes: 20, color: "#FFE66D", icon: "Users"    },
+  { id: "5", name: "Email replies",    minutes: 10, color: "#A78BFA", icon: "Mail"     },
+  { id: "6", name: "Research",         minutes: 25, color: "#F9A8D4", icon: "BookOpen" },
+];
+
+// ─── Context type ─────────────────────────────────────────────────────────────
+
+interface AppContextType {
+  tasks: Task[];
+  addTask: (task: Omit<Task, "id">) => void;
+  updateTask: (id: string, updates: Partial<Task>) => void;
+  deleteTask: (id: string) => void;
+
+  completedTasks: CompletedTask[];
+  completeTask: (taskId: string, minutesActual: number) => void;
+  uncompleteTask: (completedTaskId: string) => void;
+
+  pomodoroSession: PomodoroSession | null;
+  taskProgress: Record<string, number>;
+  startPomodoro: (task: Task) => void;
+  pausePomodoro: () => void;
+  resumePomodoro: () => void;
+  completePomodoro: () => void;
+  tickPomodoro: () => void;
+
+  dailyGoal: number;
+  setDailyGoal: (goal: number) => void;
+
+  categories: string[];
+  addCategory: (cat: string) => void;
+  removeCategory: (cat: string) => void;
+
+  streak: number;
+  bestStreak: number;
+  hasActivityToday: boolean;
+  spinCount: number;
+  incrementSpinCount: () => void;
+
+  restTasks: RestTask[];
+  completedRestDays: Date[];
+  partialRestDays: { date: Date; pct: number }[];
+  toggleRestTask: (id: string) => void;
+  addRestTask: (name: string, durationMinutes?: number) => void;
+  removeRestTask: (id: string) => void;
+
+  activeRestTimer: ActiveRestTimer | null;
+  startRestTimer: (taskId: string) => void;
+  cancelRestTimer: () => void;
+  tickRestTimer: () => void;
+
+  todayMood: DailyMood;
+  setTodayMood: (mood: DailyMood) => void;
+
+  restGoalTier: RestGoalTier;
+  setRestGoalTier: (tier: RestGoalTier) => void;
+  restMinutesToday: number;
+  restGoalMinutes: number;
+  restStreak: number;
+  bestRestStreak: number;
+}
+
+// ─── Storage helpers ──────────────────────────────────────────────────────────
+
+function ls<T>(key: string, fallback: T): T {
+  if (typeof window === "undefined") return fallback;
+  try {
+    const raw = localStorage.getItem(key);
+    if (raw === null) return fallback;
+    return JSON.parse(raw) as T;
+  } catch {
+    return fallback;
+  }
+}
+
+function lsSet(key: string, value: unknown) {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch {
+    // ignore quota errors
+  }
+}
+
+const KEYS = {
+  tasks: "wt.tasks",
+  completedTasks: "wt.completedTasks",
+  categories: "wt.categories",
+  spinCount: "wt.spinCount",
+  restTasks: "wt.restTasks",
+  restTasksDate: "wt.restTasksDate",
+  completedRestDays: "wt.completedRestDays",
+  partialRestDays: "wt.partialRestDays",
+  todayMood: "wt.todayMood",
+  todayMoodDate: "wt.todayMoodDate",
+  restGoalTier: "wt.restGoalTier",
+  dailyGoal: "wt.dailyGoal",
+} as const;
+
+// ─── Provider ─────────────────────────────────────────────────────────────────
+
+const AppContext = createContext<AppContextType | undefined>(undefined);
+
+export function AppProvider({ children }: { children: ReactNode }) {
+  const [loaded, setLoaded] = useState(false);
+  const [tasks, setTasks] = useState<Task[]>(defaultTasks);
+  const [completedTasks, setCompletedTasks] = useState<CompletedTask[]>([]);
+  const [pomodoroSession, setPomodoroSession] = useState<PomodoroSession | null>(null);
+  const [taskProgress, setTaskProgress] = useState<Record<string, number>>({});
+  const [dailyGoal, setDailyGoalState] = useState(6);
+  const [categories, setCategories] = useState<string[]>(DEFAULT_CATEGORIES);
+  const [spinCount, setSpinCount] = useState(0);
+  const [restTasks, setRestTasks] = useState<RestTask[]>(PRESET_REST_TASKS);
+  const [completedRestDays, setCompletedRestDays] = useState<Date[]>([]);
+  const [partialRestDays, setPartialRestDays] = useState<{ date: Date; pct: number }[]>([]);
+  const [activeRestTimer, setActiveRestTimer] = useState<ActiveRestTimer | null>(null);
+  const [todayMood, setTodayMoodState] = useState<DailyMood>(null);
+  const [restGoalTier, setRestGoalTierState] = useState<RestGoalTier>("standard");
+
+  // Load from localStorage on mount
+  useEffect(() => {
+    const savedTasks = ls<Task[]>(KEYS.tasks, defaultTasks);
+    setTasks(savedTasks);
+
+    const rawCompleted = ls<Array<CompletedTask & { completedAt: string }>>(KEYS.completedTasks, []);
+    setCompletedTasks(rawCompleted.map((t) => ({ ...t, completedAt: new Date(t.completedAt) })));
+
+    setCategories(ls<string[]>(KEYS.categories, DEFAULT_CATEGORIES));
+    setSpinCount(ls<number>(KEYS.spinCount, 0));
+    setDailyGoalState(ls<number>(KEYS.dailyGoal, 6));
+
+    const todayStr = new Date().toDateString();
+    const savedRestTasksDate = ls<string>(KEYS.restTasksDate, "");
+    const savedRestTasks = ls<RestTask[]>(KEYS.restTasks, PRESET_REST_TASKS);
+    const custom = savedRestTasks.filter((t) => !t.isPreset);
+    if (savedRestTasksDate === todayStr) {
+      const savedPresets = savedRestTasks.filter((t) => t.isPreset);
+      const refreshed = PRESET_REST_TASKS.map((p) => ({
+        ...p,
+        completedToday: savedPresets.find((s) => s.id === p.id)?.completedToday ?? false,
+        skippedToday: savedPresets.find((s) => s.id === p.id)?.skippedToday ?? false,
+      }));
+      setRestTasks([...refreshed, ...custom]);
+    } else {
+      setRestTasks([...PRESET_REST_TASKS, ...custom.map((t) => ({ ...t, completedToday: false }))]);
+    }
+
+    const rawCRD = ls<string[]>(KEYS.completedRestDays, []);
+    setCompletedRestDays(rawCRD.map((d) => new Date(d)));
+
+    const rawPRD = ls<Array<{ date: string; pct: number }>>(KEYS.partialRestDays, []);
+    setPartialRestDays(rawPRD.map((d) => ({ date: new Date(d.date), pct: d.pct })));
+
+    const savedMoodDate = ls<string>(KEYS.todayMoodDate, "");
+    if (savedMoodDate === todayStr) {
+      setTodayMoodState(ls<DailyMood>(KEYS.todayMood, null));
+    }
+    setRestGoalTierState(ls<RestGoalTier>(KEYS.restGoalTier, "standard"));
+
+    setLoaded(true);
+  }, []);
+
+  // Persist whenever state changes
+  useEffect(() => { if (loaded) lsSet(KEYS.tasks, tasks); }, [tasks, loaded]);
+  useEffect(() => { if (loaded) lsSet(KEYS.completedTasks, completedTasks); }, [completedTasks, loaded]);
+  useEffect(() => { if (loaded) lsSet(KEYS.categories, categories); }, [categories, loaded]);
+  useEffect(() => { if (loaded) lsSet(KEYS.spinCount, spinCount); }, [spinCount, loaded]);
+  useEffect(() => { if (loaded) lsSet(KEYS.dailyGoal, dailyGoal); }, [dailyGoal, loaded]);
+  useEffect(() => {
+    if (!loaded) return;
+    lsSet(KEYS.restTasks, restTasks);
+    lsSet(KEYS.restTasksDate, new Date().toDateString());
+  }, [restTasks, loaded]);
+  useEffect(() => {
+    if (!loaded) return;
+    lsSet(KEYS.completedRestDays, completedRestDays.map((d) => d.toISOString()));
+  }, [completedRestDays, loaded]);
+  useEffect(() => {
+    if (!loaded) return;
+    lsSet(KEYS.partialRestDays, partialRestDays.map((d) => ({ date: d.date.toISOString(), pct: d.pct })));
+  }, [partialRestDays, loaded]);
+  useEffect(() => { if (loaded) lsSet(KEYS.restGoalTier, restGoalTier); }, [restGoalTier, loaded]);
+
+  // ─── Task actions ────────────────────────────────────────────────────────────
+
+  const addTask = (task: Omit<Task, "id">) => {
+    setTasks((prev) => [...prev, { ...task, id: Date.now().toString() }]);
+  };
+
+  const updateTask = (id: string, updates: Partial<Task>) => {
+    setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, ...updates } : t)));
+  };
+
+  const deleteTask = (id: string) => {
+    setTasks((prev) => prev.filter((t) => t.id !== id));
+  };
+
+  const completeTask = (taskId: string, minutesActual: number) => {
+    const task = tasks.find((t) => t.id === taskId);
+    if (!task) return;
+    const completed: CompletedTask = {
+      id: Date.now().toString(),
+      taskId: task.id,
+      taskName: task.name,
+      color: task.color,
+      icon: task.icon,
+      category: task.category,
+      minutesEstimated: task.minutes,
+      minutesActual,
+      completedAt: new Date(),
+    };
+    setCompletedTasks((prev) => [completed, ...prev]);
+  };
+
+  const uncompleteTask = (completedTaskId: string) => {
+    const ct = completedTasks.find((t) => t.id === completedTaskId);
+    if (!ct) return;
+    setTasks((prev) => [...prev, {
+      id: ct.taskId,
+      name: ct.taskName,
+      minutes: ct.minutesEstimated,
+      color: ct.color,
+      icon: ct.icon,
+      category: ct.category,
+    }]);
+    setCompletedTasks((prev) => prev.filter((t) => t.id !== completedTaskId));
+  };
+
+  // ─── Pomodoro ────────────────────────────────────────────────────────────────
+
+  const startPomodoro = (task: Task) => {
+    const totalSeconds = task.minutes * 60;
+    if (pomodoroSession && pomodoroSession.taskId !== task.id) {
+      setTaskProgress((prev) => ({ ...prev, [pomodoroSession.taskId]: pomodoroSession.remainingSeconds }));
+    }
+    const savedRemaining = taskProgress[task.id];
+    setPomodoroSession({
+      taskId: task.id,
+      taskName: task.name,
+      totalSeconds,
+      remainingSeconds: savedRemaining ?? totalSeconds,
+      isRunning: true,
+    });
+  };
+
+  const pausePomodoro = () => {
+    setPomodoroSession((s) => (s ? { ...s, isRunning: false } : null));
+  };
+
+  const resumePomodoro = () => {
+    setPomodoroSession((s) => (s ? { ...s, isRunning: true } : null));
+  };
+
+  const completePomodoro = () => {
+    if (!pomodoroSession) return;
+    const { taskId } = pomodoroSession;
+    const minutesActual = Math.max(
+      1,
+      Math.ceil((pomodoroSession.totalSeconds - pomodoroSession.remainingSeconds) / 60)
+    );
+    completeTask(taskId, minutesActual);
+    deleteTask(taskId);
+    setPomodoroSession(null);
+    setTaskProgress((prev) => {
+      const next = { ...prev };
+      delete next[taskId];
+      return next;
+    });
+  };
+
+  const tickPomodoro = useCallback(() => {
+    setPomodoroSession((s) =>
+      s && s.isRunning && s.remainingSeconds > 0
+        ? { ...s, remainingSeconds: s.remainingSeconds - 1 }
+        : s
+    );
+  }, []);
+
+  // ─── Rest timer ──────────────────────────────────────────────────────────────
+
+  const startRestTimer = useCallback((taskId: string) => {
+    setRestTasks((prev) => {
+      const task = prev.find((t) => t.id === taskId);
+      if (!task) return prev;
+      setActiveRestTimer({
+        taskId,
+        totalSeconds: task.durationMinutes * 60,
+        remainingSeconds: task.durationMinutes * 60,
+        isRunning: true,
+      });
+      return prev;
+    });
+  }, []);
+
+  const cancelRestTimer = useCallback(() => {
+    setActiveRestTimer(null);
+  }, []);
+
+  const tickRestTimer = useCallback(() => {
+    setActiveRestTimer((s) => {
+      if (!s || !s.isRunning) return s;
+      if (s.remainingSeconds <= 1) {
+        setRestTasks((prev) =>
+          prev.map((t) => (t.id === s.taskId ? { ...t, completedToday: true, skippedToday: false } : t))
+        );
+        return null;
+      }
+      return { ...s, remainingSeconds: s.remainingSeconds - 1 };
+    });
+  }, []);
+
+  const toggleRestTask = (id: string) => {
+    setRestTasks((prev) =>
+      prev.map((t) => (t.id === id ? { ...t, completedToday: !t.completedToday, skippedToday: false } : t))
+    );
+  };
+
+  const addRestTask = (name: string, durationMinutes = 10) => {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    setRestTasks((prev) => [
+      ...prev,
+      {
+        id: `custom_${Date.now()}`,
+        name: trimmed,
+        isPreset: false,
+        completedToday: false,
+        durationMinutes,
+        category: "My Tasks" as RestCategory,
+      },
+    ]);
+  };
+
+  const removeRestTask = (id: string) => {
+    const task = restTasks.find((t) => t.id === id);
+    if (!task || task.isPreset) return;
+    setRestTasks((prev) => prev.filter((t) => t.id !== id));
+  };
+
+  const setTodayMood = useCallback((mood: DailyMood) => {
+    setTodayMoodState(mood);
+    lsSet(KEYS.todayMood, mood);
+    lsSet(KEYS.todayMoodDate, new Date().toDateString());
+  }, []);
+
+  const setRestGoalTier = useCallback((tier: RestGoalTier) => {
+    setRestGoalTierState(tier);
+  }, []);
+
+  const setDailyGoal = (goal: number) => setDailyGoalState(goal);
+
+  const addCategory = (cat: string) => {
+    const trimmed = cat.trim();
+    if (trimmed && !categories.includes(trimmed)) setCategories((prev) => [...prev, trimmed]);
+  };
+
+  const removeCategory = (cat: string) => {
+    setCategories((prev) => prev.filter((c) => c !== cat));
+  };
+
+  const incrementSpinCount = useCallback(() => {
+    setSpinCount((n) => n + 1);
+  }, []);
+
+  // ─── Derived values ───────────────────────────────────────────────────────────
+
+  const restGoalMinutes = REST_GOAL_MINUTES[restGoalTier];
+
+  const restMinutesToday = useMemo(() => {
+    return restTasks.filter((t) => t.completedToday).reduce((sum, t) => sum + t.durationMinutes, 0);
+  }, [restTasks]);
+
+  // Sync rest goal completion
+  useEffect(() => {
+    if (!loaded) return;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const pct = restGoalMinutes > 0 ? Math.min(restMinutesToday / restGoalMinutes, 1) : 0;
+    const goalMet = pct >= 1;
+
+    setCompletedRestDays((prev) => {
+      const alreadyIn = prev.some((d) => d.getTime() === today.getTime());
+      if (goalMet && !alreadyIn) return [...prev, today];
+      if (!goalMet && alreadyIn) return prev.filter((d) => d.getTime() !== today.getTime());
+      return prev;
+    });
+
+    setPartialRestDays((prev) => {
+      const filtered = prev.filter((d) => d.date.getTime() !== today.getTime());
+      if (pct > 0 && pct < 1) return [...filtered, { date: today, pct }];
+      return filtered;
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [restMinutesToday, restGoalMinutes, loaded]);
+
+  const hasActivityToday = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const hasTask = completedTasks.some((t) => { const d = new Date(t.completedAt); return d >= today && d < tomorrow; });
+    const hasRest = completedRestDays.some((d) => d >= today && d < tomorrow);
+    return hasTask || hasRest;
+  }, [completedTasks, completedRestDays]);
+
+  const streak = useMemo(() => {
+    if (completedTasks.length === 0 && completedRestDays.length === 0) return 0;
+    let count = 0;
+    const base = new Date();
+    base.setHours(0, 0, 0, 0);
+    for (let i = 0; i < 365; i++) {
+      const day = new Date(base);
+      day.setDate(day.getDate() - i);
+      const next = new Date(day);
+      next.setDate(next.getDate() + 1);
+      const hasTask = completedTasks.some((t) => { const d = new Date(t.completedAt); return d >= day && d < next; });
+      const hasRest = completedRestDays.some((d) => d >= day && d < next);
+      if (hasTask || hasRest) { count++; } else { break; }
+    }
+    return count;
+  }, [completedTasks, completedRestDays]);
+
+  const bestStreak = useMemo(() => {
+    const dates = new Set<number>();
+    completedTasks.forEach((t) => { const d = new Date(t.completedAt); d.setHours(0, 0, 0, 0); dates.add(d.getTime()); });
+    completedRestDays.forEach((d) => { const day = new Date(d); day.setHours(0, 0, 0, 0); dates.add(day.getTime()); });
+    const sorted = Array.from(dates).sort((a, b) => a - b);
+    if (sorted.length === 0) return 0;
+    const DAY = 86400000;
+    let best = 1, current = 1;
+    for (let i = 1; i < sorted.length; i++) {
+      if (sorted[i] - sorted[i - 1] === DAY) { current++; if (current > best) best = current; } else { current = 1; }
+    }
+    return best;
+  }, [completedTasks, completedRestDays]);
+
+  const restStreak = useMemo(() => {
+    if (completedRestDays.length === 0) return 0;
+    let count = 0;
+    const base = new Date();
+    base.setHours(0, 0, 0, 0);
+    for (let i = 0; i < 365; i++) {
+      const day = new Date(base);
+      day.setDate(day.getDate() - i);
+      const next = new Date(day);
+      next.setDate(next.getDate() + 1);
+      if (completedRestDays.some((d) => d >= day && d < next)) { count++; } else { break; }
+    }
+    return count;
+  }, [completedRestDays]);
+
+  const bestRestStreak = useMemo(() => {
+    const dates = new Set<number>();
+    completedRestDays.forEach((d) => { const day = new Date(d); day.setHours(0, 0, 0, 0); dates.add(day.getTime()); });
+    const sorted = Array.from(dates).sort((a, b) => a - b);
+    if (sorted.length === 0) return 0;
+    const DAY = 86400000;
+    let best = 1, current = 1;
+    for (let i = 1; i < sorted.length; i++) {
+      if (sorted[i] - sorted[i - 1] === DAY) { current++; if (current > best) best = current; } else { current = 1; }
+    }
+    return best;
+  }, [completedRestDays]);
+
+  const value: AppContextType = {
+    tasks, addTask, updateTask, deleteTask,
+    completedTasks, completeTask, uncompleteTask,
+    pomodoroSession, taskProgress, startPomodoro, pausePomodoro, resumePomodoro, completePomodoro, tickPomodoro,
+    dailyGoal, setDailyGoal,
+    categories, addCategory, removeCategory,
+    streak, bestStreak, hasActivityToday, spinCount, incrementSpinCount,
+    restTasks, completedRestDays, partialRestDays, toggleRestTask, addRestTask, removeRestTask,
+    activeRestTimer, startRestTimer, cancelRestTimer, tickRestTimer,
+    todayMood, setTodayMood,
+    restGoalTier, setRestGoalTier,
+    restMinutesToday, restGoalMinutes,
+    restStreak, bestRestStreak,
+  };
+
+  return (
+    <AppContext.Provider value={value}>
+      {loaded ? children : null}
+    </AppContext.Provider>
+  );
+}
+
+export function useApp() {
+  const context = useContext(AppContext);
+  if (!context) throw new Error("useApp must be used within AppProvider");
+  return context;
+}
