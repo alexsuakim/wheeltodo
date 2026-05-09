@@ -2,28 +2,39 @@
 
 import { useEffect, useState } from "react";
 import type { User } from "@supabase/supabase-js";
-import { AppProvider } from "@/context/AppContext";
+import { AppProvider, useApp } from "@/context/AppContext";
 import { AuthPage } from "@/components/auth/AuthPage";
 import { AppShell, type TabId } from "@/components/layout/AppShell";
 import { SpinTab } from "@/components/tabs/SpinTab";
 import { TasksTab } from "@/components/tabs/TasksTab";
 import { RestTab } from "@/components/tabs/RestTab";
 import { HistoryTab } from "@/components/tabs/HistoryTab";
+import { Onboarding } from "@/components/Onboarding";
 import { getSupabaseClient } from "@todo/shared";
 
 // ─── Authenticated app ────────────────────────────────────────────────────────
 
-function AuthenticatedApp({ user, onSignOut }: { user: User; onSignOut: () => void }) {
+function AppContent({ user, onSignOut }: { user: User | null; onSignOut: () => void }) {
   const [activeTab, setActiveTab] = useState<TabId>("spin");
+  const { hasSeenOnboarding, markOnboardingSeen } = useApp();
 
   return (
-    <AppProvider>
+    <>
+      {!hasSeenOnboarding && <Onboarding onDone={markOnboardingSeen} />}
       <AppShell user={user} activeTab={activeTab} setActiveTab={setActiveTab} onSignOut={onSignOut}>
         {activeTab === "spin"    && <SpinTab onNavigateToTasks={() => setActiveTab("tasks")} />}
         {activeTab === "tasks"   && <TasksTab />}
         {activeTab === "rest"    && <RestTab />}
         {activeTab === "history" && <HistoryTab />}
       </AppShell>
+    </>
+  );
+}
+
+function AuthenticatedApp({ user, onSignOut }: { user: User | null; onSignOut: () => void }) {
+  return (
+    <AppProvider>
+      <AppContent user={user} onSignOut={onSignOut} />
     </AppProvider>
   );
 }
@@ -33,6 +44,7 @@ function AuthenticatedApp({ user, onSignOut }: { user: User; onSignOut: () => vo
 export default function Home() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [skipAuth, setSkipAuth] = useState(false);
 
   useEffect(() => {
     let supabase: ReturnType<typeof getSupabaseClient> | null = null;
@@ -40,6 +52,7 @@ export default function Home() {
       supabase = getSupabaseClient();
     } catch {
       // Supabase env not configured — skip auth and go straight to app
+      setSkipAuth(true);
       setLoading(false);
       return;
     }
@@ -66,20 +79,20 @@ export default function Home() {
     );
   }
 
-  if (!user) {
-    return (
-      <AuthPage
-        onAuthenticated={() => {
-          try {
-            const supabase = getSupabaseClient();
-            supabase.auth.getSession().then(({ data }) => setUser(data.session?.user ?? null));
-          } catch {
-            // ignore
-          }
-        }}
-      />
-    );
+  if (skipAuth || user) {
+    return <AuthenticatedApp user={user} onSignOut={() => setUser(null)} />;
   }
 
-  return <AuthenticatedApp user={user} onSignOut={() => setUser(null)} />;
+  return (
+    <AuthPage
+      onAuthenticated={() => {
+        try {
+          const supabase = getSupabaseClient();
+          supabase.auth.getSession().then(({ data }) => setUser(data.session?.user ?? null));
+        } catch {
+          // ignore
+        }
+      }}
+    />
+  );
 }

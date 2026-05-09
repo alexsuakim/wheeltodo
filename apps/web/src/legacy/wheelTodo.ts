@@ -32,6 +32,9 @@ function minutesToMs(minutes: number) {
 }
 
 function newId() {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
   return `${Date.now().toString(16)}-${Math.random().toString(16).slice(2)}`;
 }
 
@@ -376,7 +379,9 @@ export function initWheelTodo() {
     const key = todayKey;
     const nextTasks = tasks.slice();
     const nextDone = doneTasks.slice();
-    saveQueue = saveQueue.then(() => saveDayData(dbState, key, nextTasks, nextDone)).catch(() => {});
+    saveQueue = saveQueue.then(() => saveDayData(dbState, key, nextTasks, nextDone)).catch((err) => {
+      console.error("[wheeltodo] Failed to save tasks to IndexedDB:", err);
+    });
   }
 
   function drawWheel() {
@@ -513,6 +518,7 @@ export function initWheelTodo() {
       rm.className = "task-remove";
       rm.textContent = "×";
       rm.addEventListener("click", () => {
+        if (spinning) return;
         tasks = tasks.filter((t) => t.id !== task.id);
         saveTasks();
         renderTaskList();
@@ -686,8 +692,9 @@ export function initWheelTodo() {
   modalStartEl.addEventListener("click", () => {
     if (selectedIndex == null || !tasks[selectedIndex]) return;
     hideResult();
-    // Minimal TS port keeps legacy UI; Pomodoro logic will be reintroduced next.
-    // For now, just close the modal.
+    // TODO: wire up Pomodoro start for the selected task.
+    // The full timer logic lives in app.js (startPomodoroForTask) and should be
+    // ported here as part of the TS migration. Tracked in: apps/web/CLAUDE.md
   });
 
   resultModalEl.addEventListener("click", (e) => {

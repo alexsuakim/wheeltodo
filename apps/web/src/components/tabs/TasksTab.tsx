@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { HelpCircle, ChevronDown, ChevronUp, Timer, X, Plus, Trash2, Pencil } from "lucide-react";
+import { HelpCircle, ChevronDown, ChevronUp, Timer, Plus, Trash2 } from "lucide-react";
 import { useApp, COLORS, type Task } from "@/context/AppContext";
+import { Confetti } from "@/components/Confetti";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -48,9 +49,12 @@ interface TaskModalProps {
 }
 
 function TaskModal({ task, categories, onAdd, onSave, onClose, onAddCategory }: TaskModalProps) {
+  const { defaultTimerMinutes } = useApp();
   const isEdit = !!task;
+  const defaultMins = task?.minutes ?? defaultTimerMinutes;
   const [name, setName] = useState(task?.name ?? "");
-  const [mins, setMins] = useState(String(task?.minutes ?? 25));
+  const [hours, setHours] = useState(Math.floor(defaultMins / 60));
+  const [mins, setMins] = useState(defaultMins % 60);
   const [color, setColor] = useState(task?.color ?? COLORS[0]);
   const [category, setCategory] = useState(task?.category ?? "");
   const [addingCat, setAddingCat] = useState(false);
@@ -60,11 +64,11 @@ function TaskModal({ task, categories, onAdd, onSave, onClose, onAddCategory }: 
     e.preventDefault();
     const v = name.trim();
     if (!v) return;
-    const m = Math.max(1, parseInt(mins, 10) || 25);
+    const total = Math.max(1, hours * 60 + mins);
     if (isEdit && task) {
-      onSave(task.id, v, m, color, category);
+      onSave(task.id, v, total, color, category);
     } else {
-      onAdd(v, m, color, category);
+      onAdd(v, total, color, category);
     }
     onClose();
   }
@@ -105,15 +109,32 @@ function TaskModal({ task, categories, onAdd, onSave, onClose, onAddCategory }: 
           </div>
 
           <div>
-            <p className="text-xs font-semibold text-[#aaaaaa] uppercase tracking-wide mb-2">Duration (minutes)</p>
-            <input
-              type="number"
-              value={mins}
-              onChange={(e) => setMins(e.target.value)}
-              min={1}
-              max={480}
-              className="w-28 bg-[#f7f6f3] rounded-xl px-4 py-3 text-2xl font-bold text-[#111111] text-center focus:outline-none focus:ring-2 focus:ring-[#111111]/20 transition"
-            />
+            <p className="text-xs font-semibold text-[#aaaaaa] uppercase tracking-wide mb-2">Duration</p>
+            <div className="flex items-center gap-2">
+              <div className="flex flex-col items-center">
+                <input
+                  type="number"
+                  value={hours}
+                  onChange={(e) => setHours(Math.max(0, Math.min(8, parseInt(e.target.value) || 0)))}
+                  min={0}
+                  max={8}
+                  className="w-20 bg-[#f7f6f3] rounded-xl px-3 py-3 text-2xl font-bold text-[#111111] text-center focus:outline-none focus:ring-2 focus:ring-[#111111]/20 transition"
+                />
+                <span className="text-xs text-[#aaaaaa] mt-1">hours</span>
+              </div>
+              <span className="text-2xl font-bold text-[#aaaaaa] mb-4">:</span>
+              <div className="flex flex-col items-center">
+                <input
+                  type="number"
+                  value={mins}
+                  onChange={(e) => setMins(Math.max(0, Math.min(59, parseInt(e.target.value) || 0)))}
+                  min={0}
+                  max={59}
+                  className="w-20 bg-[#f7f6f3] rounded-xl px-3 py-3 text-2xl font-bold text-[#111111] text-center focus:outline-none focus:ring-2 focus:ring-[#111111]/20 transition"
+                />
+                <span className="text-xs text-[#aaaaaa] mt-1">mins</span>
+              </div>
+            </div>
           </div>
 
           <div>
@@ -234,7 +255,7 @@ function TaskRow({ task, isActive, displayTime, onFocus, onComplete, onDelete, o
 
 // ─── Focus card ───────────────────────────────────────────────────────────────
 
-function FocusCard() {
+function FocusCard({ onComplete }: { onComplete: () => void }) {
   const { pomodoroSession, pausePomodoro, resumePomodoro, completePomodoro, tickPomodoro, tasks } = useApp();
   const completedRef = useRef(false);
 
@@ -252,8 +273,9 @@ function FocusCard() {
     if (pomodoroSession?.remainingSeconds === 0 && !completedRef.current) {
       completedRef.current = true;
       completePomodoro();
+      onComplete();
     }
-  }, [pomodoroSession?.remainingSeconds, completePomodoro]);
+  }, [pomodoroSession?.remainingSeconds, completePomodoro, onComplete]);
 
   if (!pomodoroSession) return null;
 
@@ -268,7 +290,7 @@ function FocusCard() {
         )}
         <p className="text-base font-semibold text-white truncate flex-1">{pomodoroSession.taskName}</p>
         <button
-          onClick={() => { if (!completedRef.current) { completedRef.current = true; completePomodoro(); } }}
+          onClick={() => { if (!completedRef.current) { completedRef.current = true; completePomodoro(); onComplete(); } }}
           className="text-xs font-semibold text-white/60 hover:text-white bg-white/10 rounded-full px-3 py-1 transition-colors shrink-0"
         >
           Done ✓
@@ -309,6 +331,7 @@ export function TasksTab() {
   } = useApp();
   const [modalOpen, setModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [confetti, setConfetti] = useState(false);
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -342,6 +365,7 @@ export function TasksTab() {
       : task.minutes;
     completeTask(task.id, minutesActual);
     deleteTask(task.id);
+    setConfetti(true);
   }
 
   return (
@@ -383,8 +407,11 @@ export function TasksTab() {
         </div>
       )}
 
+      {/* Confetti */}
+      <Confetti active={confetti} onDone={() => setConfetti(false)} />
+
       {/* Focus card */}
-      <FocusCard />
+      <FocusCard onComplete={() => setConfetti(true)} />
 
       {/* Task list */}
       {tasks.length > 0 && (

@@ -20,6 +20,7 @@ import {
   Zap,
 } from "lucide-react";
 import { useApp, type RestTask, type DailyMood, type RestCategory } from "@/context/AppContext";
+import { Confetti } from "@/components/Confetti";
 
 // ─── Category meta ────────────────────────────────────────────────────────────
 
@@ -279,6 +280,7 @@ export function RestTab() {
     Physical: false, Mental: false, Social: false, Nourishment: false, "My Tasks": false,
   });
   const [showCelebration, setShowCelebration] = useState(false);
+  const [confetti, setConfetti] = useState(false);
   const prevGoalMet = useRef(false);
 
   useEffect(() => {
@@ -289,7 +291,7 @@ export function RestTab() {
 
   const goalMet = restGoalMinutes > 0 && restMinutesToday >= restGoalMinutes;
   useEffect(() => {
-    if (goalMet && !prevGoalMet.current) setShowCelebration(true);
+    if (goalMet && !prevGoalMet.current) { setShowCelebration(true); setConfetti(true); }
     prevGoalMet.current = goalMet;
   }, [goalMet]);
 
@@ -382,6 +384,9 @@ export function RestTab() {
           </button>
         </div>
       </div>
+
+      {/* Confetti */}
+      <Confetti active={confetti} onDone={() => setConfetti(false)} />
 
       {/* Celebration overlay */}
       {showCelebration && (

@@ -22,3 +22,13 @@ body {
 .safe-area-bottom {
   padding-bottom: env(safe-area-inset-bottom, 0);
 }
+
+/* Confetti burst animation */
+@keyframes confetti-fall {
+  0%   { transform: translate(0, 0) rotate(0deg);                            opacity: 1; }
+  80%  { opacity: 1; }
+  100% { transform: translate(var(--cx), var(--cy)) rotate(var(--cr)); opacity: 0; }
+}
+.confetti-particle {
+  animation: confetti-fall 1.4s ease-out forwards;
+}

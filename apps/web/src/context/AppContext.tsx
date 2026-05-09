@@ -117,6 +117,8 @@ interface AppContextType {
 
   dailyGoal: number;
   setDailyGoal: (goal: number) => void;
+  defaultTimerMinutes: number;
+  setDefaultTimerMinutes: (m: number) => void;
 
   categories: string[];
   addCategory: (cat: string) => void;
@@ -149,6 +151,9 @@ interface AppContextType {
   restGoalMinutes: number;
   restStreak: number;
   bestRestStreak: number;
+
+  hasSeenOnboarding: boolean;
+  markOnboardingSeen: () => void;
 }
 
 // ─── Storage helpers ──────────────────────────────────────────────────────────
@@ -185,6 +190,8 @@ const KEYS = {
   todayMoodDate: "wt.todayMoodDate",
   restGoalTier: "wt.restGoalTier",
   dailyGoal: "wt.dailyGoal",
+  defaultTimerMinutes: "wt.defaultTimerMinutes",
+  hasSeenOnboarding: "wt.hasSeenOnboarding",
 } as const;
 
 // ─── Provider ─────────────────────────────────────────────────────────────────
@@ -206,6 +213,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [activeRestTimer, setActiveRestTimer] = useState<ActiveRestTimer | null>(null);
   const [todayMood, setTodayMoodState] = useState<DailyMood>(null);
   const [restGoalTier, setRestGoalTierState] = useState<RestGoalTier>("standard");
+  const [defaultTimerMinutes, setDefaultTimerMinutesState] = useState(25);
+  const [hasSeenOnboarding, setHasSeenOnboarding] = useState(false);
 
   // Load from localStorage on mount
   useEffect(() => {
@@ -246,6 +255,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setTodayMoodState(ls<DailyMood>(KEYS.todayMood, null));
     }
     setRestGoalTierState(ls<RestGoalTier>(KEYS.restGoalTier, "standard"));
+    setDefaultTimerMinutesState(ls<number>(KEYS.defaultTimerMinutes, 25));
+    setHasSeenOnboarding(ls<boolean>(KEYS.hasSeenOnboarding, false));
 
     setLoaded(true);
   }, []);
@@ -270,6 +281,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     lsSet(KEYS.partialRestDays, partialRestDays.map((d) => ({ date: d.date.toISOString(), pct: d.pct })));
   }, [partialRestDays, loaded]);
   useEffect(() => { if (loaded) lsSet(KEYS.restGoalTier, restGoalTier); }, [restGoalTier, loaded]);
+  useEffect(() => { if (loaded) lsSet(KEYS.defaultTimerMinutes, defaultTimerMinutes); }, [defaultTimerMinutes, loaded]);
+  useEffect(() => { if (loaded) lsSet(KEYS.hasSeenOnboarding, hasSeenOnboarding); }, [hasSeenOnboarding, loaded]);
 
   // ─── Task actions ────────────────────────────────────────────────────────────
 
@@ -438,6 +451,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const setDailyGoal = (goal: number) => setDailyGoalState(goal);
+  const setDefaultTimerMinutes = (m: number) => setDefaultTimerMinutesState(m);
+  const markOnboardingSeen = useCallback(() => setHasSeenOnboarding(true), []);
 
   const addCategory = (cat: string) => {
     const trimmed = cat.trim();
@@ -557,6 +572,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     completedTasks, completeTask, uncompleteTask,
     pomodoroSession, taskProgress, startPomodoro, pausePomodoro, resumePomodoro, completePomodoro, tickPomodoro,
     dailyGoal, setDailyGoal,
+    defaultTimerMinutes, setDefaultTimerMinutes,
     categories, addCategory, removeCategory,
     streak, bestStreak, hasActivityToday, spinCount, incrementSpinCount,
     restTasks, completedRestDays, partialRestDays, toggleRestTask, addRestTask, removeRestTask,
@@ -565,6 +581,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     restGoalTier, setRestGoalTier,
     restMinutesToday, restGoalMinutes,
     restStreak, bestRestStreak,
+    hasSeenOnboarding, markOnboardingSeen,
   };
 
   return (

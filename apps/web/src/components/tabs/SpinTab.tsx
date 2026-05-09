@@ -218,7 +218,12 @@ interface SpinTabProps {
 }
 
 export function SpinTab({ onNavigateToTasks }: SpinTabProps) {
-  const { tasks, startPomodoro, streak, incrementSpinCount } = useApp();
+  const { tasks, startPomodoro, streak, incrementSpinCount, dailyGoal, completedTasks } = useApp();
+
+  const todayDone = (() => {
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    return completedTasks.filter((t) => { const d = new Date(t.completedAt); d.setHours(0,0,0,0); return d.getTime() === today.getTime(); }).length;
+  })();
   const [rotation, setRotation] = useState(0);
   const [spinning, setSpinning] = useState(false);
   const [picked, setPicked] = useState<Task | null>(null);
@@ -316,13 +321,13 @@ export function SpinTab({ onNavigateToTasks }: SpinTabProps) {
       ) : (
         <div className="bg-white rounded-2xl flex flex-col items-center py-6 px-6 gap-5">
           <div className="relative w-[320px] h-[320px]">
-            {/* Pointer */}
+            {/* Pointer — sits at the top, pointing down into the wheel */}
             <div
-              className="absolute top-1/2 right-0 translate-x-1 -translate-y-1/2 z-10 w-0 h-0"
+              className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1 z-10 w-0 h-0"
               style={{
-                borderTop: "10px solid transparent",
-                borderBottom: "10px solid transparent",
-                borderRight: "22px solid #111111",
+                borderLeft: "10px solid transparent",
+                borderRight: "10px solid transparent",
+                borderTop: "22px solid #111111",
               }}
             />
             <SpinWheel
@@ -331,6 +336,13 @@ export function SpinTab({ onNavigateToTasks }: SpinTabProps) {
               spinning={spinning}
               onSliceClick={handleSliceClick}
             />
+          </div>
+          {/* Daily goal */}
+          <div className="flex items-center justify-center gap-1.5 text-sm text-[#aaaaaa]">
+            <span className="font-semibold text-[#111111]">{todayDone}</span>
+            <span>/</span>
+            <span>{dailyGoal}</span>
+            <span>tasks today</span>
           </div>
           <button
             onClick={spinWheel}
