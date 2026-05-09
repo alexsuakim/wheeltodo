@@ -145,12 +145,6 @@ interface AppContextType {
 
   hasSeenOnboarding: boolean;
   markOnboardingSeen: () => void;
-  hasSeenSpinHint: boolean;
-  markSpinHintSeen: () => void;
-  hasSeenRestTooltip: boolean;
-  markRestTooltipSeen: () => void;
-  hasSeenStreakExplanation: boolean;
-  markStreakExplanationSeen: () => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -170,9 +164,6 @@ const STORAGE_KEYS = {
   todayMoodDate: 'wheelTodo.todayMoodDate',
   restGoalTier: 'wheelTodo.restGoalTier',
   hasSeenOnboarding: 'wheelTodo.hasSeenOnboarding',
-  hasSeenSpinHint: 'wheelTodo.hasSeenSpinHint',
-  hasSeenRestTooltip: 'wheelTodo.hasSeenRestTooltip',
-  hasSeenStreakExplanation: 'wheelTodo.hasSeenStreakExplanation',
 } as const;
 
 const DEFAULT_CATEGORIES = ['Work', 'Personal', 'Learning', 'Health'];
@@ -212,9 +203,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [todayMood, setTodayMoodState] = useState<DailyMood>(null);
   const [restGoalTier, setRestGoalTierState] = useState<RestGoalTier>('standard');
   const [hasSeenOnboarding, setHasSeenOnboarding] = useState(false);
-  const [hasSeenSpinHint, setHasSeenSpinHint] = useState(false);
-  const [hasSeenRestTooltip, setHasSeenRestTooltip] = useState(false);
-  const [hasSeenStreakExplanation, setHasSeenStreakExplanation] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -290,17 +278,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
         const spinRaw = await AsyncStorage.getItem(STORAGE_KEYS.spinCount);
         if (spinRaw) setSpinCount(JSON.parse(spinRaw));
 
-        const [[, onboardingRaw], [, spinHintRaw], [, restTooltipRaw], [, streakExpRaw]] =
+        const [[, onboardingRaw]] =
           await AsyncStorage.multiGet([
             STORAGE_KEYS.hasSeenOnboarding,
-            STORAGE_KEYS.hasSeenSpinHint,
-            STORAGE_KEYS.hasSeenRestTooltip,
-            STORAGE_KEYS.hasSeenStreakExplanation,
           ]);
         if (onboardingRaw) setHasSeenOnboarding(JSON.parse(onboardingRaw));
-        if (spinHintRaw) setHasSeenSpinHint(JSON.parse(spinHintRaw));
-        if (restTooltipRaw) setHasSeenRestTooltip(JSON.parse(restTooltipRaw));
-        if (streakExpRaw) setHasSeenStreakExplanation(JSON.parse(streakExpRaw));
       } catch {
         // keep defaults on parse failure
       } finally {
@@ -474,13 +456,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!loaded) return;
-    AsyncStorage.multiSet([
-      [STORAGE_KEYS.hasSeenOnboarding, JSON.stringify(hasSeenOnboarding)],
-      [STORAGE_KEYS.hasSeenSpinHint, JSON.stringify(hasSeenSpinHint)],
-      [STORAGE_KEYS.hasSeenRestTooltip, JSON.stringify(hasSeenRestTooltip)],
-      [STORAGE_KEYS.hasSeenStreakExplanation, JSON.stringify(hasSeenStreakExplanation)],
-    ]).catch(() => {});
-  }, [hasSeenOnboarding, hasSeenSpinHint, hasSeenRestTooltip, hasSeenStreakExplanation, loaded]);
+    AsyncStorage.setItem(STORAGE_KEYS.hasSeenOnboarding, JSON.stringify(hasSeenOnboarding)).catch(() => {});
+  }, [hasSeenOnboarding, loaded]);
 
   const restGoalMinutes = REST_GOAL_MINUTES[restGoalTier];
 
@@ -763,9 +740,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     restMinutesToday, restGoalMinutes,
     restStreak, bestRestStreak,
     hasSeenOnboarding, markOnboardingSeen: () => setHasSeenOnboarding(true),
-    hasSeenSpinHint, markSpinHintSeen: () => setHasSeenSpinHint(true),
-    hasSeenRestTooltip, markRestTooltipSeen: () => setHasSeenRestTooltip(true),
-    hasSeenStreakExplanation, markStreakExplanationSeen: () => setHasSeenStreakExplanation(true),
   };
 
   return <AppContext.Provider value={value}>{loaded ? children : null}</AppContext.Provider>;

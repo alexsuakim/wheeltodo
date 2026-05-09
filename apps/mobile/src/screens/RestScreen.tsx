@@ -12,7 +12,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Activity, Brain, Check, ChevronDown, ChevronUp, Coffee, Frown, Info, Meh, MessageCircle, PenLine, Plus, Timer, X, Zap } from 'lucide-react-native';
+import { Activity, Brain, Check, ChevronDown, ChevronUp, Coffee, Info, MessageCircle, PenLine, Plus, Timer, X } from 'lucide-react-native';
 import type { LucideIcon } from 'lucide-react-native';
 import { useApp, type RestTask, type DailyMood, type RestCategory, type ActiveRestTimer } from '../context/AppContext';
 import { TOKENS } from '../theme/tokens';
@@ -92,10 +92,10 @@ interface EnergyCheckInProps {
 }
 
 function EnergyCheckIn({ onSelect }: EnergyCheckInProps) {
-  const moods: { key: DailyMood; label: string; icon: LucideIcon; color: string }[] = [
-    { key: 'drained',  label: 'Drained',  icon: Frown, color: TOKENS.colors.rest.mental },
-    { key: 'okay',     label: 'Okay',     icon: Meh,   color: TOKENS.colors.rest.social },
-    { key: 'restless', label: 'Restless', icon: Zap,   color: TOKENS.colors.rest.physical },
+  const moods: { key: DailyMood; label: string; emoji: string }[] = [
+    { key: 'drained',  label: 'Drained',  emoji: '😔' },
+    { key: 'okay',     label: 'Okay',     emoji: '😌' },
+    { key: 'restless', label: 'Restless', emoji: '😤' },
   ];
 
   return (
@@ -103,15 +103,12 @@ function EnergyCheckIn({ onSelect }: EnergyCheckInProps) {
       <Text style={styles.checkInTitle}>How are you feeling?</Text>
       <Text style={styles.checkInSub}>We'll suggest the best activities for you.</Text>
       <View style={styles.moodRow}>
-        {moods.map((m) => {
-          const MoodIcon = m.icon;
-          return (
-            <Pressable key={m.key} style={styles.moodBtn} onPress={() => onSelect(m.key)}>
-              <MoodIcon size={24} color={m.color} strokeWidth={2} />
-              <Text style={styles.moodLabel}>{m.label}</Text>
-            </Pressable>
-          );
-        })}
+        {moods.map((m) => (
+          <Pressable key={m.key} style={styles.moodBtn} onPress={() => onSelect(m.key)}>
+            <Text style={styles.moodEmoji}>{m.emoji}</Text>
+            <Text style={styles.moodLabel}>{m.label}</Text>
+          </Pressable>
+        ))}
       </View>
     </View>
   );
@@ -746,5 +743,6 @@ const styles = StyleSheet.create({
     backgroundColor: TOKENS.colors.bg.input,
     gap: 6,
   },
+  moodEmoji: { fontSize: 24 },
   moodLabel: { fontSize: 13, fontWeight: '600', color: TOKENS.colors.text.secondary },
 });

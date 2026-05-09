@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { CircleCheck, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Flame, Info, Moon, Target } from 'lucide-react-native';
+import { CircleCheck, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Info, Moon } from 'lucide-react-native';
 import { useApp, type CompletedTask } from '../context/AppContext';
 import { TOKENS } from '../theme/tokens';
 
@@ -143,7 +143,7 @@ export function HistoryScreen() {
           <View style={styles.statItem}>
             <Text style={[styles.statValue, { color: TOKENS.colors.action.streak }]}>{streak}</Text>
             <View style={styles.statLabelRow}>
-              <Flame size={11} color={TOKENS.colors.action.streak} strokeWidth={2} />
+              <Text style={styles.statLabelEmoji}>🔥</Text>
               <Text style={styles.statLabel}>Streak</Text>
             </View>
           </View>
@@ -151,7 +151,7 @@ export function HistoryScreen() {
           <View style={styles.statItem}>
             <Text style={styles.statValue}>{restStreak}</Text>
             <View style={styles.statLabelRow}>
-              <Moon size={11} color={TOKENS.colors.text.secondary} strokeWidth={2} />
+              <Text style={styles.statLabelEmoji}>🌙</Text>
               <Text style={styles.statLabel}>Rest Streak</Text>
             </View>
           </View>
@@ -225,7 +225,7 @@ export function HistoryScreen() {
 
         {/* Next milestone */}
         <View style={styles.milestoneCard}>
-          <Target size={28} color={TOKENS.colors.accent.heading} strokeWidth={1.8} />
+          <Text style={styles.milestoneEmoji}>🎯</Text>
           <View style={styles.milestoneText}>
             {streak === 0 ? (
               <>
@@ -314,6 +314,7 @@ const styles = StyleSheet.create({
   statValue: { fontSize: 22, fontWeight: '700', color: TOKENS.colors.text.primary },
   statLabel: { fontSize: 11, color: TOKENS.colors.text.secondary, textAlign: 'center' },
   statLabelRow: { flexDirection: 'row', alignItems: 'center', gap: 3 },
+  statLabelEmoji: { fontSize: 11 },
   statDivider: { width: 1, backgroundColor: '#e8e8e8' },
 
   // Week selector
@@ -367,6 +368,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
   },
+  milestoneEmoji: { fontSize: 28 },
   milestoneText: { flex: 1 },
   milestoneTitle: {
     fontSize: 15,
