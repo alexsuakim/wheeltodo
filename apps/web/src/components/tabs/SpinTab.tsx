@@ -1,8 +1,32 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { HelpCircle, ChevronDown, ChevronUp, Flame, Target } from "lucide-react";
+import {
+  HelpCircle, ChevronDown, ChevronUp,
+  Flame, Target, Trophy, Clock, Zap, Moon, RotateCcw,
+  // ── icons used on wheel slices ──
+  BookOpen, Code, Palette, Users, Mail, PenLine,
+  Coffee, Timer, Pencil, Star, Heart, Music, Camera,
+  Laptop, Dumbbell, Brain, Leaf, Sun, Sparkles,
+} from "lucide-react";
 import { useApp, type Task } from "@/context/AppContext";
+import { ACHIEVEMENT_DEFS, getNextAchievement } from "@/utils/achievements";
+
+// ─── Icon map for wheel slices ────────────────────────────────────────────────
+
+type IconComp = React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>;
+
+const ICON_MAP: Record<string, IconComp> = {
+  BookOpen, Code, Palette, Users, Mail, PenLine,
+  Coffee, Timer, Pencil, Star, Heart, Music, Camera,
+  Laptop, Dumbbell, Brain, Leaf, Sun, Sparkles,
+  Flame, Target, Trophy, Clock, Zap, Moon, RotateCcw,
+};
+
+// Achievement icon components
+const ACHIEVEMENT_ICONS: Record<string, IconComp> = {
+  Flame, Trophy, Clock, Zap, Moon, RotateCcw,
+};
 
 // ─── Wheel colors matching the mobile app ────────────────────────────────────
 
@@ -48,6 +72,7 @@ function SpinWheel({ tasks, rotation, spinning, onSliceClick }: WheelProps) {
   const CX = SIZE / 2;
   const CY = SIZE / 2;
   const R = CX - 10;
+  const ICON_R = R * 0.62;
 
   if (tasks.length === 0) {
     return (
@@ -74,16 +99,20 @@ function SpinWheel({ tasks, rotation, spinning, onSliceClick }: WheelProps) {
     const pathD = `M ${CX} ${CY} L ${x1} ${y1} A ${R} ${R} 0 ${largeArc} 1 ${x2} ${y2} Z`;
 
     const midAngle = startAngle + sliceAngle / 2;
-    const labelR = R * 0.62;
-    const labelX = CX + labelR * Math.cos(midAngle);
-    const labelY = CY + labelR * Math.sin(midAngle);
-    const labelRotation = (midAngle * 180) / Math.PI + 90;
+    const iconX = CX + ICON_R * Math.cos(midAngle);
+    const iconY = CY + ICON_R * Math.sin(midAngle);
 
+    // For text fallback (many slices)
     const maxChars = n > 6 ? 12 : 16;
     const labelText = task.name.length > maxChars ? task.name.slice(0, maxChars - 1) + "…" : task.name;
 
-    return { task, pathD, labelX, labelY, labelRotation, labelText, color: WHEEL_COLORS[i % WHEEL_COLORS.length] };
+    const IconComp = ICON_MAP[task.icon];
+    const color = WHEEL_COLORS[i % WHEEL_COLORS.length];
+
+    return { task, pathD, iconX, iconY, midAngle, labelText, color, IconComp };
   });
+
+  const iconSize = n > 6 ? 14 : 18;
 
   return (
     <svg
@@ -93,7 +122,7 @@ function SpinWheel({ tasks, rotation, spinning, onSliceClick }: WheelProps) {
       className="block"
       style={{ transform: `rotate(${rotation}deg)`, transition: spinning ? "none" : undefined }}
     >
-      {slices.map(({ task, pathD, labelX, labelY, labelRotation, labelText, color }) => (
+      {slices.map(({ task, pathD, iconX, iconY, midAngle, labelText, color, IconComp }) => (
         <g key={task.id}>
           <path
             d={pathD}
@@ -103,20 +132,35 @@ function SpinWheel({ tasks, rotation, spinning, onSliceClick }: WheelProps) {
             className={!spinning ? "cursor-pointer" : ""}
             onClick={() => { if (!spinning) onSliceClick(task); }}
           />
-          <text
-            x={labelX}
-            y={labelY}
-            textAnchor="middle"
-            dominantBaseline="middle"
-            transform={`rotate(${labelRotation}, ${labelX}, ${labelY})`}
-            fontSize={n > 8 ? 10 : n > 5 ? 11 : 12}
-            fontWeight="600"
-            fontFamily="var(--font-dm-sans), system-ui, sans-serif"
-            fill="rgba(255,255,255,0.95)"
-            className="pointer-events-none select-none"
-          >
-            {labelText}
-          </text>
+          {IconComp ? (
+            <foreignObject
+              x={iconX - iconSize}
+              y={iconY - iconSize}
+              width={iconSize * 2}
+              height={iconSize * 2}
+              className="pointer-events-none overflow-visible"
+            >
+              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+              <div style={{ width: iconSize * 2, height: iconSize * 2, display: "flex", alignItems: "center", justifyContent: "center" } as any}>
+                <IconComp size={iconSize} color="rgba(255,255,255,0.95)" strokeWidth={1.8} />
+              </div>
+            </foreignObject>
+          ) : (
+            <text
+              x={iconX}
+              y={iconY}
+              textAnchor="middle"
+              dominantBaseline="middle"
+              transform={`rotate(${(midAngle * 180) / Math.PI + 90}, ${iconX}, ${iconY})`}
+              fontSize={n > 8 ? 10 : n > 5 ? 11 : 12}
+              fontWeight="600"
+              fontFamily="var(--font-dm-sans), system-ui, sans-serif"
+              fill="rgba(255,255,255,0.95)"
+              className="pointer-events-none select-none"
+            >
+              {labelText}
+            </text>
+          )}
         </g>
       ))}
       {/* Center circle */}
@@ -180,6 +224,7 @@ interface ResultSheetProps {
 }
 
 function ResultSheet({ task, onStartFocus, onDismiss }: ResultSheetProps) {
+  const color = WHEEL_COLORS[0];
   return (
     <div className="fixed inset-0 bg-black/40 z-40 flex items-end md:items-center justify-center" onClick={onDismiss}>
       <div
@@ -187,10 +232,11 @@ function ResultSheet({ task, onStartFocus, onDismiss }: ResultSheetProps) {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="w-9 h-1 rounded-full bg-[#e0e0e0] mb-3 md:hidden" />
-        <div
-          className="w-10 h-10 rounded-full mb-1"
-          style={{ backgroundColor: WHEEL_COLORS[0] }}
-        />
+        <div className="w-10 h-10 rounded-full mb-1 flex items-center justify-center" style={{ backgroundColor: color }}>
+          {ICON_MAP[task.icon]
+            ? (() => { const I = ICON_MAP[task.icon]; return <I size={18} color="white" strokeWidth={1.8} />; })()
+            : null}
+        </div>
         <p className="text-xs font-semibold text-[#aaaaaa] uppercase tracking-wider">You got</p>
         <p className="text-2xl font-bold text-[#111111] text-center">{task.name}</p>
         <p className="text-sm text-[#aaaaaa]">{task.minutes}-minute focus session</p>
@@ -218,16 +264,19 @@ interface SpinTabProps {
 }
 
 export function SpinTab({ onNavigateToTasks }: SpinTabProps) {
-  const { tasks, startPomodoro, streak, incrementSpinCount, dailyGoal, completedTasks } = useApp();
-
-  const todayDone = (() => {
-    const today = new Date(); today.setHours(0, 0, 0, 0);
-    return completedTasks.filter((t) => { const d = new Date(t.completedAt); d.setHours(0,0,0,0); return d.getTime() === today.getTime(); }).length;
-  })();
+  const { tasks, startPomodoro, streak, incrementSpinCount, dailyGoal, completedTasks, achievementValues } = useApp();
   const [rotation, setRotation] = useState(0);
   const [spinning, setSpinning] = useState(false);
   const [picked, setPicked] = useState<Task | null>(null);
   const rotationRef = useRef(0);
+
+  const todayDone = (() => {
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    return completedTasks.filter((t) => { const d = new Date(t.completedAt); d.setHours(0, 0, 0, 0); return d.getTime() === today.getTime(); }).length;
+  })();
+
+  // Achievement next milestone
+  const nextAch = getNextAchievement(achievementValues);
 
   function easeOutCubic(t: number) {
     return 1 - Math.pow(1 - t, 3);
@@ -354,20 +403,52 @@ export function SpinTab({ onNavigateToTasks }: SpinTabProps) {
         </div>
       )}
 
-      {/* Next milestone */}
-      {streak > 0 && (
-        <div className="bg-white rounded-2xl flex items-center gap-3 px-4 py-4">
-          <Target size={24} strokeWidth={1.8} className="text-[#FF5C4D] shrink-0" />
-          <div>
-            <p className="text-sm font-bold text-[#111111]">
-              {[7, 14, 21, 30, 60, 90].find((m) => m > streak) != null
-                ? `${([7, 14, 21, 30, 60, 90].find((m) => m > streak)! - streak)} day${[7, 14, 21, 30, 60, 90].find((m) => m > streak)! - streak !== 1 ? "s" : ""} to ${[7, 14, 21, 30, 60, 90].find((m) => m > streak)}-day milestone`
-                : "Legendary streak! Keep going."}
-            </p>
-            <p className="text-xs text-[#aaaaaa] mt-0.5">You're on a roll</p>
+      {/* Next milestone — uses real achievement system */}
+      {(() => {
+        if (!nextAch) {
+          return (
+            <div className="bg-white rounded-2xl flex items-center gap-3 px-4 py-4">
+              <Target size={26} strokeWidth={1.8} className="text-[#FF5C4D] shrink-0" />
+              <div>
+                <p className="text-sm font-bold text-[#111111]">All achievements unlocked!</p>
+                <p className="text-xs text-[#aaaaaa] mt-0.5">You're an absolute legend.</p>
+              </div>
+            </div>
+          );
+        }
+
+        const { def, tier, current, pct } = nextAch;
+        const AchIcon = ACHIEVEMENT_ICONS[def.iconName];
+        const pctDisplay = Math.round(pct * 100);
+
+        return (
+          <div className="bg-white rounded-2xl overflow-hidden">
+            <p className="text-xs font-semibold text-[#aaaaaa] uppercase tracking-wide px-4 pt-4 pb-2">Next milestone</p>
+            <div className="flex items-center gap-3 px-4 pb-4">
+              <div
+                className="w-11 h-11 rounded-2xl flex items-center justify-center shrink-0"
+                style={{ backgroundColor: `${def.color}22` }}
+              >
+                {AchIcon && <AchIcon size={20} color={def.color} strokeWidth={2} />}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between mb-0.5">
+                  <p className="text-sm font-bold text-[#111111]">{tier.badge}</p>
+                  <p className="text-xs font-semibold text-[#aaaaaa]">{current} / {tier.target}</p>
+                </div>
+                <p className="text-xs text-[#aaaaaa] mb-2">{def.description(tier.target)}</p>
+                {/* Progress bar */}
+                <div className="h-1.5 bg-[#f0f0f0] rounded-full overflow-hidden">
+                  <div
+                    className="h-full rounded-full transition-all"
+                    style={{ width: `${pctDisplay}%`, backgroundColor: def.color }}
+                  />
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {picked && (
         <ResultSheet task={picked} onStartFocus={handleStartFocus} onDismiss={() => setPicked(null)} />

@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import { RotateCcw, ListTodo, Moon, BarChart2, LogOut, User, X, Flame, Minus, Plus } from "lucide-react";
+import { RotateCcw, ListTodo, Moon, BarChart2, LogOut, User, X, Flame, Minus, Plus, Trophy, Clock, Zap } from "lucide-react";
 import { getSupabaseClient } from "@todo/shared";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 import { useApp, type RestGoalTier, REST_GOAL_MINUTES } from "@/context/AppContext";
+import { ACHIEVEMENT_DEFS, getUnlockedTierIds } from "@/utils/achievements";
 
 export type TabId = "spin" | "tasks" | "rest" | "history";
 
@@ -205,6 +206,17 @@ interface ProfileModalProps {
 
 const TIMER_STEPS = [5, 10, 15, 20, 25, 30, 45, 60, 90, 120];
 
+type LucideIconComp = React.ComponentType<{ size?: number; strokeWidth?: number; className?: string }>;
+
+const ACHIEVEMENT_ICON_MAP: Record<string, LucideIconComp> = {
+  Flame: Flame,
+  Trophy: Trophy,
+  Clock: Clock,
+  Zap: Zap,
+  Moon: Moon,
+  RotateCcw: RotateCcw,
+};
+
 const REST_TIERS: { id: RestGoalTier; label: string; description: string }[] = [
   { id: "easy",       label: "Easy",       description: `${REST_GOAL_MINUTES.easy} min`      },
   { id: "standard",   label: "Standard",   description: `${REST_GOAL_MINUTES.standard} min`  },
@@ -218,7 +230,10 @@ function ProfileModal({ user, onClose, onSignOut }: ProfileModalProps) {
     restGoalTier, setRestGoalTier,
     categories, addCategory, removeCategory,
     completedTasks,
+    achievementValues,
   } = useApp();
+
+  const unlockedIds = getUnlockedTierIds(achievementValues);
 
   const [tab, setTab] = useState<"account" | "settings">("account");
   const [displayName, setDisplayName] = useState(
@@ -313,6 +328,60 @@ function ProfileModal({ user, onClose, onSignOut }: ProfileModalProps) {
                 <div className="flex-1 flex flex-col items-center gap-0.5">
                   <span className="text-xl font-bold text-[#111111]">{onTimePct}%</span>
                   <span className="text-xs text-[#aaaaaa]">On time</span>
+                </div>
+              </div>
+
+              {/* Achievements */}
+              <div>
+                <p className="text-xs font-semibold text-[#aaaaaa] uppercase tracking-wide mb-3">Achievements</p>
+                <div className="space-y-2">
+                  {ACHIEVEMENT_DEFS.map((def) => {
+                    const val = achievementValues[def.key];
+                    const AchievIcon = ACHIEVEMENT_ICON_MAP[def.iconName];
+                    const unlockedCount = def.tiers.filter((t) => unlockedIds.includes(t.id)).length;
+                    return (
+                      <div key={def.key} className="bg-[#f7f6f3] rounded-2xl p-3.5">
+                        <div className="flex items-center gap-3 mb-2.5">
+                          <div
+                            className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
+                            style={{ backgroundColor: def.color + "30" }}
+                          >
+                            {AchievIcon && (
+                              <span style={{ color: def.color }}>
+                                <AchievIcon size={16} strokeWidth={2} />
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-semibold text-[#111111] leading-tight">{def.label}</p>
+                            <p className="text-xs text-[#aaaaaa] leading-tight">{def.description(val)}</p>
+                          </div>
+                          <span className="text-xs font-semibold text-[#aaaaaa] shrink-0">
+                            {unlockedCount}/{def.tiers.length}
+                          </span>
+                        </div>
+                        <div className="flex gap-1.5">
+                          {def.tiers.map((tier) => {
+                            const isUnlocked = unlockedIds.includes(tier.id);
+                            return (
+                              <div key={tier.id} className="flex-1 flex flex-col items-center gap-1">
+                                <div
+                                  className="w-2 h-2 rounded-full"
+                                  style={{ backgroundColor: isUnlocked ? def.color : "#D1D0CD" }}
+                                />
+                                <span
+                                  className="text-[9px] text-center leading-tight font-medium"
+                                  style={{ color: isUnlocked ? "#111111" : "#aaaaaa" }}
+                                >
+                                  {tier.badge}
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
 

@@ -10,6 +10,7 @@ import React, {
   useState,
   type ReactNode,
 } from "react";
+import { type AchievementValues } from "../utils/achievements";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -129,6 +130,7 @@ interface AppContextType {
   hasActivityToday: boolean;
   spinCount: number;
   incrementSpinCount: () => void;
+  achievementValues: AchievementValues;
 
   restTasks: RestTask[];
   completedRestDays: Date[];
@@ -554,6 +556,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return count;
   }, [completedRestDays]);
 
+  const achievementValues: AchievementValues = useMemo(() => ({
+    streak,
+    tasks: completedTasks.length,
+    focus: completedTasks.reduce((s, t) => s + t.minutesActual, 0),
+    speed: completedTasks.filter((t) => t.minutesActual <= t.minutesEstimated).length,
+    rest: completedRestDays.length,
+    spin: spinCount,
+  }), [streak, completedTasks, completedRestDays, spinCount]);
+
   const bestRestStreak = useMemo(() => {
     const dates = new Set<number>();
     completedRestDays.forEach((d) => { const day = new Date(d); day.setHours(0, 0, 0, 0); dates.add(day.getTime()); });
@@ -574,7 +585,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     dailyGoal, setDailyGoal,
     defaultTimerMinutes, setDefaultTimerMinutes,
     categories, addCategory, removeCategory,
-    streak, bestStreak, hasActivityToday, spinCount, incrementSpinCount,
+    streak, bestStreak, hasActivityToday, spinCount, incrementSpinCount, achievementValues,
     restTasks, completedRestDays, partialRestDays, toggleRestTask, addRestTask, removeRestTask,
     activeRestTimer, startRestTimer, cancelRestTimer, tickRestTimer,
     todayMood, setTodayMood,
