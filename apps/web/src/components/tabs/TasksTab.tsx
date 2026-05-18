@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { HelpCircle, ChevronDown, ChevronUp, Timer, Plus, Trash2 } from "lucide-react";
+import { HelpCircle, ChevronDown, ChevronUp, Timer, Plus, Trash2, Sparkles, Lock } from "lucide-react";
 import { useApp, COLORS, type Task } from "@/context/AppContext";
 import { Confetti } from "@/components/Confetti";
+import { useSubscription } from "@/hooks/useSubscription";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -33,6 +34,168 @@ function TasksFaqAccordion() {
           Click the timer icon to start a focus session. Click the task name to edit it. Use the bin icon to delete.
         </div>
       )}
+    </div>
+  );
+}
+
+// ─── Upgrade Modal ───────────────────────────────────────────────────────────
+
+function UpgradeModal({ onClose, onUpgrade }: { onClose: () => void; onUpgrade: () => void }) {
+  return (
+    <div className="fixed inset-0 bg-black/40 z-40 flex items-end md:items-center justify-center" onClick={onClose}>
+      <div
+        className="w-full max-w-md rounded-t-3xl md:rounded-2xl p-6 shadow-2xl"
+        style={{ background: 'var(--bg-card)' }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="w-9 h-1 rounded-full mb-5 mx-auto md:hidden" style={{ background: 'var(--border)' }} />
+        <div className="flex items-center justify-center w-14 h-14 rounded-2xl mb-4 mx-auto" style={{ background: 'var(--accent)' }}>
+          <Sparkles size={26} strokeWidth={1.8} className="text-white" />
+        </div>
+        <h2 className="text-xl font-bold text-center mb-1" style={{ color: 'var(--text-primary)' }}>AI Task Breakdown</h2>
+        <p className="text-sm text-center mb-6 leading-relaxed" style={{ color: 'var(--text-muted)' }}>
+          Premium members can break any task into smaller, focused subtasks using AI — instantly.
+        </p>
+        <button
+          onClick={() => { onUpgrade(); onClose(); }}
+          className="w-full text-white font-semibold text-base rounded-full py-3.5 active:scale-[0.98] transition"
+          style={{ background: 'var(--text-primary)' }}
+        >
+          Unlock Premium
+        </button>
+        <p className="text-xs text-center mt-3" style={{ color: 'var(--text-muted)' }}>
+          Demo mode — no payment required yet
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// ─── Breakdown Modal ──────────────────────────────────────────────────────────
+
+interface SubtaskSuggestion {
+  name: string;
+  minutes: number;
+}
+
+function BreakdownModal({
+  task,
+  onClose,
+  onAdd,
+}: {
+  task: Task;
+  onClose: () => void;
+  onAdd: (subtasks: SubtaskSuggestion[]) => void;
+}) {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [suggestions, setSuggestions] = useState<SubtaskSuggestion[]>([]);
+  const [selected, setSelected] = useState<Set<number>>(new Set());
+
+  async function fetchBreakdown() {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/break-task", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ taskName: task.name, taskMinutes: task.minutes }),
+      });
+      if (!res.ok) throw new Error("Request failed");
+      const data = (await res.json()) as { subtasks?: SubtaskSuggestion[]; error?: string };
+      if (data.error) throw new Error(data.error);
+      const items = data.subtasks ?? [];
+      setSuggestions(items);
+      setSelected(new Set(items.map((_, i) => i)));
+    } catch {
+      setError("Could not generate subtasks. Check your ANTHROPIC_API_KEY and try again.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => { void fetchBreakdown(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  function toggle(i: number) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      next.has(i) ? next.delete(i) : next.add(i);
+      return next;
+    });
+  }
+
+  const selectedCount = selected.size;
+
+  return (
+    <div className="fixed inset-0 bg-black/40 z-40 flex items-end md:items-center justify-center" onClick={onClose}>
+      <div
+        className="w-full max-w-md rounded-t-3xl md:rounded-2xl p-6 shadow-2xl"
+        style={{ background: 'var(--bg-card)' }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="w-9 h-1 rounded-full mb-5 mx-auto md:hidden" style={{ background: 'var(--border)' }} />
+        <div className="flex items-center gap-2 mb-1">
+          <Sparkles size={16} strokeWidth={1.8} style={{ color: 'var(--accent)' }} />
+          <h2 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>Break down task</h2>
+        </div>
+        <p className="text-sm mb-5 truncate" style={{ color: 'var(--text-muted)' }}>"{task.name}"</p>
+
+        {loading && (
+          <div className="flex flex-col items-center gap-3 py-8">
+            <span className="text-3xl animate-spin inline-block" style={{ color: 'var(--accent)' }}>◎</span>
+            <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Thinking…</p>
+          </div>
+        )}
+
+        {error && (
+          <div className="flex flex-col items-center gap-3 py-6">
+            <p className="text-sm text-center" style={{ color: 'var(--text-muted)' }}>{error}</p>
+            <button
+              onClick={fetchBreakdown}
+              className="px-4 py-2 rounded-full text-sm font-semibold"
+              style={{ background: 'var(--bg-track)', color: 'var(--text-primary)' }}
+            >
+              Retry
+            </button>
+          </div>
+        )}
+
+        {!loading && !error && suggestions.length > 0 && (
+          <>
+            <div className="space-y-2 mb-5">
+              {suggestions.map((s, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => toggle(i)}
+                  className="w-full flex items-center gap-3 rounded-xl px-4 py-3 text-left transition-colors"
+                  style={{ background: 'var(--bg-input)' }}
+                >
+                  <span
+                    className="w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-colors"
+                    style={{
+                      background: selected.has(i) ? 'var(--text-primary)' : 'transparent',
+                      borderColor: selected.has(i) ? 'var(--text-primary)' : 'var(--border)',
+                    }}
+                  >
+                    {selected.has(i) && <span className="text-white text-xs font-bold">✓</span>}
+                  </span>
+                  <span className="flex-1 text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{s.name}</span>
+                  <span className="text-xs shrink-0" style={{ color: 'var(--text-muted)' }}>{s.minutes}m</span>
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={() => { onAdd(suggestions.filter((_, i) => selected.has(i))); onClose(); }}
+              disabled={selectedCount === 0}
+              className="w-full text-white font-semibold text-base rounded-full py-3.5 active:scale-[0.98] transition disabled:opacity-40"
+              style={{ background: 'var(--text-primary)' }}
+            >
+              Add {selectedCount} task{selectedCount !== 1 ? "s" : ""}
+            </button>
+          </>
+        )}
+      </div>
     </div>
   );
 }
@@ -211,13 +374,15 @@ interface TaskRowProps {
   task: Task;
   isActive: boolean;
   displayTime: string;
+  isPremium: boolean;
   onFocus: () => void;
   onComplete: () => void;
   onDelete: () => void;
   onEdit: () => void;
+  onBreakdown: () => void;
 }
 
-function TaskRow({ task, isActive, displayTime, onFocus, onComplete, onDelete, onEdit }: TaskRowProps) {
+function TaskRow({ task, isActive, displayTime, isPremium, onFocus, onComplete, onDelete, onEdit, onBreakdown }: TaskRowProps) {
   return (
     <div
       className={`flex items-center gap-3 rounded-2xl px-4 py-3.5 transition-opacity ${isActive ? "opacity-60" : ""}`}
@@ -237,6 +402,16 @@ function TaskRow({ task, isActive, displayTime, onFocus, onComplete, onDelete, o
         )}
       </div>
       <span className="text-sm shrink-0" style={{ color: 'var(--text-muted)' }}>{displayTime}</span>
+      <button
+        onClick={onBreakdown}
+        title={isPremium ? "Break into subtasks" : "Premium: Break into subtasks"}
+        className="w-9 h-9 flex items-center justify-center rounded-xl transition-colors shrink-0"
+      >
+        {isPremium
+          ? <Sparkles size={16} strokeWidth={1.8} style={{ color: 'var(--accent)' }} />
+          : <Lock size={14} strokeWidth={1.8} style={{ color: 'var(--text-muted)' }} />
+        }
+      </button>
       <button
         onClick={onFocus}
         title="Start focus session"
@@ -338,9 +513,12 @@ export function TasksTab() {
     tasks, addTask, updateTask, deleteTask, completeTask, startPomodoro,
     pomodoroSession, taskProgress, completedTasks, dailyGoal, categories, addCategory,
   } = useApp();
+  const { isPremium, loaded: subLoaded, activate } = useSubscription();
   const [modalOpen, setModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [confetti, setConfetti] = useState(false);
+  const [breakdownTask, setBreakdownTask] = useState<Task | null>(null);
+  const [showUpgrade, setShowUpgrade] = useState(false);
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -358,6 +536,28 @@ export function TasksTab() {
   function handleSave(id: string, name: string, mins: number, color: string, category: string) {
     updateTask(id, { name, minutes: mins, color, category });
     setEditingTask(null);
+  }
+
+  function handleBreakdown(task: Task) {
+    if (!subLoaded) return;
+    if (isPremium) {
+      setBreakdownTask(task);
+    } else {
+      setShowUpgrade(true);
+    }
+  }
+
+  function handleAddSubtasks(subtasks: { name: string; minutes: number }[], parentTask: Task) {
+    const colorCycle = COLORS;
+    subtasks.forEach((s, i) => {
+      addTask({
+        name: s.name,
+        minutes: s.minutes,
+        color: colorCycle[i % colorCycle.length],
+        icon: "BookOpen",
+        category: parentTask.category,
+      });
+    });
   }
 
   function handleFocus(task: Task) {
@@ -439,10 +639,12 @@ export function TasksTab() {
               task={task}
               isActive={isActive}
               displayTime={displayTime}
+              isPremium={isPremium}
               onFocus={() => handleFocus(task)}
               onComplete={() => handleDone(task)}
               onDelete={() => deleteTask(task.id)}
               onEdit={() => setEditingTask(task)}
+              onBreakdown={() => handleBreakdown(task)}
             />
           );
         })}
@@ -465,6 +667,21 @@ export function TasksTab() {
           onSave={handleSave}
           onClose={() => { setModalOpen(false); setEditingTask(null); }}
           onAddCategory={addCategory}
+        />
+      )}
+
+      {showUpgrade && (
+        <UpgradeModal
+          onClose={() => setShowUpgrade(false)}
+          onUpgrade={activate}
+        />
+      )}
+
+      {breakdownTask && (
+        <BreakdownModal
+          task={breakdownTask}
+          onClose={() => setBreakdownTask(null)}
+          onAdd={(subtasks) => handleAddSubtasks(subtasks, breakdownTask)}
         />
       )}
     </div>

@@ -9,16 +9,13 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.96.0",
     "@supabase/supabase-js": "^2.105.4",
     "@todo/shared": "file:../../packages/shared",
     "lucide-react": "^1.14.0",
     "next": "16.2.2",
     "react": "19.2.0",
     "react-dom": "19.2.0"
-  },
-  "optionalDependencies": {
-    "@tailwindcss/oxide-linux-x64-gnu": "4.2.2",
-    "lightningcss-linux-x64-gnu": "1.32.0"
   },
   "optionalDependencies": {
     "@tailwindcss/oxide-linux-x64-gnu": "4.2.2",
