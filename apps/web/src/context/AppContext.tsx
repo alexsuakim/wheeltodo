@@ -83,7 +83,8 @@ export const PRESET_REST_TASKS: RestTask[] = [
   { id: "preset_10", name: "Watch something you enjoy", isPreset: true, completedToday: false, durationMinutes: 30, category: "Mental"      },
 ];
 
-export const COLORS = ["#FF5C4D", "#FF9B50", "#4ECDC4", "#FFE66D", "#A78BFA", "#F9A8D4"];
+// Default wheel colours — warm-start theme. Override per-theme via CSS --wheel-N vars.
+export const COLORS = ["#EDB590", "#E59880", "#9DC4BC", "#F0D29D", "#ADA8CC", "#D4A5C8"];
 
 const DEFAULT_CATEGORIES = ["Work", "Personal", "Learning", "Health"];
 

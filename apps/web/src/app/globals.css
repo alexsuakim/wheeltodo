@@ -11,9 +11,73 @@ body {
   padding: 0;
 }
 
+/* ── Theme: Warm Start (default light) ─────────────────────────── */
+:root, .theme-warm-start {
+  --bg-screen:       #FAF7F2;
+  --bg-card:         #FFFFFF;
+  --bg-input:        #F5F0EB;
+  --text-primary:    #2A2520;
+  --text-secondary:  #8A7E7A;
+  --text-muted:      #B0A8A4;
+  --accent:          #E59880;
+  --primary:         #ADA8CC;
+  --success:         #BCD4A5;
+  --danger:          #E59880;
+  --wheel-1: #EDB590; --wheel-2: #E59880; --wheel-3: #9DC4BC;
+  --wheel-4: #F0D29D; --wheel-5: #ADA8CC; --wheel-6: #D4A5C8;
+}
+
+/* ── Theme: Slow Down (dark, grounding) ────────────────────────── */
+.theme-slow-down {
+  --bg-screen:       #1C1828;
+  --bg-card:         #26223A;
+  --bg-input:        #302C44;
+  --text-primary:    #EDE8E3;
+  --text-secondary:  #9B8FA0;
+  --text-muted:      #6A6278;
+  --accent:          #ADA8CC;
+  --primary:         #9DC4BC;
+  --success:         #8AAE82;
+  --danger:          #C07868;
+  --wheel-1: #C8977A; --wheel-2: #C07868; --wheel-3: #7AADA6;
+  --wheel-4: #C4A87A; --wheel-5: #8E8AAA; --wheel-6: #A882A4;
+}
+
+/* ── Theme: Light Accessible (high contrast) ───────────────────── */
+.theme-light-a11y {
+  --bg-screen:       #FFFFFF;
+  --bg-card:         #F5F5F5;
+  --bg-input:        #EBEBEB;
+  --text-primary:    #1A1210;
+  --text-secondary:  #4A4040;
+  --text-muted:      #6A6060;
+  --accent:          #B84A30;
+  --primary:         #5A5498;
+  --success:         #3A7230;
+  --danger:          #B84A30;
+  --wheel-1: #C8640A; --wheel-2: #B84A30; --wheel-3: #2A8C82;
+  --wheel-4: #8A7200; --wheel-5: #5A5498; --wheel-6: #8A4070;
+}
+
+/* ── Theme: Dark Accessible (high contrast) ────────────────────── */
+.theme-dark-a11y {
+  --bg-screen:       #0F0D18;
+  --bg-card:         #1A1830;
+  --bg-input:        #242240;
+  --text-primary:    #FFFFFF;
+  --text-secondary:  #C8C0D8;
+  --text-muted:      #A098B0;
+  --accent:          #F5C4A0;
+  --primary:         #C8C4E8;
+  --success:         #A8D898;
+  --danger:          #F0A898;
+  --wheel-1: #F5C4A0; --wheel-2: #F0A898; --wheel-3: #B4E0D8;
+  --wheel-4: #F5DFA0; --wheel-5: #C8C4E8; --wheel-6: #E8BCD8;
+}
+
 body {
-  background-color: #f2f0eb;
-  color: #111111;
+  background-color: var(--bg-screen, #FAF7F2);
+  color: var(--text-primary, #2A2520);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
