@@ -33,7 +33,7 @@ function AppContent({ user, onSignOut }: { user: User | null; onSignOut: () => v
 
 function AuthenticatedApp({ user, onSignOut }: { user: User | null; onSignOut: () => void }) {
   return (
-    <AppProvider>
+    <AppProvider userId={user?.id}>
       <AppContent user={user} onSignOut={onSignOut} />
     </AppProvider>
   );
@@ -79,20 +79,6 @@ export default function Home() {
     );
   }
 
-  if (skipAuth || user) {
-    return <AuthenticatedApp user={user} onSignOut={() => setUser(null)} />;
-  }
-
-  return (
-    <AuthPage
-      onAuthenticated={() => {
-        try {
-          const supabase = getSupabaseClient();
-          supabase.auth.getSession().then(({ data }) => setUser(data.session?.user ?? null));
-        } catch {
-          // ignore
-        }
-      }}
-    />
-  );
+  // Login is optional — show the app immediately, gate only premium features.
+  return <AuthenticatedApp user={user} onSignOut={() => setUser(null)} />;
 }

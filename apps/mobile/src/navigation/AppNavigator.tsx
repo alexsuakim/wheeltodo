@@ -8,7 +8,6 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Apple, Bird, Bug, Cat, Cherry, Clock, Coffee, Dog, Fish, Flame, Flower, Leaf, ListTodo, Moon, PawPrint, Pizza, Rabbit, Rainbow, Rat, RotateCcw, Shrimp, Snail, Squirrel, Turtle, Worm } from 'lucide-react-native';
 import type { LucideIcon } from 'lucide-react-native';
 import { useApp } from '../context/AppContext';
-import { LoginScreen } from '../screens/LoginScreen';
 import { SpinScreen } from '../screens/SpinScreen';
 import { TasksScreen } from '../screens/TasksScreen';
 import { HistoryScreen } from '../screens/HistoryScreen';
@@ -258,11 +257,10 @@ function MainTabsWithHeader() {
 }
 
 export function AppNavigator() {
-  const { user, hasSeenOnboarding, markOnboardingSeen } = useApp();
+  const { hasSeenOnboarding, markOnboardingSeen } = useApp();
 
-  if (!user) {
-    return <LoginScreen onLogin={() => {}} />;
-  }
+  // Login is optional — users can use the app without an account.
+  // Premium features prompt sign-in inline when needed.
 
   return (
     <>

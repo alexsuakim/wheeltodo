@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode, useRef } from 'react';
+import { getSupabaseClient } from '@todo/shared';
 import { ACHIEVEMENT_DEFS, getUnlockedTierIds, type AchievementValues } from '../utils/achievements';
 
 export interface Task {
@@ -99,8 +100,10 @@ interface AppContextType {
   setWheelSoundEnabled: (enabled: boolean) => void;
 
   user: { name: string; email: string; initials: string; avatarId?: string } | null;
-  login: (email: string, password: string) => void;
-  logout: () => void;
+  authLoading: boolean;
+  login: (email: string, password: string) => Promise<string | null>;
+  signUp: (email: string, password: string) => Promise<string | null>;
+  logout: () => Promise<void>;
   updateUser: (name: string, email: string, avatarId?: string) => void;
 
   categories: string[];
@@ -192,6 +195,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [wheelSoundEnabled, setWheelSoundEnabled] = useState(true);
   const [user, setUser] = useState<{ name: string; email: string; initials: string; avatarId?: string } | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
   const [categories, setCategories] = useState<string[]>(DEFAULT_CATEGORIES);
   const [seenAchievements, setSeenAchievements] = useState<string[]>([]);
   const [pendingAchievementToast, setPendingAchievementToast] = useState<string | null>(null);
@@ -401,10 +405,41 @@ export function AppProvider({ children }: { children: ReactNode }) {
     );
   }, []);
 
-  const login = (email: string, _password: string) => {
-    const name = email.split('@')[0];
-    const initials = name.slice(0, 2).toUpperCase();
-    setUser({ name, email, initials });
+  // Restore Supabase session on mount
+  useEffect(() => {
+    const supabase = getSupabaseClient();
+    supabase.auth.getSession().then(({ data }) => {
+      const u = data.session?.user;
+      if (u) {
+        const name = u.user_metadata?.full_name ?? u.email?.split('@')[0] ?? 'User';
+        const initials = name.slice(0, 2).toUpperCase();
+        setUser({ name, email: u.email ?? '', initials });
+      }
+      setAuthLoading(false);
+    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      const u = session?.user;
+      if (u) {
+        const name = u.user_metadata?.full_name ?? u.email?.split('@')[0] ?? 'User';
+        const initials = name.slice(0, 2).toUpperCase();
+        setUser({ name, email: u.email ?? '', initials });
+      } else {
+        setUser(null);
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const login = async (email: string, password: string): Promise<string | null> => {
+    const supabase = getSupabaseClient();
+    const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+    return error ? error.message : null;
+  };
+
+  const signUp = async (email: string, password: string): Promise<string | null> => {
+    const supabase = getSupabaseClient();
+    const { error } = await supabase.auth.signUp({ email: email.trim(), password });
+    return error ? error.message : null;
   };
 
   const updateUser = (name: string, email: string, avatarId?: string) => {
@@ -580,7 +615,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setCategories((prev) => prev.filter((c) => c !== cat));
   };
 
-  const logout = () => {
+  const logout = async () => {
+    const supabase = getSupabaseClient();
+    await supabase.auth.signOut();
     setUser(null);
     setPomodoroSession(null);
   };
@@ -728,7 +765,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     dailyGoal, setDailyGoal,
     notificationsEnabled, setNotificationsEnabled,
     wheelSoundEnabled, setWheelSoundEnabled,
-    user, login, logout, updateUser,
+    user, authLoading, login, signUp, logout, updateUser,
     categories, addCategory, removeCategory,
     streak, bestStreak, hasActivityToday, achievementValues, unlockedTierIds, spinCount, incrementSpinCount,
     seenAchievements, markAchievementSeen,
