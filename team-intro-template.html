@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Self Intro — [Your Name] · ionstudio</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:     #f2f0eb;
+  --black:  #111111;
+  --white:  #ffffff;
+  --red:    #FF5C4D;
+  --muted:  #aaaaaa;
+  --card:   #ffffff;
+  --border: rgba(0,0,0,.07);
+  --ink:    #333333;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
+  background: var(--bg);
+  color: var(--black);
+  min-height: 100vh;
+  padding: 48px 24px 80px;
+}
+
+/* ── LAYOUT ── */
+.page { max-width: 780px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+
+/* ── HERO ── */
+.hero {
+  background: var(--black);
+  border-radius: 28px;
+  padding: 40px 40px 36px;
+  display: flex;
+  gap: 36px;
+  align-items: flex-start;
+  position: relative;
+  overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute;
+  width: 300px; height: 300px;
+  background: radial-gradient(circle, rgba(255,92,77,.25) 0%, transparent 70%);
+  top: -80px; right: -60px;
+  pointer-events: none;
+}
+.photo-wrap {
+  flex-shrink: 0;
+  width: 120px; height: 120px;
+  border-radius: 24px;
+  overflow: hidden;
+  background: #1e1e1e;
+  border: 2px solid rgba(255,255,255,.08);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  position: relative;
+}
+.photo-wrap img { width: 100%; height: 100%; object-fit: cover; display: none; }
+.photo-placeholder {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  color: rgba(255,255,255,.25); font-size: 11px; font-weight: 600; letter-spacing: .05em;
+  text-align: center; padding: 10px;
+}
+.photo-placeholder .icon { font-size: 28px; }
+.photo-input { display: none; }
+
+.hero-info { flex: 1; display: flex; flex-direction: column; gap: 12px; padding-top: 4px; }
+.hero-name {
+  font-size: clamp(32px, 5vw, 48px);
+  font-weight: 800;
+  color: var(--white);
+  letter-spacing: -.03em;
+  line-height: 1.0;
+  outline: none;
+  border: none;
+  background: transparent;
+  width: 100%;
+}
+.hero-name::placeholder { color: rgba(255,255,255,.2); }
+.pronouns-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.editable-pill {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 4px 13px; border-radius: 100px;
+  font-size: 12px; font-weight: 600;
+  outline: none; cursor: text;
+  min-width: 60px;
+}
+.pill-ghost { background: rgba(255,255,255,.08); color: rgba(255,255,255,.5); }
+.pill-red   { background: rgba(255,92,77,.2); color: var(--red); }
+.pill-ghost:empty::before { content: attr(data-placeholder); opacity:.5; }
+.pill-red:empty::before   { content: attr(data-placeholder); opacity:.5; }
+
+.hero-tagline {
+  font-size: 16px; color: rgba(255,255,255,.5); font-weight: 400;
+  line-height: 1.6; outline: none; background: transparent; border: none; width: 100%;
+  resize: none; min-height: 48px;
+}
+.hero-tagline::placeholder { color: rgba(255,255,255,.2); }
+
+/* ── SECTION CARDS ── */
+.card {
+  background: var(--card);
+  border-radius: 22px;
+  padding: 30px 32px;
+}
+.card.beige { background: var(--bg); border: 1.5px solid rgba(0,0,0,.06); }
+.card.dark  { background: #1a1a1a; }
+
+.section-label {
+  font-size: 10px; font-weight: 700; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--red); margin-bottom: 16px;
+}
+.section-label.inv { color: rgba(255,255,255,.35); }
+.section-label.drk { color: var(--muted); }
+
+/* ── EDITABLE CONTENT ── */
+[contenteditable] {
+  outline: none;
+  cursor: text;
+  transition: background .15s;
+  border-radius: 8px;
+}
+[contenteditable]:focus { background: rgba(255,92,77,.05); }
+[contenteditable].dark-focus:focus { background: rgba(255,255,255,.04); }
+[contenteditable]:empty::before {
+  content: attr(data-placeholder);
+  color: var(--muted);
+  pointer-events: none;
+}
+
+/* ── HOW I WORK ── */
+.work-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.work-item { display: flex; flex-direction: column; gap: 10px; }
+.work-label { font-size: 12px; font-weight: 700; color: var(--black); }
+.slider-wrap { position: relative; }
+.slider-track {
+  height: 6px; background: var(--bg); border-radius: 3px;
+  position: relative; cursor: pointer;
+}
+.slider-fill {
+  height: 6px; background: var(--red); border-radius: 3px;
+  position: absolute; top: 0; left: 0; transition: width .2s;
+}
+.slider-thumb {
+  width: 18px; height: 18px; border-radius: 50%;
+  background: var(--white); border: 2px solid var(--red);
+  position: absolute; top: -6px;
+  transform: translateX(-50%);
+  cursor: grab; box-shadow: 0 2px 6px rgba(0,0,0,.15);
+  transition: left .2s;
+}
+.slider-labels { display: flex; justify-content: space-between; margin-top: 6px; }
+.slider-labels span { font-size: 10px; color: var(--muted); }
+.slider-value { font-size: 11px; font-weight: 700; color: var(--red); text-align: center; margin-top: 2px; }
+
+/* ── CHIPS ── */
+.chip-input-wrap { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.chip {
+  padding: 6px 14px; border-radius: 100px;
+  font-size: 13px; font-weight: 600;
+  background: var(--bg); color: var(--black);
+  display: inline-flex; align-items: center; gap: 5px;
+  border: 1.5px solid transparent;
+  cursor: default; user-select: none;
+}
+.chip .del {
+  font-size: 14px; line-height: 1; cursor: pointer;
+  color: var(--muted); margin-left: 2px;
+  transition: color .15s;
+}
+.chip .del:hover { color: var(--red); }
+.chip.colored { background: var(--black); color: var(--white); }
+.chip-add {
+  padding: 6px 14px; border-radius: 100px;
+  font-size: 13px; font-weight: 600;
+  border: 1.5px dashed var(--muted);
+  color: var(--muted); cursor: pointer;
+  background: transparent;
+  transition: all .15s;
+}
+.chip-add:hover { border-color: var(--red); color: var(--red); }
+.chip-input {
+  padding: 6px 14px; border-radius: 100px;
+  font-size: 13px; font-weight: 600;
+  border: 1.5px solid var(--red); outline: none;
+  background: transparent; color: var(--black);
+  min-width: 80px; max-width: 160px;
+}
+
+/* ── PERSONALITY BADGES ── */
+.badge-grid { display: flex; flex-wrap: wrap; gap: 10px; }
+.badge {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--bg); border-radius: 14px;
+  padding: 10px 14px; font-size: 13px; font-weight: 600;
+  color: var(--black);
+}
+.badge .badge-icon { font-size: 18px; }
+
+/* ── SCHEDULE GRID ── */
+.schedule-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.sched-card {
+  background: var(--bg); border-radius: 16px; padding: 18px;
+}
+.sched-card .sched-icon { font-size: 22px; margin-bottom: 8px; }
+.sched-card .sched-title { font-size: 13px; font-weight: 700; color: var(--black); margin-bottom: 6px; }
+.sched-body {
+  font-size: 13px; color: var(--ink); line-height: 1.6;
+  min-height: 44px; padding: 2px 4px; border-radius: 6px;
+}
+
+/* ── DAY RHYTHM PICKER ── */
+.rhythm-row { display: flex; gap: 6px; }
+.rhythm-day {
+  flex: 1; border-radius: 12px; padding: 10px 4px;
+  text-align: center; cursor: pointer;
+  background: var(--bg); border: 1.5px solid transparent;
+  transition: all .15s; user-select: none;
+}
+.rhythm-day .rd-label { font-size: 10px; font-weight: 700; color: var(--muted); margin-bottom: 5px; }
+.rhythm-day .rd-dot   { width: 8px; height: 8px; border-radius: 50%; background: #ddd; margin: 0 auto; transition: background .15s; }
+.rhythm-day.on { background: var(--black); border-color: var(--black); }
+.rhythm-day.on .rd-label { color: rgba(255,255,255,.6); }
+.rhythm-day.on .rd-dot   { background: var(--red); }
+
+/* ── COWORKER STYLE ── */
+.style-row { display: flex; flex-direction: column; gap: 12px; }
+.style-item { display: flex; gap: 12px; align-items: flex-start; }
+.style-emoji { font-size: 22px; flex-shrink: 0; width: 36px; height: 36px; border-radius: 10px; background: var(--bg); display: flex; align-items: center; justify-content: center; }
+.style-body { flex: 1; }
+.style-title { font-size: 14px; font-weight: 700; color: var(--black); margin-bottom: 3px; }
+.style-desc  { font-size: 13px; color: var(--ink); line-height: 1.55; min-height: 20px; padding: 2px 4px; border-radius: 6px; }
+
+/* ── TWO COL ── */
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+/* ── FOOTER ── */
+.footer {
+  text-align: center; padding: 24px;
+  font-size: 12px; color: var(--muted);
+  letter-spacing: .05em;
+}
+
+/* ── PRINT/EXPORT HINT ── */
+.top-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 4px;
+}
+.top-bar-title { font-size: 12px; font-weight: 700; color: var(--muted); letter-spacing: .1em; text-transform: uppercase; }
+.save-btn {
+  padding: 7px 18px; border-radius: 100px;
+  background: var(--black); color: var(--white);
+  font-size: 12px; font-weight: 700; border: none;
+  cursor: pointer; letter-spacing: .03em;
+  transition: opacity .15s;
+}
+.save-btn:hover { opacity: .8; }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 600px) {
+  body { padding: 24px 14px 60px; }
+  .hero { flex-direction: column; gap: 24px; padding: 28px 24px; }
+  .work-grid { grid-template-columns: 1fr; }
+  .schedule-grid { grid-template-columns: 1fr; }
+  .two-col { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<div class="page">
+
+  <!-- ── TOP BAR ── -->
+  <div class="top-bar">
+    <span class="top-bar-title">ionstudio · Self Intro</span>
+    <button class="save-btn" onclick="window.print()">Save as PDF</button>
+  </div>
+
+  <!-- ══════════════════════════════════
+       HERO — NAME + PHOTO + TAGLINE
+  ════════════════════════════════════ -->
+  <div class="hero">
+    <div class="photo-wrap" onclick="document.getElementById('photo-input').click()" title="Click to upload photo">
+      <div class="photo-placeholder" id="photo-placeholder">
+        <span class="icon">📸</span>
+        <span>Add photo</span>
+      </div>
+      <img id="photo-img" alt="Profile photo" />
+      <input type="file" id="photo-input" class="photo-input" accept="image/*" onchange="loadPhoto(event)">
+    </div>
+
+    <div class="hero-info">
+      <input
+        class="hero-name"
+        type="text"
+        placeholder="Your Name"
+        id="hero-name"
+      />
+      <div class="pronouns-row">
+        <span class="editable-pill pill-ghost" contenteditable data-placeholder="she/her" title="Pronouns"></span>
+        <span class="editable-pill pill-red" contenteditable data-placeholder="what to call you 🙂" title="Preferred name / nickname"></span>
+      </div>
+      <textarea
+        class="hero-tagline"
+        placeholder="One line about who you are — e.g. &quot;designer by day, bread baker by night, and relentlessly curious about everything in between&quot;"
+        rows="2"
+      ></textarea>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════
+       BACKGROUND & EXPERTISE
+  ════════════════════════════════════ -->
+  <div class="card">
+    <div class="section-label">Background &amp; Expertise</div>
+    <div
+      contenteditable
+      data-placeholder="Tell us your story — what's your background, what skills do you bring, and what are you most experienced in? E.g. 'I studied communication design, then spent 3 years at a startup doing everything from branding to user research. I'm strongest in visual systems and rapid prototyping.'"
+      style="font-size:15px; color:var(--ink); line-height:1.7; padding:4px 6px; min-height:80px;"
+    ></div>
+    <div style="margin-top:20px;">
+      <div style="font-size:12px; font-weight:700; color:var(--muted); margin-bottom:10px; letter-spacing:.04em;">AREAS OF EXPERTISE</div>
+      <div class="chip-input-wrap" id="expertise-chips">
+        <span class="chip colored">Design <span class="del" onclick="this.parentElement.remove()">×</span></span>
+        <span class="chip colored">Branding <span class="del" onclick="this.parentElement.remove()">×</span></span>
+        <button class="chip-add" onclick="addChip('expertise-chips', this)">+ add skill</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════
+       HOW I WORK
+  ════════════════════════════════════ -->
+  <div class="card beige">
+    <div class="section-label drk">How I Work</div>
+
+    <div class="work-grid">
+
+      <!-- slider 1: solo ↔ collaborative -->
+      <div class="work-item">
+        <div class="work-label">I work better…</div>
+        <div class="slider-wrap">
+          <div class="slider-track" id="track-0" onclick="sliderClick(0,event)">
+            <div class="slider-fill" id="fill-0" style="width:30%;"></div>
+            <div class="slider-thumb" id="thumb-0" style="left:30%;"></div>
+          </div>
+          <div class="slider-labels"><span>Solo deep work</span><span>With others</span></div>
+          <div class="slider-value" id="val-0">Mostly solo, open to collaboration</div>
+        </div>
+      </div>
+
+      <!-- slider 2: marathon ↔ sprint -->
+      <div class="work-item">
+        <div class="work-label">My work sessions are…</div>
+        <div class="slider-wrap">
+          <div class="slider-track" id="track-1" onclick="sliderClick(1,event)">
+            <div class="slider-fill" id="fill-1" style="width:65%;"></div>
+            <div class="slider-thumb" id="thumb-1" style="left:65%;"></div>
+          </div>
+          <div class="slider-labels"><span>1h daily bursts</span><span>All-day sprints</span></div>
+          <div class="slider-value" id="val-1">Long focused sprints</div>
+        </div>
+      </div>
+
+      <!-- slider 3: structured ↔ fluid -->
+      <div class="work-item">
+        <div class="work-label">I prefer…</div>
+        <div class="slider-wrap">
+          <div class="slider-track" id="track-2" onclick="sliderClick(2,event)">
+            <div class="slider-fill" id="fill-2" style="width:50%;"></div>
+            <div class="slider-thumb" id="thumb-2" style="left:50%;"></div>
+          </div>
+          <div class="slider-labels"><span>Structured plans</span><span>Fluid & open</span></div>
+          <div class="slider-value" id="val-2">Mix of both</div>
+        </div>
+      </div>
+
+      <!-- slider 4: async ↔ sync -->
+      <div class="work-item">
+        <div class="work-label">Communication style…</div>
+        <div class="slider-wrap">
+          <div class="slider-track" id="track-3" onclick="sliderClick(3,event)">
+            <div class="slider-fill" id="fill-3" style="width:40%;"></div>
+            <div class="slider-thumb" id="thumb-3" style="left:40%;"></div>
+          </div>
+          <div class="slider-labels"><span>Async (Slack etc)</span><span>Real-time / calls</span></div>
+          <div class="slider-value" id="val-3">Prefer async</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- what drives you -->
+    <div style="margin-top:24px;">
+      <div style="font-size:12px; font-weight:700; color:var(--muted); margin-bottom:10px; letter-spacing:.04em; text-transform:uppercase;">What drives you?</div>
+      <div
+        contenteditable
+        data-placeholder="What gets you excited about your work? What kind of problems energize you? What makes you feel like you're doing something meaningful? E.g. 'I'm driven by the moment when something I made genuinely helps someone — when I can see the impact directly.'"
+        style="font-size:14px; color:var(--ink); line-height:1.7; padding:6px 8px; min-height:60px; background:white; border-radius:12px;"
+      ></div>
+    </div>
+
+    <!-- needs / pet peeves -->
+    <div class="two-col" style="margin-top:20px;">
+      <div>
+        <div style="font-size:12px; font-weight:700; color:var(--muted); margin-bottom:8px; letter-spacing:.04em; text-transform:uppercase;">I work best when…</div>
+        <div
+          contenteditable
+          data-placeholder="e.g. I have clear goals, quiet time in the morning, feedback that's direct..."
+          style="font-size:13px; color:var(--ink); line-height:1.65; padding:6px 8px; min-height:52px; background:white; border-radius:12px;"
+        ></div>
+      </div>
+      <div>
+        <div style="font-size:12px; font-weight:700; color:var(--muted); margin-bottom:8px; letter-spacing:.04em; text-transform:uppercase;">It slows me down when…</div>
+        <div
+          contenteditable
+          data-placeholder="e.g. too many meetings, unclear briefs, last-minute changes, no sleep..."
+          style="font-size:13px; color:var(--ink); line-height:1.65; padding:6px 8px; min-height:52px; background:white; border-radius:12px;"
+        ></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════
+       HOBBIES & INTERESTS
+  ════════════════════════════════════ -->
+  <div class="card">
+    <div class="section-label">Hobbies &amp; Interests</div>
+    <div
+      contenteditable
+      data-placeholder="What do you do when you're not working? Any obsessions, side projects, sports, creative outlets, shows you can't stop recommending, places you love, things you collect, or random skills nobody expects you to have?"
+      style="font-size:15px; color:var(--ink); line-height:1.7; padding:4px 6px; min-height:60px;"
+    ></div>
+    <div style="margin-top:16px;">
+      <div class="chip-input-wrap" id="hobby-chips">
+        <span class="chip">🎵 Music <span class="del" onclick="this.parentElement.remove()">×</span></span>
+        <span class="chip">🏃 Running <span class="del" onclick="this.parentElement.remove()">×</span></span>
+        <span class="chip">📚 Reading <span class="del" onclick="this.parentElement.remove()">×</span></span>
+        <button class="chip-add" onclick="addChip('hobby-chips', this)">+ add hobby</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════
+       AS A FRIEND / COWORKER
+  ════════════════════════════════════ -->
+  <div class="card beige">
+    <div class="section-label drk">What I'm like as a friend &amp; coworker</div>
+    <div class="style-row">
+      <div class="style-item">
+        <div class="style-emoji">💬</div>
+        <div class="style-body">
+          <div class="style-title">How I communicate</div>
+          <div
+            class="style-desc"
+            contenteditable
+            data-placeholder="Direct? Indirect? Do you tend to over-explain or keep it short? Do you need time to think before responding? e.g. 'I'm pretty direct — I'd rather have a slightly awkward honest conversation than a polite one that goes nowhere.'"
+          ></div>
+        </div>
+      </div>
+      <div class="style-item">
+        <div class="style-emoji">🙌</div>
+        <div class="style-body">
+          <div class="style-title">How I show up for others</div>
+          <div
+            class="style-desc"
+            contenteditable
+            data-placeholder="Are you the person who checks in quietly, the one who hypes people up loudly, the practical helper, or the one who remembers everything? e.g. 'I notice when people seem off and check in privately — I'm not a big public cheerleader but I'll absolutely be in your corner.'"
+          ></div>
+        </div>
+      </div>
+      <div class="style-item">
+        <div class="style-emoji">⚠️</div>
+        <div class="style-body">
+          <div class="style-title">What to know about working with me</div>
+          <div
+            class="style-desc"
+            contenteditable
+            data-placeholder="Quirks, tendencies, or things that are just easier to know upfront. e.g. 'I get quiet when I'm stressed — it's not personal. Also I will send you voice notes at 11pm. You don't have to reply until morning.'"
+          ></div>
+        </div>
+      </div>
+      <div class="style-item">
+        <div class="style-emoji">🎁</div>
+        <div class="style-body">
+          <div class="style-title">What I bring to a team</div>
+          <div
+            class="style-desc"
+            contenteditable
+            data-placeholder="Not skills — vibes and energy. What does the team get just by having you around? e.g. 'I ask the dumb questions nobody else will ask. I also make it less weird when there's tension in the room.'"
+          ></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════
+       SCHEDULE
+  ════════════════════════════════════ -->
+  <div class="card dark">
+    <div class="section-label inv">My Schedule</div>
+    <div class="schedule-grid">
+
+      <div class="sched-card">
+        <div class="sched-icon">💼</div>
+        <div class="sched-title">Day job / main commitments</div>
+        <div class="sched-body" contenteditable data-placeholder="What are you doing Monday–Friday? Where do you work, what hours, any fixed commitments?"></div>
+      </div>
+
+      <div class="sched-card">
+        <div class="sched-icon">⏰</div>
+        <div class="sched-title">When I'm most available</div>
+        <div class="sched-body" contenteditable data-placeholder="Mornings? Late nights? Weekends? When is the best time to reach you or set meetings?"></div>
+      </div>
+
+      <div class="sched-card">
+        <div class="sched-icon">✈️</div>
+        <div class="sched-title">Upcoming travel / time away</div>
+        <div class="sched-body" contenteditable data-placeholder="Any trips, vacations, or periods when you'll be less available? Good to know in advance!"></div>
+      </div>
+
+      <div class="sched-card">
+        <div class="sched-icon">🌍</div>
+        <div class="sched-title">Timezone &amp; location</div>
+        <div class="sched-body" contenteditable data-placeholder="Where are you based? Which timezone? Do you work from home, office, or both?"></div>
+      </div>
+
+    </div>
+
+    <!-- active days -->
+    <div style="margin-top:20px;">
+      <div style="font-size:11px; font-weight:700; color:rgba(255,255,255,.3); letter-spacing:.1em; text-transform:uppercase; margin-bottom:12px;">Days I'm usually around</div>
+      <div class="rhythm-row" id="rhythm-row">
+        <div class="rhythm-day" onclick="toggleDay(this)"><div class="rd-label">MON</div><div class="rd-dot"></div></div>
+        <div class="rhythm-day on" onclick="toggleDay(this)"><div class="rd-label">TUE</div><div class="rd-dot"></div></div>
+        <div class="rhythm-day on" onclick="toggleDay(this)"><div class="rd-label">WED</div><div class="rd-dot"></div></div>
+        <div class="rhythm-day on" onclick="toggleDay(this)"><div class="rd-label">THU</div><div class="rd-dot"></div></div>
+        <div class="rhythm-day on" onclick="toggleDay(this)"><div class="rd-label">FRI</div><div class="rd-dot"></div></div>
+        <div class="rhythm-day" onclick="toggleDay(this)"><div class="rd-label">SAT</div><div class="rd-dot"></div></div>
+        <div class="rhythm-day" onclick="toggleDay(this)"><div class="rd-label">SUN</div><div class="rd-dot"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════
+       ONE LAST THING
+  ════════════════════════════════════ -->
+  <div class="card" style="background:var(--black); color:white; padding:32px;">
+    <div class="section-label inv">One last thing…</div>
+    <div
+      contenteditable
+      class="dark-focus"
+      data-placeholder="Anything else you want the team to know? A fun fact, something surprising, a thing you've always wanted to learn, a deeply held opinion about pineapple on pizza, or just a message to your future teammates."
+      style="font-size:16px; color:rgba(255,255,255,.65); line-height:1.75; padding:4px 6px; min-height:64px;"
+    ></div>
+  </div>
+
+  <div class="footer">ionstudio self intro template · fill it in, save as PDF, share with the team 🙌</div>
+
+</div><!-- /page -->
+
+<script>
+/* ── PHOTO UPLOAD ── */
+function loadPhoto(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const img = document.getElementById('photo-img');
+    const ph  = document.getElementById('photo-placeholder');
+    img.src = ev.target.result;
+    img.style.display = 'block';
+    ph.style.display  = 'none';
+  };
+  reader.readAsDataURL(file);
+}
+
+/* ── SLIDERS ── */
+const SLIDER_LABELS = [
+  ['Mostly solo', 'Mostly solo, open to collaboration', 'Mix of both', 'Collaborative, with solo time', 'All about collaboration'],
+  ['Short daily bursts', 'Leans toward bursts', 'Mix of both', 'Long focused sprints', 'Full all-day immersion'],
+  ['Strongly structured', 'Prefer plans', 'Mix of both', 'Leaning fluid', 'Fully flexible & open'],
+  ['Strongly async', 'Prefer async', 'Mix of both', 'Prefer real-time', 'Always real-time'],
+];
+
+function sliderClick(idx, e) {
+  const track = document.getElementById('track-' + idx);
+  const rect  = track.getBoundingClientRect();
+  const pct   = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+  updateSlider(idx, pct);
+}
+
+function updateSlider(idx, pct) {
+  const fill  = document.getElementById('fill-' + idx);
+  const thumb = document.getElementById('thumb-' + idx);
+  const val   = document.getElementById('val-' + idx);
+  const p     = Math.round(pct * 100);
+  fill.style.width = p + '%';
+  thumb.style.left = p + '%';
+  const bucket = Math.min(4, Math.floor(pct * 5));
+  val.textContent = SLIDER_LABELS[idx][bucket];
+}
+
+// Make thumbs draggable
+document.querySelectorAll('.slider-thumb').forEach((thumb, idx) => {
+  let dragging = false;
+  thumb.addEventListener('mousedown', e => { dragging = true; e.preventDefault(); });
+  document.addEventListener('mousemove', e => {
+    if (!dragging) return;
+    const track = document.getElementById('track-' + idx);
+    const rect  = track.getBoundingClientRect();
+    const pct   = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    updateSlider(idx, pct);
+  });
+  document.addEventListener('mouseup', () => { dragging = false; });
+});
+
+/* ── CHIPS ── */
+function addChip(containerId, btn) {
+  const container = document.getElementById(containerId);
+  const input = document.createElement('input');
+  input.className = 'chip-input';
+  input.placeholder = 'type + enter';
+  input.maxLength = 24;
+  container.insertBefore(input, btn);
+  input.focus();
+  const isExpertise = containerId === 'expertise-chips';
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ',') {
+      e.preventDefault();
+      const val = input.value.trim();
+      if (val) {
+        const chip = document.createElement('span');
+        chip.className = isExpertise ? 'chip colored' : 'chip';
+        chip.innerHTML = val + ' <span class="del" onclick="this.parentElement.remove()">×</span>';
+        container.insertBefore(chip, input);
+      }
+      input.remove();
+    }
+    if (e.key === 'Escape') { input.remove(); }
+  });
+  input.addEventListener('blur', () => {
+    const val = input.value.trim();
+    if (val) {
+      const chip = document.createElement('span');
+      chip.className = isExpertise ? 'chip colored' : 'chip';
+      chip.innerHTML = val + ' <span class="del" onclick="this.parentElement.remove()">×</span>';
+      container.insertBefore(chip, input);
+    }
+    input.remove();
+  });
+}
+
+/* ── DAY TOGGLE ── */
+function toggleDay(el) { el.classList.toggle('on'); }
+
+/* ── PRINT STYLES ── */
+const printStyle = document.createElement('style');
+printStyle.textContent = `
+  @media print {
+    body { padding: 0; background: white; }
+    .top-bar { display: none !important; }
+    .chip-add, .chip .del { display: none !important; }
+    [contenteditable]:focus { background: transparent !important; }
+    .slider-thumb { box-shadow: none; }
+    @page { margin: 18mm; }
+  }
+`;
+document.head.appendChild(printStyle);
+</script>
+</body>
+</html>

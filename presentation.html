@@ -1,0 +1,1455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WheelTodo — Project Update</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --black:   #111111;
+  --white:   #ffffff;
+  --red:     #FF5C4D;
+  --orange:  #FF9B50;
+  --teal:    #4ECDC4;
+  --purple:  #A78BFA;
+  --yellow:  #FFE66D;
+  --blue:    #93C5FD;
+  --green:   #22a722;
+  --bg:      #f2f0eb;
+  --card:    #ffffff;
+  --muted:   #aaaaaa;
+  --border:  #e8e8e8;
+}
+
+html, body { width: 100%; height: 100%; overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
+  background: var(--black); }
+
+/* ── DECK ── */
+#deck { width: 100%; height: 100%; position: relative; }
+
+.slide {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column; justify-content: center; align-items: center;
+  padding: 52px 60px;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.4s ease, transform 0.4s ease;
+  transform: translateY(20px);
+}
+.slide.active  { opacity: 1; pointer-events: all; transform: translateY(0); }
+.slide.exit    { opacity: 0; transform: translateY(-20px); }
+
+/* ── BG ── */
+.bg-app    { background: var(--bg); }
+.bg-white  { background: var(--white); }
+.bg-black  { background: var(--black); color: var(--white); }
+.bg-red    { background: var(--red); color: var(--white); }
+
+/* ── NAV ── */
+#progress { position:fixed; bottom:0; left:0; height:3px; background:var(--red); transition:width .4s ease; z-index:100; }
+#dots     { position:fixed; bottom:22px; left:50%; transform:translateX(-50%); display:flex; gap:7px; z-index:100; }
+.dot      { width:6px; height:6px; border-radius:50%; background:rgba(255,255,255,.25); transition:all .3s; cursor:pointer; }
+.dot.on   { background:var(--red); width:18px; border-radius:3px; }
+#snum     { position:fixed; top:26px; right:32px; font-size:11px; color:rgba(255,255,255,.3); letter-spacing:.06em; z-index:100; font-variant-numeric:tabular-nums; }
+#hint     { position:fixed; bottom:48px; right:32px; font-size:11px; color:rgba(255,255,255,.18); z-index:100; }
+
+/* ── TYPE ── */
+.label { font-size:11px; font-weight:700; letter-spacing:.13em; text-transform:uppercase; color:var(--red); margin-bottom:18px; }
+.label.inv { color:rgba(255,255,255,.45); }
+.label.drk { color:#888; }
+h1 { font-size:clamp(50px,7vw,86px); font-weight:800; line-height:1.0; letter-spacing:-.03em; }
+h2 { font-size:clamp(30px,4vw,50px); font-weight:800; line-height:1.05; letter-spacing:-.025em; }
+h3 { font-size:clamp(17px,2.2vw,24px); font-weight:700; line-height:1.2; }
+p  { font-size:clamp(14px,1.6vw,18px); line-height:1.65; color:var(--muted); }
+.tc { text-align:center; }
+.white { color: var(--white); }
+
+/* ── PHONE MOCKUP ── */
+.phone {
+  width: 200px; flex-shrink: 0;
+  background: #1a1a1a;
+  border-radius: 36px;
+  padding: 10px;
+  box-shadow: 0 20px 60px rgba(0,0,0,.35), inset 0 0 0 1px rgba(255,255,255,.08);
+  position: relative;
+}
+.phone-notch {
+  width: 70px; height: 20px;
+  background: #1a1a1a;
+  border-radius: 0 0 14px 14px;
+  margin: 0 auto 6px;
+  position: relative; z-index: 2;
+}
+.phone-screen {
+  background: var(--bg);
+  border-radius: 28px;
+  overflow: hidden;
+  height: 360px;
+  position: relative;
+}
+.phone.lg { width: 240px; }
+.phone.lg .phone-screen { height: 430px; }
+
+/* screen-bg override per mockup */
+.phone-screen.dark { background: #111; }
+
+/* ── SCREEN HEADER (persistent header) ── */
+.app-header {
+  background: var(--bg);
+  padding: 8px 14px 6px;
+  display: flex; align-items: center; justify-content: space-between;
+  border-bottom: 1px solid rgba(0,0,0,.06);
+}
+.streak-badge {
+  display: flex; align-items: center; gap: 4px;
+  background: var(--white); border-radius: 100px;
+  padding: 3px 9px 3px 7px; font-size: 11px; font-weight: 700;
+}
+.streak-flame { font-size: 13px; }
+.avatar-circle {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: var(--black); display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+}
+.app-content { padding: 8px 10px; display: flex; flex-direction: column; gap: 7px; overflow: hidden; }
+.screen-title { font-size: 13px; font-weight: 800; color: var(--black); line-height: 1.2; }
+.screen-title .accent { color: var(--red); }
+.tab-bar {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  background: var(--white); border-top: 1px solid rgba(0,0,0,.07);
+  display: flex; padding: 6px 0 8px;
+}
+.tab { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 7px; color: var(--muted); }
+.tab.active { color: var(--black); font-weight: 700; }
+.tab-icon { font-size: 14px; }
+
+/* ── WHEEL ── */
+.mini-wheel { margin: 2px auto; }
+
+/* ── CARD COMPONENTS ── */
+.ui-card {
+  background: var(--white); border-radius: 12px;
+  padding: 9px 10px; font-size: 10px;
+}
+.ui-card-title { font-size: 10px; font-weight: 700; color: var(--black); margin-bottom: 4px; }
+.ui-row { display: flex; align-items: center; gap: 6px; padding: 5px 0; border-bottom: 1px solid #f5f5f5; }
+.ui-row:last-child { border-bottom: none; }
+.ui-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.ui-task-name { font-size: 9px; color: var(--black); flex: 1; font-weight: 500; }
+.ui-task-time { font-size: 8px; color: var(--muted); }
+.ui-timer-icon { font-size: 10px; }
+
+/* focus card */
+.focus-card {
+  background: var(--black); border-radius: 12px; padding: 10px;
+  color: white;
+}
+.focus-task { font-size: 9px; font-weight: 700; color: rgba(255,255,255,.9); }
+.focus-timer { font-size: 24px; font-weight: 300; color: white; margin: 2px 0; }
+.focus-bar-bg { height: 3px; background: rgba(255,255,255,.2); border-radius: 2px; overflow: hidden; margin-bottom: 6px; }
+.focus-bar-fill { height: 3px; background: var(--red); border-radius: 2px; }
+.focus-btns { display: flex; gap: 5px; }
+.focus-btn { flex: 1; padding: 4px; border-radius: 100px; text-align: center; font-size: 8px; font-weight: 600; }
+.focus-btn.outline { background: rgba(255,255,255,.12); color: white; }
+.focus-btn.filled  { background: white; color: var(--black); }
+
+/* week bubbles */
+.week-bubbles { display: flex; gap: 3px; }
+.bubble { flex: 1; height: 22px; border-radius: 7px; display: flex; align-items: center; justify-content: center; font-size: 7px; font-weight: 700; }
+.bubble.active   { background: var(--black); color: white; }
+.bubble.today    { background: var(--red); color: white; }
+.bubble.rest     { background: var(--purple); color: white; }
+.bubble.future   { background: #eeecea; color: #ccc; }
+.bubble.inactive { background: #e0ddd8; color: #bcbab6; }
+
+/* rest meter */
+.rest-meter-bg { height: 8px; background: #f0f0f0; border-radius: 4px; overflow: hidden; }
+.rest-meter-fill { height: 8px; background: var(--teal); border-radius: 4px; }
+.cat-row { display: flex; align-items: center; gap: 5px; padding: 4px 0; }
+.cat-icon { font-size: 11px; }
+.cat-name { font-size: 9px; font-weight: 700; flex: 1; }
+.cat-prog { font-size: 8px; color: var(--muted); }
+
+/* check row */
+.check-row { display: flex; align-items: center; gap: 5px; padding: 4px 0; }
+.circle-check { width: 14px; height: 14px; border-radius: 50%; border: 1.5px solid #d0d0d0; flex-shrink: 0; }
+.circle-done  { background: var(--green); border-color: var(--green); display: flex; align-items: center; justify-content: center; font-size: 7px; color: white; }
+.check-label  { font-size: 9px; color: var(--black); flex: 1; }
+.check-time   { font-size: 8px; color: var(--muted); }
+
+/* mood row */
+.mood-row { display: flex; gap: 4px; }
+.mood-btn { flex: 1; background: #f7f6f3; border-radius: 8px; padding: 7px 3px; text-align: center; font-size: 10px; }
+.mood-label { font-size: 8px; color: var(--muted); margin-top: 2px; }
+
+/* bottom sheet */
+.bottom-sheet { background: white; border-radius: 18px 18px 0 0; padding: 10px; text-align: center; }
+.sheet-handle { width: 26px; height: 3px; background: #e0e0e0; border-radius: 2px; margin: 0 auto 8px; }
+.sheet-dot    { width: 28px; height: 28px; border-radius: 50%; margin: 0 auto 5px; }
+.sheet-label  { font-size: 8px; color: var(--muted); letter-spacing: .06em; text-transform: uppercase; }
+.sheet-task   { font-size: 13px; font-weight: 800; color: var(--black); margin: 3px 0; }
+.sheet-meta   { font-size: 8px; color: var(--muted); margin-bottom: 8px; }
+.sheet-btn    { background: var(--black); color: white; border-radius: 100px; padding: 7px; font-size: 9px; font-weight: 700; width: 100%; }
+.sheet-dismiss { color: var(--muted); font-size: 9px; margin-top: 5px; }
+
+/* morning nudge screen mockup */
+.nudge-row { display: flex; align-items: center; gap: 6px; padding: 5px 8px; border-radius: 9px; background: white; }
+.nudge-icon { font-size: 14px; flex-shrink: 0; }
+.nudge-text { font-size: 9px; font-weight: 600; color: var(--black); flex: 1; }
+.nudge-time { font-size: 8px; color: var(--muted); }
+.nudge-start { background: var(--red); color: white; border-radius: 100px; padding: 2px 7px; font-size: 8px; font-weight: 700; }
+
+/* stat card */
+.stat-card { background: white; border-radius: 12px; display: flex; }
+.stat-item { flex: 1; text-align: center; padding: 8px 4px; }
+.stat-val  { font-size: 16px; font-weight: 800; color: var(--black); }
+.stat-lbl  { font-size: 7px; color: var(--muted); }
+.stat-divider { width: 1px; background: #f0f0f0; }
+
+/* ── LAYOUT ── */
+.split { display:grid; grid-template-columns:1fr 1fr; gap:64px; align-items:center; width:100%; max-width:980px; }
+.col   { display:flex; flex-direction:column; gap:18px; }
+
+/* ── CARDS ── */
+.card       { background:var(--card); border-radius:18px; padding:26px 22px; }
+.card.beige { background:var(--bg); }
+.card.dark  { background:#1a1a1a; }
+.card.outlined { background:transparent; border:1.5px solid var(--border); }
+.card-grid  { display:grid; gap:14px; width:100%; max-width:860px; }
+.card-grid.c2 { grid-template-columns:1fr 1fr; }
+.card-grid.c3 { grid-template-columns:1fr 1fr 1fr; }
+.card-grid.c4 { grid-template-columns:1fr 1fr 1fr 1fr; }
+.card-icon  { font-size:26px; margin-bottom:10px; display:block; }
+.card h3    { font-size:16px; font-weight:700; color:var(--black); margin-bottom:5px; }
+.card.dark h3 { color:var(--white); }
+.card p     { font-size:13px; color:#777; line-height:1.55; }
+.card.dark p { color:#888; }
+.card-accent { position:absolute; top:0; left:0; width:100%; height:3px; border-radius:18px 18px 0 0; }
+
+/* ── PILLS ── */
+.pill { display:inline-flex; align-items:center; gap:5px; padding:4px 13px; border-radius:100px; font-size:12px; font-weight:600; letter-spacing:.02em; }
+.pill.red    { background:rgba(255,92,77,.12); color:var(--red); }
+.pill.teal   { background:rgba(78,205,196,.15); color:#0d9488; }
+.pill.purple { background:rgba(167,139,250,.15); color:#7c3aed; }
+.pill.black  { background:#1a1a1a; color:#fff; }
+.pill.green  { background:rgba(34,167,34,.12); color:#16a34a; }
+.pill.yellow { background:rgba(255,230,109,.25); color:#b45309; }
+.pill.sm     { font-size:10px; padding:3px 9px; }
+
+/* ── STEPS ── */
+.steps { display:flex; flex-direction:column; gap:20px; }
+.step  { display:flex; gap:16px; align-items:flex-start; }
+.step-n { flex-shrink:0; width:36px; height:36px; border-radius:50%; background:var(--black); color:#fff; display:flex; align-items:center; justify-content: center; font-size:15px; font-weight:800; }
+.step-n.red { background:var(--red); }
+.step-n.purple { background:var(--purple); }
+.step-body h3 { font-size:16px; font-weight:700; color:var(--black); margin-bottom:3px; }
+.step-body.light h3 { color:var(--white); }
+.step-body p  { font-size:13px; color:#888; line-height:1.5; }
+
+/* ── FEAT ROWS ── */
+.feat-list { display:flex; flex-direction:column; gap:10px; }
+.feat-row  { display:flex; gap:12px; align-items:flex-start; padding:12px 14px; background:#f7f6f3; border-radius:12px; }
+.feat-row.dark { background:#1a1a1a; }
+.feat-icon { font-size:20px; flex-shrink:0; }
+.feat-body h4 { font-size:14px; font-weight:700; color:var(--black); }
+.feat-body.light h4 { color:var(--white); }
+.feat-body p  { font-size:12px; color:#999; line-height:1.45; margin-top:2px; }
+
+/* ── TEAM ── */
+.team-grid { display:grid; grid-template-columns: repeat(4,1fr); gap:14px; max-width:920px; width:100%; }
+.team-card { background:var(--white); border-radius:18px; padding:20px 16px; text-align:center; }
+.team-avatar { width:52px; height:52px; border-radius:50%; margin:0 auto 10px; display:flex; align-items:center; justify-content:center; font-size:24px; }
+.team-name  { font-size:15px; font-weight:800; color:var(--black); }
+.team-role  { font-size:12px; color:var(--muted); margin:3px 0 10px; }
+.team-focus { font-size:12px; color:#555; line-height:1.45; }
+
+/* ── TIMELINE ── */
+.timeline { display:flex; flex-direction:column; gap:0; max-width:680px; width:100%; }
+.tl-item  { display:flex; gap:20px; align-items:stretch; }
+.tl-line  { display:flex; flex-direction:column; align-items:center; flex-shrink:0; }
+.tl-dot   { width:14px; height:14px; border-radius:50%; background:var(--red); flex-shrink:0; margin-top:3px; }
+.tl-dot.done { background:var(--green); }
+.tl-dot.future { background:#444; }
+.tl-track { width:2px; background:#2a2a2a; flex:1; margin:4px 0; }
+.tl-body  { padding-bottom:24px; }
+.tl-date  { font-size:11px; color:rgba(255,255,255,.35); font-weight:600; letter-spacing:.05em; margin-bottom:3px; }
+.tl-title { font-size:15px; font-weight:700; color:var(--white); margin-bottom:3px; }
+.tl-desc  { font-size:13px; color:#888; line-height:1.5; }
+
+/* ── ROADMAP ── */
+.road-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; max-width:880px; width:100%; }
+.road-card { background:#1a1a1a; border-radius:16px; padding:20px; border:1px solid #252525; }
+.road-tag  { font-size:10px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; padding:3px 10px; border-radius:100px; margin-bottom:13px; display:inline-block; }
+.road-card ul { list-style:none; display:flex; flex-direction:column; gap:7px; }
+.road-card ul li { font-size:13px; color:#bbb; display:flex; gap:8px; }
+.road-card ul li::before { content:"→"; color:#444; flex-shrink:0; }
+
+/* ── WORKFLOW ── */
+.workflow-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; max-width:860px; width:100%; }
+.wf-card { background:#1a1a1a; border-radius:16px; padding:20px; border:1px solid #252525; }
+.wf-icon { font-size:28px; margin-bottom:10px; }
+.wf-title { font-size:15px; font-weight:700; color:var(--white); margin-bottom:6px; }
+.wf-desc  { font-size:13px; color:#888; line-height:1.55; }
+.wf-tag   { display:inline-block; margin-top:8px; padding:3px 10px; border-radius:100px; font-size:11px; font-weight:600; }
+
+/* ── DIVIDER ── */
+.div { width:40px; height:3px; background:var(--red); border-radius:2px; }
+.div.c { margin:0 auto; }
+
+/* ── TECH ── */
+.tech-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; max-width:700px; width:100%; }
+.tech-card { background:#1a1a1a; border-radius:14px; padding:18px; border:1px solid #252525; text-align:center; }
+.tech-card .ti { font-size:28px; margin-bottom:8px; }
+.tech-card h4  { font-size:14px; font-weight:700; color:var(--white); }
+.tech-card p   { font-size:11px; color:#666; margin-top:3px; }
+
+/* ── WHEEL ANIM ── */
+.spin-slow { animation: spin 20s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<div id="deck">
+
+<!-- ════════════════════════════════════════
+     01 · COVER
+═════════════════════════════════════════ -->
+<div class="slide bg-black active" id="s0">
+  <div style="margin-bottom:36px;">
+    <svg class="spin-slow" width="140" height="140" viewBox="0 0 160 160">
+      <path d="M80,80 L80,4 A76,76 0 0,1 156,80 Z" fill="#FF5C4D"/>
+      <path d="M80,80 L156,80 A76,76 0 0,1 80,156 Z" fill="#4ECDC4"/>
+      <path d="M80,80 L80,156 A76,76 0 0,1 4,80 Z" fill="#A78BFA"/>
+      <path d="M80,80 L4,80 A76,76 0 0,1 80,4 Z" fill="#f2f0eb"/>
+      <circle cx="80" cy="80" r="18" fill="#111"/>
+      <circle cx="80" cy="80" r="6" fill="#FF5C4D"/>
+    </svg>
+  </div>
+  <h1 class="tc white" style="letter-spacing:-.04em;">WheelTodo</h1>
+  <p style="color:rgba(255,255,255,.35); font-size:18px; letter-spacing:.1em; margin-top:14px; text-align:center;">SPIN · FOCUS · DONE</p>
+  <div style="margin-top:40px; display:flex; gap:10px; flex-wrap:wrap; justify-content:center;">
+    <span class="pill black">ionstudio</span>
+    <span class="pill black">React Native</span>
+    <span class="pill black">Expo</span>
+    <span class="pill red">Ship by May 20</span>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     02 · THE PROBLEM
+═════════════════════════════════════════ -->
+<div class="slide bg-white" id="s1">
+  <div class="tc" style="margin-bottom:36px;">
+    <div class="label">The Problem</div>
+    <h2>You have a to-do list.<br>You're still not doing anything.</h2>
+    <div class="div c" style="margin-top:20px;"></div>
+  </div>
+  <div class="card-grid c3" style="max-width:800px;">
+    <div class="card beige tc" style="padding:28px 18px;">
+      <span style="font-size:40px; display:block; margin-bottom:12px;">😩</span>
+      <h3>Decision paralysis</h3>
+      <p>Too many tasks, no clear place to start</p>
+    </div>
+    <div class="card beige tc" style="padding:28px 18px;">
+      <span style="font-size:40px; display:block; margin-bottom:12px;">⏱️</span>
+      <h3>No focus structure</h3>
+      <p>Tasks sit open with no time-boxing or urgency</p>
+    </div>
+    <div class="card beige tc" style="padding:28px 18px;">
+      <span style="font-size:40px; display:block; margin-bottom:12px;">💀</span>
+      <h3>Streak anxiety</h3>
+      <p>Rest days feel like failure and break your flow</p>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     03 · THE SOLUTION
+═════════════════════════════════════════ -->
+<div class="slide bg-black" id="s2">
+  <div class="split">
+    <div class="col">
+      <div class="label inv">The Solution</div>
+      <h2 class="white">Let the<br>wheel decide.</h2>
+      <p style="color:#888; font-size:16px; line-height:1.7;">Add tasks, give it a spin, start a Pomodoro. On off days, rest activities protect your streak. Simple.</p>
+      <div class="steps" style="margin-top:4px;">
+        <div class="step">
+          <div class="step-n red">1</div>
+          <div class="step-body light"><h3>Add tasks to the wheel</h3><p>Each task becomes a coloured slice on the wheel.</p></div>
+        </div>
+        <div class="step">
+          <div class="step-n red">2</div>
+          <div class="step-body light"><h3>Spin to pick</h3><p>Swipe the wheel — it lands on a random task for you.</p></div>
+        </div>
+        <div class="step">
+          <div class="step-n red">3</div>
+          <div class="step-body light"><h3>Focus timer auto-runs</h3><p>"Start Focus" → Pomodoro starts and tracks your time.</p></div>
+        </div>
+        <div class="step">
+          <div class="step-n purple">4</div>
+          <div class="step-body light"><h3>Rest days count too</h3><p>Log rest activities to protect your streak on off days.</p></div>
+        </div>
+      </div>
+    </div>
+    <div class="col" style="align-items:center;">
+      <svg width="230" height="230" viewBox="0 0 160 160">
+        <circle cx="80" cy="80" r="78" fill="#1a1a1a"/>
+        <path d="M80,80 L80,4 A76,76 0 0,1 141,41 Z" fill="#FF5C4D"/>
+        <path d="M80,80 L141,41 A76,76 0 0,1 156,80 Z" fill="#FF9B50"/>
+        <path d="M80,80 L156,80 A76,76 0 0,1 141,119 Z" fill="#FFE66D"/>
+        <path d="M80,80 L141,119 A76,76 0 0,1 80,156 Z" fill="#4ECDC4"/>
+        <path d="M80,80 L80,156 A76,76 0 0,1 19,119 Z" fill="#A78BFA"/>
+        <path d="M80,80 L19,119 A76,76 0 0,1 4,80 Z" fill="#F9A8D4"/>
+        <path d="M80,80 L4,80 A76,76 0 0,1 19,41 Z" fill="#93C5FD"/>
+        <path d="M80,80 L19,41 A76,76 0 0,1 80,4 Z" fill="#60D394"/>
+        <circle cx="80" cy="80" r="20" fill="#111"/>
+        <circle cx="80" cy="80" r="7" fill="#FF5C4D"/>
+        <polygon points="80,2 76,14 84,14" fill="#fff"/>
+      </svg>
+      <div style="margin-top:16px; display:flex; gap:8px; flex-wrap:wrap; justify-content:center;">
+        <span class="pill red">🔥 12-day streak</span>
+        <span class="pill purple">🌙 rest protected</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     04 · APP SCREENS GALLERY
+═════════════════════════════════════════ -->
+<div class="slide bg-app" id="s3">
+  <div class="tc" style="margin-bottom:28px;">
+    <div class="label drk">The App</div>
+    <h2>Four screens. One flow.</h2>
+  </div>
+  <div style="display:flex; gap:16px; align-items:flex-start; justify-content:center;">
+
+    <!-- PHONE 1: Spin Screen -->
+    <div class="phone">
+      <div class="phone-notch"></div>
+      <div class="phone-screen">
+        <div class="app-header">
+          <div class="streak-badge"><span class="streak-flame">🔥</span><span>12</span></div>
+          <div class="avatar-circle">🐟</div>
+        </div>
+        <div class="app-content">
+          <div class="screen-title">Not sure where to start?<br><span class="accent">Spin the wheel.</span></div>
+          <!-- week bubbles -->
+          <div class="week-bubbles">
+            <div class="bubble active">M</div>
+            <div class="bubble active">T</div>
+            <div class="bubble rest">W</div>
+            <div class="bubble active">T</div>
+            <div class="bubble today">F</div>
+            <div class="bubble future">S</div>
+            <div class="bubble future">S</div>
+          </div>
+          <!-- wheel -->
+          <div style="text-align:center; margin:4px 0;">
+            <svg width="130" height="130" viewBox="0 0 160 160">
+              <path d="M80,80 L80,4 A76,76 0 0,1 141,41 Z" fill="#FF5C4D"/>
+              <path d="M80,80 L141,41 A76,76 0 0,1 156,80 Z" fill="#FF9B50"/>
+              <path d="M80,80 L156,80 A76,76 0 0,1 141,119 Z" fill="#FFE66D"/>
+              <path d="M80,80 L141,119 A76,76 0 0,1 80,156 Z" fill="#4ECDC4"/>
+              <path d="M80,80 L80,156 A76,76 0 0,1 19,119 Z" fill="#A78BFA"/>
+              <path d="M80,80 L19,119 A76,76 0 0,1 4,80 Z" fill="#F9A8D4"/>
+              <path d="M80,80 L4,80 A76,76 0 0,1 19,41 Z" fill="#93C5FD"/>
+              <path d="M80,80 L19,41 A76,76 0 0,1 80,4 Z" fill="#60D394"/>
+              <circle cx="80" cy="80" r="20" fill="#111"/>
+              <circle cx="80" cy="80" r="7" fill="#FF5C4D"/>
+              <polygon points="80,2 76,12 84,12" fill="#111"/>
+            </svg>
+          </div>
+          <!-- milestone -->
+          <div class="ui-card" style="padding:7px 9px;">
+            <div style="display:flex; align-items:center; gap:6px;">
+              <div style="width:22px; height:22px; border-radius:7px; background:rgba(255,92,77,.12); display:flex; align-items:center; justify-content:center; font-size:11px;">🔥</div>
+              <div style="flex:1;"><div style="font-size:9px; font-weight:700; color:#111;">Blazing</div><div style="font-size:8px; color:#aaa;">7-day streak</div></div>
+              <div style="font-size:8px; color:#aaa;">12/7</div>
+            </div>
+          </div>
+        </div>
+        <div class="tab-bar">
+          <div class="tab active"><span class="tab-icon">🎡</span>Spin</div>
+          <div class="tab"><span class="tab-icon">✅</span>Tasks</div>
+          <div class="tab"><span class="tab-icon">🌙</span>Rest</div>
+          <div class="tab"><span class="tab-icon">📈</span>History</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PHONE 2: Tasks + Pomodoro -->
+    <div class="phone">
+      <div class="phone-notch"></div>
+      <div class="phone-screen">
+        <div class="app-header">
+          <div class="streak-badge"><span class="streak-flame">🔥</span><span>12</span></div>
+          <div class="avatar-circle">🐟</div>
+        </div>
+        <div class="app-content">
+          <div class="screen-title">Your tasks are set.<br><span class="accent">Time to get to work.</span></div>
+          <!-- focus card -->
+          <div class="focus-card">
+            <div style="display:flex; align-items:center; gap:5px;">
+              <div style="width:7px; height:7px; border-radius:50%; background:#FF5C4D;"></div>
+              <div class="focus-task">Write weekly report</div>
+            </div>
+            <div class="focus-timer">18:42</div>
+            <div class="focus-bar-bg"><div class="focus-bar-fill" style="width:37%;"></div></div>
+            <div class="focus-btns">
+              <div class="focus-btn outline">Pause</div>
+              <div class="focus-btn filled">Done ✓</div>
+            </div>
+          </div>
+          <!-- task list -->
+          <div style="font-size:8px; font-weight:600; color:#aaa; letter-spacing:.06em; text-transform:uppercase;">TODAY'S TASKS</div>
+          <div class="ui-card" style="padding:4px 10px;">
+            <div class="ui-row">
+              <div class="ui-dot" style="background:#4ECDC4;"></div>
+              <span class="ui-task-name">Review design mockups</span>
+              <span class="ui-task-time">25m</span>
+              <span class="ui-timer-icon">⏱</span>
+            </div>
+            <div class="ui-row">
+              <div class="ui-dot" style="background:#A78BFA;"></div>
+              <span class="ui-task-name">Read documentation</span>
+              <span class="ui-task-time">30m</span>
+              <span class="ui-timer-icon">⏱</span>
+            </div>
+            <div class="ui-row" style="border:none;">
+              <div class="ui-dot" style="background:#FFE66D;"></div>
+              <span class="ui-task-name">Plan next sprint</span>
+              <span class="ui-task-time">20m</span>
+              <span class="ui-timer-icon">⏱</span>
+            </div>
+          </div>
+          <!-- stats -->
+          <div class="stat-card">
+            <div class="stat-item"><div class="stat-val">45m</div><div class="stat-lbl">Done</div></div>
+            <div class="stat-divider"></div>
+            <div class="stat-item"><div class="stat-val">2/5</div><div class="stat-lbl">Tasks</div></div>
+            <div class="stat-divider"></div>
+            <div class="stat-item"><div class="stat-val">40%</div><div class="stat-lbl">Goal</div></div>
+          </div>
+        </div>
+        <div class="tab-bar">
+          <div class="tab"><span class="tab-icon">🎡</span>Spin</div>
+          <div class="tab active"><span class="tab-icon">✅</span>Tasks</div>
+          <div class="tab"><span class="tab-icon">🌙</span>Rest</div>
+          <div class="tab"><span class="tab-icon">📈</span>History</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PHONE 3: Rest Mode -->
+    <div class="phone">
+      <div class="phone-notch"></div>
+      <div class="phone-screen">
+        <div class="app-header">
+          <div class="streak-badge"><span class="streak-flame">🔥</span><span>12</span></div>
+          <div class="avatar-circle">🐟</div>
+        </div>
+        <div class="app-content">
+          <div class="screen-title">Need a day off?<br><span class="accent">Take it easy today.</span></div>
+          <!-- rest meter -->
+          <div class="ui-card" style="padding:8px 10px;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+              <span style="font-size:9px; font-weight:700; color:#111;">Rest Meter</span>
+              <span style="font-size:9px; color:#aaa;">20 / 30m</span>
+            </div>
+            <div class="rest-meter-bg"><div class="rest-meter-fill" style="width:67%;"></div></div>
+            <div style="font-size:8px; color:#aaa; margin-top:4px;">10m more to protect your streak</div>
+          </div>
+          <!-- energy check-in -->
+          <div class="ui-card" style="padding:8px 10px;">
+            <div style="font-size:9px; font-weight:700; color:#111; margin-bottom:3px;">How are you feeling?</div>
+            <div style="font-size:8px; color:#aaa; margin-bottom:6px;">We'll suggest the best activities for you.</div>
+            <div class="mood-row">
+              <div class="mood-btn">😔<div class="mood-label">Drained</div></div>
+              <div class="mood-btn">😐<div class="mood-label">Okay</div></div>
+              <div class="mood-btn" style="background:#FF9B50; color:white;">⚡<div class="mood-label" style="color:rgba(255,255,255,.8);">Restless</div></div>
+            </div>
+          </div>
+          <!-- categories -->
+          <div class="ui-card" style="padding:4px 10px;">
+            <div class="cat-row"><span class="cat-icon">🏃</span><span class="cat-name" style="color:#FF9B50;">Physical</span><span class="cat-prog">1/4</span><span style="font-size:9px; color:#aaa;">▾</span></div>
+            <div class="check-row" style="padding-left:20px;">
+              <div class="circle-done">✓</div>
+              <span class="check-label" style="text-decoration:line-through; color:#aaa;">Go for a walk</span>
+              <span class="check-time">20m</span>
+            </div>
+            <div style="height:1px; background:#f5f5f5; margin:2px 0;"></div>
+            <div class="cat-row"><span class="cat-icon">🧠</span><span class="cat-name" style="color:#A78BFA;">Mental</span><span class="cat-prog">0/3</span><span style="font-size:9px; color:#aaa;">▾</span></div>
+          </div>
+        </div>
+        <div class="tab-bar">
+          <div class="tab"><span class="tab-icon">🎡</span>Spin</div>
+          <div class="tab"><span class="tab-icon">✅</span>Tasks</div>
+          <div class="tab active"><span class="tab-icon">🌙</span>Rest</div>
+          <div class="tab"><span class="tab-icon">📈</span>History</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PHONE 4: Spin result sheet -->
+    <div class="phone">
+      <div class="phone-notch"></div>
+      <div class="phone-screen">
+        <div style="position:relative; height:100%; overflow:hidden;">
+          <div class="app-header">
+            <div class="streak-badge"><span class="streak-flame">🔥</span><span>12</span></div>
+            <div class="avatar-circle">🐟</div>
+          </div>
+          <!-- blurred bg -->
+          <div style="position:absolute; inset:0; background:rgba(0,0,0,.3); z-index:1;"></div>
+          <!-- bottom sheet -->
+          <div style="position:absolute; bottom:0; left:0; right:0; z-index:2;">
+            <div class="bottom-sheet">
+              <div class="sheet-handle"></div>
+              <div class="sheet-dot" style="background:#4ECDC4;"></div>
+              <div class="sheet-label">You got</div>
+              <div class="sheet-task">Review design mockups</div>
+              <div class="sheet-meta">25-minute focus session</div>
+              <div class="sheet-btn">Start Focus</div>
+              <div class="sheet-dismiss">Dismiss</div>
+            </div>
+          </div>
+          <div class="tab-bar" style="position:absolute; bottom:0; z-index:0;">
+            <div class="tab"><span class="tab-icon">🎡</span>Spin</div>
+            <div class="tab"><span class="tab-icon">✅</span>Tasks</div>
+            <div class="tab"><span class="tab-icon">🌙</span>Rest</div>
+            <div class="tab"><span class="tab-icon">📈</span>History</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     05 · TRY IT NOW
+═════════════════════════════════════════ -->
+<div class="slide bg-white" id="s-try">
+  <div class="split" style="max-width:900px; gap:80px; align-items:center;">
+    <div class="col">
+      <div class="label">Try it right now</div>
+      <h2>Open it on your phone.</h2>
+      <div class="div" style="margin:8px 0 16px;"></div>
+      <p style="font-size:15px; color:var(--ink); line-height:1.7; margin-bottom:20px;">
+        Scan the QR code or type the URL — it opens in your browser as a mobile web app. Works best in Chrome with the device toolbar on.
+      </p>
+
+      <!-- URL pill -->
+      <div style="background:var(--bg); border-radius:14px; padding:14px 18px; display:flex; align-items:center; gap:12px; margin-bottom:20px;">
+        <span style="font-size:18px;">🌐</span>
+        <div style="flex:1; overflow:hidden;">
+          <div style="font-size:10px; font-weight:700; color:var(--muted); letter-spacing:.08em; text-transform:uppercase; margin-bottom:3px;">Cloudflare tunnel (public)</div>
+          <a href="https://issue-mba-pay-deutsche.trycloudflare.com" target="_blank"
+             style="font-size:13px; font-weight:700; color:var(--red); text-decoration:none; word-break:break-all;">
+            issue-mba-pay-deutsche.trycloudflare.com
+          </a>
+        </div>
+      </div>
+
+      <!-- Chrome DevTools steps -->
+      <div style="font-size:11px; font-weight:700; color:var(--muted); letter-spacing:.1em; text-transform:uppercase; margin-bottom:12px;">For desktop → Chrome mobile emulator</div>
+      <div style="display:flex; flex-direction:column; gap:9px;">
+        <div style="display:flex; gap:12px; align-items:center;">
+          <div style="width:26px; height:26px; border-radius:50%; background:var(--black); color:white; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:800; flex-shrink:0;">1</div>
+          <span style="font-size:14px; color:var(--ink);">Open Chrome → go to the URL above</span>
+        </div>
+        <div style="display:flex; gap:12px; align-items:center;">
+          <div style="width:26px; height:26px; border-radius:50%; background:var(--black); color:white; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:800; flex-shrink:0;">2</div>
+          <span style="font-size:14px; color:var(--ink);">Press <kbd style="background:var(--bg); border:1px solid #ddd; border-radius:5px; padding:2px 7px; font-size:12px; font-family:monospace;">F12</kbd> to open DevTools</span>
+        </div>
+        <div style="display:flex; gap:12px; align-items:center;">
+          <div style="width:26px; height:26px; border-radius:50%; background:var(--black); color:white; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:800; flex-shrink:0;">3</div>
+          <span style="font-size:14px; color:var(--ink);">Click the <strong>Toggle device toolbar</strong> icon <span style="font-size:16px;">📱</span> (top-left of DevTools)</span>
+        </div>
+        <div style="display:flex; gap:12px; align-items:center;">
+          <div style="width:26px; height:26px; border-radius:50%; background:var(--red); color:white; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:800; flex-shrink:0;">4</div>
+          <span style="font-size:14px; color:var(--ink);">Pick <strong>iPhone 14 Pro</strong> or <strong>Pixel 7</strong> from the dropdown → enjoy 🎡</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- QR code -->
+    <div class="col" style="align-items:center; gap:16px;">
+      <div style="background:white; border-radius:24px; padding:20px; box-shadow:0 4px 32px rgba(0,0,0,.1); border:1.5px solid var(--border);">
+        <canvas id="qr-canvas"></canvas>
+      </div>
+      <p style="font-size:13px; color:var(--muted); text-align:center; max-width:200px; line-height:1.5;">Scan with your phone camera to open instantly</p>
+      <div style="display:flex; flex-direction:column; gap:6px; width:100%; max-width:220px;">
+        <div style="background:var(--bg); border-radius:10px; padding:10px 14px;">
+          <div style="font-size:10px; font-weight:700; color:var(--muted); letter-spacing:.06em; text-transform:uppercase; margin-bottom:2px;">Local only</div>
+          <div style="font-size:12px; color:#999; font-family:monospace;">localhost:8081</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     06 · MORNING NUDGE (NEW FEATURE)
+═════════════════════════════════════════ -->
+<div class="slide bg-black" id="s4">
+  <div class="split" style="max-width:960px;">
+    <div class="col">
+      <div class="label inv">Upcoming Feature</div>
+      <h2 class="white">Morning Nudge</h2>
+      <div class="div" style="margin:4px 0;"></div>
+      <p style="color:#888; font-size:16px; line-height:1.7;">
+        Starting a day is the hardest part. A small win in the first 5 minutes builds the momentum to do everything else. Morning Nudge gives users 3 tiny, pre-loaded tasks to kick off their day — no thinking required.
+      </p>
+      <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:4px;">
+        <span class="pill red sm">💡 Upcoming</span>
+        <span class="pill black sm">No setup needed</span>
+        <span class="pill black sm">Feeds into streak</span>
+      </div>
+      <div class="feat-list" style="margin-top:8px;">
+        <div class="feat-row dark">
+          <span class="feat-icon">☀️</span>
+          <div class="feat-body light"><h4>Daily starter pack</h4><p>3 tiny pre-loaded nudges appear each morning — drink water, open a window, walk for 5 min.</p></div>
+        </div>
+        <div class="feat-row dark">
+          <span class="feat-icon">⚡</span>
+          <div class="feat-body light"><h4>Instant momentum</h4><p>Completing a nudge feels like a win — enough to open the wheel and spin for the next task.</p></div>
+        </div>
+        <div class="feat-row dark">
+          <span class="feat-icon">🔥</span>
+          <div class="feat-body light"><h4>Streak-safe</h4><p>Completing your morning nudge counts toward your daily activity — so even minimal days protect your streak.</p></div>
+        </div>
+      </div>
+    </div>
+    <div class="col" style="align-items:center;">
+      <div class="phone lg">
+        <div class="phone-notch"></div>
+        <div class="phone-screen">
+          <div class="app-header">
+            <div class="streak-badge"><span class="streak-flame">🔥</span><span>12</span></div>
+            <div class="avatar-circle">🐟</div>
+          </div>
+          <div class="app-content">
+            <div class="screen-title">Good morning, Sua.<br><span class="accent">Start small today.</span></div>
+            <div style="font-size:8px; font-weight:700; color:#aaa; letter-spacing:.08em; text-transform:uppercase;">MORNING NUDGE</div>
+            <!-- nudge tasks -->
+            <div style="display:flex; flex-direction:column; gap:5px;">
+              <div class="nudge-row">
+                <span class="nudge-icon">💧</span>
+                <span class="nudge-text">Drink a glass of water</span>
+                <span class="nudge-time">1m</span>
+                <div class="nudge-start">Start</div>
+              </div>
+              <div class="nudge-row">
+                <span class="nudge-icon">🪟</span>
+                <span class="nudge-text">Open the window</span>
+                <span class="nudge-time">1m</span>
+                <div class="nudge-start">Start</div>
+              </div>
+              <div class="nudge-row">
+                <span class="nudge-icon">🚶</span>
+                <span class="nudge-text">Walk outside for 5 min</span>
+                <span class="nudge-time">5m</span>
+                <div class="nudge-start">Start</div>
+              </div>
+            </div>
+            <div style="height:1px; background:rgba(0,0,0,.06); margin:4px 0;"></div>
+            <div style="font-size:8px; font-weight:700; color:#aaa; letter-spacing:.08em; text-transform:uppercase;">THEN SPIN FOR MORE</div>
+            <!-- mini wheel teaser -->
+            <div style="text-align:center; margin-top:4px;">
+              <svg width="80" height="80" viewBox="0 0 160 160">
+                <path d="M80,80 L80,4 A76,76 0 0,1 141,41 Z" fill="#FF5C4D" opacity=".7"/>
+                <path d="M80,80 L141,41 A76,76 0 0,1 156,80 Z" fill="#FF9B50" opacity=".7"/>
+                <path d="M80,80 L156,80 A76,76 0 0,1 141,119 Z" fill="#FFE66D" opacity=".7"/>
+                <path d="M80,80 L141,119 A76,76 0 0,1 80,156 Z" fill="#4ECDC4" opacity=".7"/>
+                <path d="M80,80 L80,156 A76,76 0 0,1 19,119 Z" fill="#A78BFA" opacity=".7"/>
+                <path d="M80,80 L19,119 A76,76 0 0,1 19,41 Z" fill="#F9A8D4" opacity=".7"/>
+                <path d="M80,80 L19,41 A76,76 0 0,1 80,4 Z" fill="#93C5FD" opacity=".7"/>
+                <circle cx="80" cy="80" r="20" fill="#111"/>
+                <circle cx="80" cy="80" r="7" fill="#FF5C4D"/>
+              </svg>
+            </div>
+          </div>
+          <div class="tab-bar">
+            <div class="tab active"><span class="tab-icon">🎡</span>Spin</div>
+            <div class="tab"><span class="tab-icon">✅</span>Tasks</div>
+            <div class="tab"><span class="tab-icon">🌙</span>Rest</div>
+            <div class="tab"><span class="tab-icon">📈</span>History</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     06 · WHAT'S BUILT
+═════════════════════════════════════════ -->
+<div class="slide bg-white" id="s5">
+  <div class="tc" style="margin-bottom:32px;">
+    <div class="label">Current Status</div>
+    <h2>What's shipped ✅</h2>
+  </div>
+  <div class="card-grid c3" style="max-width:900px;">
+    <div class="card beige" style="position:relative; padding:22px 18px;">
+      <div class="card-accent" style="background:var(--red);"></div>
+      <span class="card-icon">🔐</span>
+      <h3>Auth + Onboarding</h3>
+      <p>Login, 3-step first-launch walkthrough, persistent session via AsyncStorage.</p>
+    </div>
+    <div class="card beige" style="position:relative; padding:22px 18px;">
+      <div class="card-accent" style="background:var(--red);"></div>
+      <span class="card-icon">🎡</span>
+      <h3>Spin Screen</h3>
+      <p>Full spinning wheel, result sheet, weekly activity bubbles, next achievement card.</p>
+    </div>
+    <div class="card beige" style="position:relative; padding:22px 18px;">
+      <div class="card-accent" style="background:var(--red);"></div>
+      <span class="card-icon">⏱️</span>
+      <h3>Tasks + Pomodoro</h3>
+      <p>Task CRUD, swipe gestures, focus card with live countdown, confetti, achievement toasts.</p>
+    </div>
+    <div class="card beige" style="position:relative; padding:22px 18px;">
+      <div class="card-accent" style="background:var(--teal);"></div>
+      <span class="card-icon">🌿</span>
+      <h3>Rest Mode</h3>
+      <p>Energy check-in, rest meter, 10 preset activities, custom tasks, celebration modal.</p>
+    </div>
+    <div class="card beige" style="position:relative; padding:22px 18px;">
+      <div class="card-accent" style="background:var(--purple);"></div>
+      <span class="card-icon">📈</span>
+      <h3>History</h3>
+      <p>Week-by-week activity grid, streak stats, completed task log, next milestone card.</p>
+    </div>
+    <div class="card beige" style="position:relative; padding:22px 18px;">
+      <div class="card-accent" style="background:#FFE66D;"></div>
+      <span class="card-icon">👤</span>
+      <h3>Profile + Avatars</h3>
+      <p>20 animal avatars, all 6 achievement tracks, settings panel, edit profile screen.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     07 · GOALS & TIMELINE
+═════════════════════════════════════════ -->
+<div class="slide bg-black" id="s6">
+  <div class="split" style="max-width:960px; gap:80px;">
+    <div class="col">
+      <div class="label inv">Goals</div>
+      <h2 class="white">What we're<br>working toward.</h2>
+      <p style="color:#888; font-size:15px; line-height:1.7; margin-top:4px;">Three horizons — a concrete launch deadline, a team multiplier goal, and a longer vision for how we work together.</p>
+    </div>
+    <div class="col" style="gap:0;">
+      <div class="timeline">
+        <div class="tl-item">
+          <div class="tl-line">
+            <div class="tl-dot" style="background:var(--red);"></div>
+            <div class="tl-track"></div>
+          </div>
+          <div class="tl-body">
+            <div class="tl-date">MAY 20, 2026 · 2 WEEKS</div>
+            <div class="tl-title">🚀 App Store launch</div>
+            <div class="tl-desc">Engineering mostly done thanks to Amithi. Now focus shifts to marketing, social media, and App Store submission. This is the date.</div>
+          </div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-line">
+            <div class="tl-dot" style="background:var(--purple);"></div>
+            <div class="tl-track"></div>
+          </div>
+          <div class="tl-body">
+            <div class="tl-date">MID-TERM</div>
+            <div class="tl-title">🤝 Work faster together with AI</div>
+            <div class="tl-desc">Everyone on the team moves faster and does more by embedding AI into their workflows — not just as a tool, but as a collaborator.</div>
+          </div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-line">
+            <div class="tl-dot future"></div>
+          </div>
+          <div class="tl-body">
+            <div class="tl-date">LONG-TERM</div>
+            <div class="tl-title">🌍 Grow WheelTodo to a real product</div>
+            <div class="tl-desc">Cloud sync, premium tier, widgets, team mode. Build WheelTodo into an app people recommend to friends.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     08 · TEAM
+═════════════════════════════════════════ -->
+<div class="slide bg-app" id="s7">
+  <div class="tc" style="margin-bottom:28px;">
+    <div class="label drk">Our Team</div>
+    <h2>People &amp; focus areas</h2>
+  </div>
+  <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:14px; max-width:960px; width:100%;">
+    <div class="team-card">
+      <div class="team-avatar" style="background:#FFE8E6;">🐱</div>
+      <div class="team-name">Sua</div>
+      <div class="team-role">Product / Lead</div>
+      <div class="team-focus">Overall direction, product decisions, and keeping the ship moving toward May 20.</div>
+      <div style="margin-top:10px;"><span class="pill red sm">Product</span></div>
+    </div>
+    <div class="team-card">
+      <div class="team-avatar" style="background:#EFF6FF;">⚙️</div>
+      <div class="team-name">Amithi</div>
+      <div class="team-role">Engineer</div>
+      <div class="team-focus">Core app engineering — has driven most of the build. Wrapping up remaining features before launch.</div>
+      <div style="margin-top:10px;"><span class="pill black sm">Engineering</span></div>
+    </div>
+    <div class="team-card">
+      <div class="team-avatar" style="background:#EDFAFA;">🎬</div>
+      <div class="team-name">Johanna</div>
+      <div class="team-role">Creative Director</div>
+      <div class="team-focus">Whatever creative vision Johanna has, we'll make it happen together.</div>
+      <div style="margin-top:10px;"><span class="pill teal sm">Creative Direction</span></div>
+    </div>
+    <div class="team-card" style="grid-column: 1 / 2; margin-top:2px;">
+      <div class="team-avatar" style="background:#F5F3FF;">✨</div>
+      <div class="team-name">Paoli</div>
+      <div class="team-role">PR · HR · Brand</div>
+      <div class="team-focus">People, positioning, and the studio's public face. PR strategy, HR, and building ionstudio's brand identity — website, LinkedIn, business direction.</div>
+      <div style="margin-top:10px; display:flex; gap:6px; flex-wrap:wrap;">
+        <span class="pill purple sm">PR</span>
+        <span class="pill purple sm">HR</span>
+        <span class="pill purple sm">Brand</span>
+      </div>
+    </div>
+    <div class="team-card" style="grid-column: 2 / 4; margin-top:2px;">
+      <div style="display:flex; gap:20px; align-items:flex-start;">
+        <div class="team-avatar" style="background:#FFF0E8; flex-shrink:0;">🔭</div>
+        <div>
+          <div class="team-name">Jade</div>
+          <div class="team-role">Market Research · Marketing</div>
+          <div class="team-focus" style="margin-top:4px;">Understanding the landscape — who our users are, what competitors are doing, and how WheelTodo can stand out. Works alongside Johanna to ground the creative direction in real market insight.</div>
+          <div style="margin-top:10px; display:flex; gap:6px; flex-wrap:wrap;">
+            <span class="pill orange sm">Market Research</span>
+            <span class="pill orange sm">Marketing</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     09 · HOW WE WORK
+═════════════════════════════════════════ -->
+<div class="slide bg-black" id="s8">
+  <div class="tc" style="margin-bottom:32px;">
+    <div class="label inv">Workflow</div>
+    <h2 class="white">How we work together</h2>
+  </div>
+  <div class="workflow-grid">
+    <div class="wf-card">
+      <div class="wf-icon">💬</div>
+      <div class="wf-title">Slack</div>
+      <div class="wf-desc">Day-to-day async communication. Quick updates, links, ideas, and feedback all live in Slack. Fast and low friction.</div>
+      <span class="wf-tag" style="background:rgba(78,205,196,.15); color:#0d9488;">Daily async</span>
+    </div>
+    <div class="wf-card">
+      <div class="wf-icon">📋</div>
+      <div class="wf-title">Notion</div>
+      <div class="wf-desc">Documentation, tasks, and structured information. Architecture docs, feature specs, and the task tracker all live here.</div>
+      <span class="wf-tag" style="background:rgba(167,139,250,.15); color:#7c3aed;">Docs + tasks</span>
+    </div>
+    <div class="wf-card">
+      <div class="wf-icon">📅</div>
+      <div class="wf-title">Saturday — Weekly Meeting</div>
+      <div class="wf-desc">Weekly sync for the whole team. Updates, blockers, decisions. Everyone is expected to attend and contribute.</div>
+      <span class="wf-tag" style="background:rgba(255,92,77,.12); color:var(--red);">Every Saturday</span>
+    </div>
+    <div class="wf-card">
+      <div class="wf-icon">🧪</div>
+      <div class="wf-title">Workshop Day — Coming Soon</div>
+      <div class="wf-desc">A new session where each teammate shares their area of expertise. Optional to attend — join what's relevant to you. Share what you know, learn what you need.</div>
+      <span class="wf-tag" style="background:rgba(255,230,109,.2); color:#b45309;">Opt-in · Proposed</span>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     10 · ROCKY — AI TEAM AGENT
+═════════════════════════════════════════ -->
+<div class="slide bg-black" id="s9">
+  <div class="split" style="max-width:980px; gap:72px;">
+    <div class="col">
+      <div style="display:flex; align-items:center; gap:14px; margin-bottom:4px;">
+        <div style="width:48px; height:48px; border-radius:16px; background:rgba(255,92,77,.15); display:flex; align-items:center; justify-content:center; font-size:26px;">🪨</div>
+        <div>
+          <div class="label inv" style="margin-bottom:2px;">ionstudio tool · in progress</div>
+          <h2 class="white" style="font-size:clamp(28px,4vw,46px);">Meet Rocky.</h2>
+        </div>
+      </div>
+      <p style="color:#888; font-size:15px; line-height:1.75;">
+        Named after the alien in <em style="color:rgba(255,255,255,.5);">Project Hail Mary</em> — a being that communicates across completely different worlds. Rocky is our AI Slack agent that reads through everything so you never have to.
+      </p>
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <span class="pill red sm">In progress</span>
+        <span class="pill black sm">ionstudio internal</span>
+      </div>
+      <div class="feat-list">
+        <div class="feat-row dark">
+          <span class="feat-icon">🔍</span>
+          <div class="feat-body light">
+            <h4>Reads everything</h4>
+            <p>Slack, Notion, and Git — so anyone on the team can ask "what's going on?" and get a real answer.</p>
+          </div>
+        </div>
+        <div class="feat-row dark">
+          <span class="feat-icon">💬</span>
+          <div class="feat-body light">
+            <h4>Codebase for non-devs</h4>
+            <p>Designers, marketers, anyone — ask Rocky about the codebase in plain English and get a plain English answer.</p>
+          </div>
+        </div>
+        <div class="feat-row dark">
+          <span class="feat-icon">📅</span>
+          <div class="feat-body light">
+            <h4>Creates Google Meetings</h4>
+            <p>Tell Rocky to schedule a meeting and it handles the invite — no context-switching required.</p>
+          </div>
+        </div>
+        <div class="feat-row dark">
+          <span class="feat-icon">📝</span>
+          <div class="feat-body light">
+            <h4>Remembers & documents</h4>
+            <p>Tell Rocky something important and it writes it to Notion. Your team's memory, externalised.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Rocky chat mockup -->
+    <div class="col" style="align-items:center;">
+      <div style="width:300px; background:#1a1a1a; border-radius:24px; padding:18px; border:1px solid #2a2a2a;">
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px; padding-bottom:14px; border-bottom:1px solid #2a2a2a;">
+          <div style="width:36px; height:36px; border-radius:12px; background:rgba(255,92,77,.2); display:flex; align-items:center; justify-content:center; font-size:18px;">🪨</div>
+          <div>
+            <div style="font-size:13px; font-weight:700; color:white;">Rocky</div>
+            <div style="font-size:11px; color:#555;">● online</div>
+          </div>
+        </div>
+        <!-- messages -->
+        <div style="display:flex; flex-direction:column; gap:12px;">
+          <div style="align-self:flex-end; background:var(--red); border-radius:14px 14px 4px 14px; padding:9px 13px; max-width:220px;">
+            <p style="font-size:12px; color:white; line-height:1.5;">what's the app's streak logic — i need to explain it to a designer</p>
+          </div>
+          <div style="align-self:flex-start; background:#252525; border-radius:14px 14px 14px 4px; padding:9px 13px; max-width:240px;">
+            <p style="font-size:12px; color:#ddd; line-height:1.6;">A streak day counts if you complete at least one task <em style="color:var(--red);">or</em> hit your rest goal. It's computed live from date arrays — never stored as a number, so it can't go stale. 📅</p>
+          </div>
+          <div style="align-self:flex-end; background:var(--red); border-radius:14px 14px 4px 14px; padding:9px 13px; max-width:220px;">
+            <p style="font-size:12px; color:white; line-height:1.5;">schedule a call with johanna tomorrow at 3pm</p>
+          </div>
+          <div style="align-self:flex-start; background:#252525; border-radius:14px 14px 14px 4px; padding:9px 13px; max-width:240px;">
+            <p style="font-size:12px; color:#ddd; line-height:1.6;">Done ✅ Google Meet created for tomorrow, May 8 at 3pm — invite sent to Johanna.</p>
+          </div>
+        </div>
+        <div style="margin-top:14px; background:#111; border-radius:12px; padding:10px 12px; display:flex; align-items:center; gap:8px; border:1px solid #2a2a2a;">
+          <span style="font-size:11px; color:#444; flex:1;">ask Rocky anything…</span>
+          <span style="font-size:16px;">🪨</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     11 · BODY DOUBLE MODE
+═════════════════════════════════════════ -->
+<div class="slide bg-app" id="s10">
+  <div class="split" style="max-width:980px; gap:72px;">
+    <!-- phone mockup: body double -->
+    <div class="col" style="align-items:center;">
+      <div class="phone lg">
+        <div class="phone-notch"></div>
+        <div class="phone-screen dark">
+          <!-- unity scene -->
+          <div style="position:relative; height:100%; background:linear-gradient(180deg, #0a0a1a 0%, #111130 60%, #1a1a2e 100%);">
+            <!-- stars -->
+            <div style="position:absolute; inset:0; overflow:hidden;">
+              <div style="position:absolute; width:2px; height:2px; background:white; border-radius:50%; top:12%; left:20%; opacity:.6;"></div>
+              <div style="position:absolute; width:1px; height:1px; background:white; border-radius:50%; top:18%; left:60%; opacity:.4;"></div>
+              <div style="position:absolute; width:2px; height:2px; background:white; border-radius:50%; top:8%; left:80%; opacity:.7;"></div>
+              <div style="position:absolute; width:1px; height:1px; background:white; border-radius:50%; top:25%; left:40%; opacity:.3;"></div>
+              <div style="position:absolute; width:1px; height:1px; background:white; border-radius:50%; top:5%; left:55%; opacity:.5;"></div>
+            </div>
+            <!-- desk scene -->
+            <div style="position:absolute; bottom:38%; left:0; right:0; text-align:center;">
+              <!-- character -->
+              <div style="font-size:52px; line-height:1;">🧑‍💻</div>
+              <!-- desk -->
+              <div style="width:110px; height:5px; background:#2a2a4a; border-radius:3px; margin:4px auto 0;"></div>
+              <!-- lamp glow -->
+              <div style="width:60px; height:60px; border-radius:50%; background:radial-gradient(circle, rgba(255,230,109,.15) 0%, transparent 70%); position:absolute; bottom:100%; left:50%; transform:translateX(-50%);"></div>
+            </div>
+            <!-- lofi vibe elements -->
+            <div style="position:absolute; top:10px; left:10px; right:10px;">
+              <div style="background:rgba(255,255,255,.06); border-radius:10px; padding:8px 10px; display:flex; align-items:center; gap:7px;">
+                <span style="font-size:12px;">🎵</span>
+                <div style="flex:1;">
+                  <div style="font-size:8px; font-weight:700; color:rgba(255,255,255,.8);">lofi beats to focus</div>
+                  <div style="height:2px; background:rgba(255,255,255,.1); border-radius:1px; margin-top:4px; overflow:hidden;">
+                    <div style="height:2px; background:var(--purple); border-radius:1px; width:45%;"></div>
+                  </div>
+                </div>
+                <span style="font-size:10px; color:rgba(255,255,255,.4);">▶</span>
+              </div>
+            </div>
+            <!-- focus overlay at bottom -->
+            <div style="position:absolute; bottom:0; left:0; right:0; background:rgba(0,0,0,.6); backdrop-filter:blur(8px); padding:10px 12px;">
+              <div style="display:flex; align-items:center; gap:6px; margin-bottom:6px;">
+                <div style="width:6px; height:6px; border-radius:50%; background:var(--red);"></div>
+                <span style="font-size:9px; font-weight:700; color:white;">Write weekly report</span>
+              </div>
+              <div style="font-size:26px; font-weight:300; color:white; line-height:1; margin-bottom:6px;">18:42</div>
+              <div style="height:3px; background:rgba(255,255,255,.15); border-radius:2px; overflow:hidden; margin-bottom:8px;">
+                <div style="height:3px; background:var(--red); width:37%; border-radius:2px;"></div>
+              </div>
+              <div style="display:flex; gap:5px;">
+                <div style="flex:1; background:rgba(255,255,255,.1); border-radius:100px; padding:5px; text-align:center; font-size:8px; font-weight:600; color:rgba(255,255,255,.7);">Pause</div>
+                <div style="flex:1; background:white; border-radius:100px; padding:5px; text-align:center; font-size:8px; font-weight:700; color:#111;">Done ✓</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col">
+      <div class="label drk">Upcoming Feature · WheelTodo</div>
+      <h2>Body Double<br>Mode</h2>
+      <div class="div" style="margin:4px 0;"></div>
+      <p style="color:var(--ink); font-size:15px; line-height:1.75;">
+        You focus better when someone is focusing with you — even a virtual someone. Body Double Mode puts a character in the room while you work, with ambient sound, so it feels less like working alone and more like a cozy study session.
+      </p>
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <span class="pill red sm">Researching</span>
+        <span class="pill black sm">Unity</span>
+        <span class="pill black sm">WebGL</span>
+      </div>
+      <div class="feat-list">
+        <div class="feat-row">
+          <span class="feat-icon">🧑‍💻</span>
+          <div class="feat-body">
+            <h4>A character working alongside you</h4>
+            <p>A Unity-rendered companion that visibly focuses with you — animated, ambient, present.</p>
+          </div>
+        </div>
+        <div class="feat-row">
+          <span class="feat-icon">🎵</span>
+          <div class="feat-body">
+            <h4>Lofi / ambient soundtrack</h4>
+            <p>Like a "study with me" YouTube video — Rain, café, lofi beats to help you stay in the zone.</p>
+          </div>
+        </div>
+        <div class="feat-row">
+          <span class="feat-icon">✨</span>
+          <div class="feat-body">
+            <h4>Inspired by the greats</h4>
+            <p>Lofi Girl, Focus@Will, Focus Friend — a genre that works. We're bringing it natively into the Pomodoro screen.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     12 · SUA'S CURRENT FOCUS
+═════════════════════════════════════════ -->
+<div class="slide bg-black" id="s10b">
+  <div class="split" style="max-width:980px; gap:72px;">
+    <div class="col">
+      <div class="label inv">What I'm doing right now</div>
+      <h2 class="white">Sua's next<br>two weeks.</h2>
+      <div class="div" style="margin:6px 0;"></div>
+      <p style="color:#888; font-size:15px; line-height:1.75;">Engineering is in good hands with Amithi. My focus shifts to creative growth — learning from Johanna and executing on her vision together.</p>
+      <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:4px;">
+        <span class="pill red sm">Now → May 20</span>
+        <span class="pill black sm">Johanna's right hand 🙋</span>
+      </div>
+    </div>
+    <div class="col" style="gap:14px;">
+      <div style="background:#1a1a1a; border-radius:18px; padding:22px; border:1px solid #252525;">
+        <div style="font-size:20px; margin-bottom:10px;">📣</div>
+        <div style="font-size:14px; font-weight:700; color:white; margin-bottom:6px;">Marketing & social media</div>
+        <p style="font-size:13px; color:#888; line-height:1.6;">Executing on Johanna's creative vision. Social media, content, launch campaign — whatever she sees, we build together.</p>
+      </div>
+      <div style="background:#1a1a1a; border-radius:18px; padding:22px; border:1px solid #252525;">
+        <div style="font-size:20px; margin-bottom:10px;">🔬</div>
+        <div style="font-size:14px; font-weight:700; color:white; margin-bottom:6px;">Research: tools for ionstudio</div>
+        <p style="font-size:13px; color:#888; line-height:1.6;">Building Rocky, exploring Body Double Mode, and researching what else the team needs. The goal is to find tools that make everyone faster — especially with AI.</p>
+      </div>
+      <div style="background:rgba(255,92,77,.1); border-radius:18px; padding:22px; border:1px solid rgba(255,92,77,.2);">
+        <div style="font-size:20px; margin-bottom:10px;">🚀</div>
+        <div style="font-size:14px; font-weight:700; color:var(--red); margin-bottom:6px;">Ship WheelTodo by May 20</div>
+        <p style="font-size:13px; color:#888; line-height:1.6;">Two weeks. App Store submission, social assets, positioning brief with Paoli & Jade. Everything points at this date.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     13 · ROADMAP
+═════════════════════════════════════════ -->
+<div class="slide bg-app" id="s11r">
+  <div class="tc" style="margin-bottom:30px;">
+    <div class="label drk">What's Next</div>
+    <h2>Roadmap</h2>
+  </div>
+  <div class="road-grid">
+    <div class="road-card">
+      <div class="road-tag" style="background:rgba(255,92,77,.12); color:var(--red);">🚀 Before May 20</div>
+      <ul>
+        <li>Morning Nudge feature</li>
+        <li>App Store submission prep</li>
+        <li>Social media launch assets</li>
+        <li>PR + positioning brief</li>
+      </ul>
+    </div>
+    <div class="road-card">
+      <div class="road-tag" style="background:rgba(255,155,80,.15); color:var(--orange);">🔥 Quick Wins Post-Launch</div>
+      <ul>
+        <li>Dark mode (token system is ready)</li>
+        <li>Pomodoro break timer</li>
+        <li>Smart streak-at-risk notification</li>
+        <li>Shareable streak card</li>
+      </ul>
+    </div>
+    <div class="road-card">
+      <div class="road-tag" style="background:rgba(167,139,250,.15); color:var(--purple);">🌙 Rest Upgrades</div>
+      <ul>
+        <li>Rest journal (daily note field)</li>
+        <li>Mood trend chart on History</li>
+        <li>GitHub-style rest heatmap</li>
+        <li>Custom rest task durations</li>
+      </ul>
+    </div>
+    <div class="road-card">
+      <div class="road-tag" style="background:rgba(147,197,253,.15); color:var(--blue);">🚀 Bigger Features</div>
+      <ul>
+        <li>Cloud sync (Supabase auth)</li>
+        <li>iOS/Android home screen widget</li>
+        <li>Wheel bias (pin frequent tasks)</li>
+        <li>Recurring tasks + templates</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     14 · TECH STACK
+═════════════════════════════════════════ -->
+<div class="slide bg-black" id="s12tech">
+  <div class="tc" style="margin-bottom:36px;">
+    <div class="label inv">Under the Hood</div>
+    <h2 class="white">Tech Stack</h2>
+  </div>
+  <div class="tech-grid">
+    <div class="tech-card"><div class="ti">📱</div><h4>Expo SDK 52+</h4><p>iOS + Android from one codebase</p></div>
+    <div class="tech-card"><div class="ti">⚛️</div><h4>React Native</h4><p>Native performance, gestures, animations</p></div>
+    <div class="tech-card"><div class="ti">🔷</div><h4>TypeScript</h4><p>Fully typed, end-to-end</p></div>
+    <div class="tech-card"><div class="ti">🧭</div><h4>React Navigation v6</h4><p>Native Stack + Bottom Tabs</p></div>
+    <div class="tech-card"><div class="ti">🗄️</div><h4>AsyncStorage</h4><p>Offline-first, no account required</p></div>
+    <div class="tech-card"><div class="ti">🔔</div><h4>expo-notifications</h4><p>Live Pomodoro push updates</p></div>
+  </div>
+  <div style="margin-top:24px; text-align:center;">
+    <span class="pill black" style="font-size:13px;">State: React Context + useState — no Redux, no Zustand, no backend yet</span>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     15 · BRAINSTORM
+═════════════════════════════════════════ -->
+<div class="slide bg-white" id="s14brain">
+  <div class="tc" style="margin-bottom:32px;">
+    <div class="label">Open Floor</div>
+    <h2>Your turn. 💡</h2>
+    <p style="max-width:520px; margin:14px auto 0; font-size:16px; line-height:1.65;">
+      No wrong answers. What's on your mind — about the app, the studio, how we work, or anything we should build next?
+    </p>
+  </div>
+  <div class="card-grid c2" style="max-width:820px;">
+
+    <div class="card beige" style="padding:26px 24px; position:relative;">
+      <div style="position:absolute; top:20px; right:22px; font-size:22px;">📱</div>
+      <div class="section-label drk" style="margin-bottom:12px;">WheelTodo features</div>
+      <div style="display:flex; flex-direction:column; gap:7px;">
+        <div style="display:flex; gap:10px; align-items:flex-start;">
+          <span style="color:var(--red); font-weight:800; flex-shrink:0;">→</span>
+          <span style="font-size:14px; color:#555; line-height:1.5;">Is there a screen or flow you wish existed?</span>
+        </div>
+        <div style="display:flex; gap:10px; align-items:flex-start;">
+          <span style="color:var(--red); font-weight:800; flex-shrink:0;">→</span>
+          <span style="font-size:14px; color:#555; line-height:1.5;">Anything that would make <em>you</em> actually use the app every day?</span>
+        </div>
+        <div style="display:flex; gap:10px; align-items:flex-start;">
+          <span style="color:var(--red); font-weight:800; flex-shrink:0;">→</span>
+          <span style="font-size:14px; color:#555; line-height:1.5;">What would make the wheel more fun or satisfying?</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card beige" style="padding:26px 24px; position:relative;">
+      <div style="position:absolute; top:20px; right:22px; font-size:22px;">🚀</div>
+      <div class="section-label drk" style="margin-bottom:12px;">Future apps &amp; products</div>
+      <div style="display:flex; flex-direction:column; gap:7px;">
+        <div style="display:flex; gap:10px; align-items:flex-start;">
+          <span style="color:var(--red); font-weight:800; flex-shrink:0;">→</span>
+          <span style="font-size:14px; color:#555; line-height:1.5;">What problem do you keep running into that nobody's solved well?</span>
+        </div>
+        <div style="display:flex; gap:10px; align-items:flex-start;">
+          <span style="color:var(--red); font-weight:800; flex-shrink:0;">→</span>
+          <span style="font-size:14px; color:#555; line-height:1.5;">Is there an app you'd want to build just for yourself?</span>
+        </div>
+        <div style="display:flex; gap:10px; align-items:flex-start;">
+          <span style="color:var(--red); font-weight:800; flex-shrink:0;">→</span>
+          <span style="font-size:14px; color:#555; line-height:1.5;">Any space (wellness, creativity, tools) you think is underserved?</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card beige" style="padding:26px 24px; position:relative;">
+      <div style="position:absolute; top:20px; right:22px; font-size:22px;">🤝</div>
+      <div class="section-label drk" style="margin-bottom:12px;">How we work as a team</div>
+      <div style="display:flex; flex-direction:column; gap:7px;">
+        <div style="display:flex; gap:10px; align-items:flex-start;">
+          <span style="color:var(--red); font-weight:800; flex-shrink:0;">→</span>
+          <span style="font-size:14px; color:#555; line-height:1.5;">What's something about our current workflow that slows you down?</span>
+        </div>
+        <div style="display:flex; gap:10px; align-items:flex-start;">
+          <span style="color:var(--red); font-weight:800; flex-shrink:0;">→</span>
+          <span style="font-size:14px; color:#555; line-height:1.5;">What would you want from the Workshop Day?</span>
+        </div>
+        <div style="display:flex; gap:10px; align-items:flex-start;">
+          <span style="color:var(--red); font-weight:800; flex-shrink:0;">→</span>
+          <span style="font-size:14px; color:#555; line-height:1.5;">Rocky — what else should it do for you?</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="padding:26px 24px; background:var(--black); position:relative;">
+      <div style="position:absolute; top:20px; right:22px; font-size:22px;">🏢</div>
+      <div class="section-label inv" style="margin-bottom:12px;">ionstudio as a studio</div>
+      <div style="display:flex; flex-direction:column; gap:7px;">
+        <div style="display:flex; gap:10px; align-items:flex-start;">
+          <span style="color:var(--red); font-weight:800; flex-shrink:0;">→</span>
+          <span style="font-size:14px; color:#aaa; line-height:1.5;">What should our website say about us?</span>
+        </div>
+        <div style="display:flex; gap:10px; align-items:flex-start;">
+          <span style="color:var(--red); font-weight:800; flex-shrink:0;">→</span>
+          <span style="font-size:14px; color:#aaa; line-height:1.5;">What kind of studio do we want to be in 1 year?</span>
+        </div>
+        <div style="display:flex; gap:10px; align-items:flex-start;">
+          <span style="color:var(--red); font-weight:800; flex-shrink:0;">→</span>
+          <span style="font-size:14px; color:#aaa; line-height:1.5;">Paoli — any ideas from an HR lens on how we grow this team?</span>
+        </div>
+      </div>
+      <div style="margin-top:16px; padding:12px 14px; background:rgba(255,92,77,.1); border-radius:12px; border:1px solid rgba(255,92,77,.2);">
+        <p style="font-size:12px; color:rgba(255,255,255,.6); line-height:1.55;">📅 Upcoming meeting: <strong style="color:white;">Sua × Paoli × Jade</strong> — ionstudio website, LinkedIn, business plans</p>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     16 · CLOSING
+═════════════════════════════════════════ -->
+<div class="slide bg-red" id="s13close">
+  <!-- bg wheel -->
+  <div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; pointer-events:none; opacity:.1;">
+    <svg class="spin-slow" width="600" height="600" viewBox="0 0 160 160">
+      <path d="M80,80 L80,4 A76,76 0 0,1 156,80 Z" fill="white"/>
+      <path d="M80,80 L156,80 A76,76 0 0,1 80,156 Z" fill="white"/>
+      <path d="M80,80 L80,156 A76,76 0 0,1 4,80 Z" fill="white"/>
+      <path d="M80,80 L4,80 A76,76 0 0,1 80,4 Z" fill="white"/>
+    </svg>
+  </div>
+  <div class="tc" style="position:relative; z-index:1;">
+    <p style="font-size:12px; font-weight:700; letter-spacing:.14em; color:rgba(255,255,255,.55); text-transform:uppercase; margin-bottom:18px;">ionstudio · 2026</p>
+    <h1 class="white">WheelTodo</h1>
+    <p style="font-size:22px; color:rgba(255,255,255,.7); margin-top:14px; letter-spacing:.05em;">Stop thinking. Start spinning.</p>
+    <div style="margin-top:20px;">
+      <span class="pill" style="background:rgba(255,255,255,.15); color:white; font-size:13px;">github.com/alexsuakim/wheeltodo</span>
+    </div>
+    <div style="margin-top:32px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap;">
+      <span class="pill" style="background:rgba(255,255,255,.2); color:white;">Sua · Product</span>
+      <span class="pill" style="background:rgba(255,255,255,.2); color:white;">Amithi · Engineering</span>
+      <span class="pill" style="background:rgba(255,255,255,.2); color:white;">Johanna · Creative Director</span>
+      <span class="pill" style="background:rgba(255,255,255,.2); color:white;">Paoli · PR · HR · Brand</span>
+      <span class="pill" style="background:rgba(255,255,255,.2); color:white;">Jade · Market Research</span>
+    </div>
+  </div>
+</div>
+
+</div><!-- /deck -->
+
+<div id="progress" style="width:0%;"></div>
+<div id="dots"></div>
+<div id="snum">1 / 17</div>
+<div id="hint">← → navigate</div>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  const total  = slides.length;
+  let   cur    = 0;
+
+  const dotsEl = document.getElementById('dots');
+  slides.forEach((_, i) => {
+    const d = document.createElement('div');
+    d.className = 'dot' + (i === 0 ? ' on' : '');
+    d.addEventListener('click', () => go(i));
+    dotsEl.appendChild(d);
+  });
+
+  function go(n) {
+    if (n === cur) return;
+    slides[cur].classList.remove('active');
+    slides[cur].classList.add('exit');
+    const prev = cur;
+    cur = Math.max(0, Math.min(total - 1, n));
+    slides[cur].classList.add('active');
+    setTimeout(() => slides[prev].classList.remove('exit'), 420);
+    update();
+  }
+
+  function update() {
+    document.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('on', i === cur));
+    document.getElementById('progress').style.width = ((cur + 1) / total * 100) + '%';
+    document.getElementById('snum').textContent = (cur + 1) + ' / ' + total;
+  }
+
+  document.addEventListener('keydown', e => {
+    if (['ArrowRight','ArrowDown',' '].includes(e.key)) { e.preventDefault(); go(cur + 1); }
+    if (['ArrowLeft','ArrowUp'].includes(e.key))        { e.preventDefault(); go(cur - 1); }
+  });
+
+  let tx = 0;
+  document.addEventListener('touchstart', e => { tx = e.touches[0].clientX; });
+  document.addEventListener('touchend',   e => {
+    const dx = e.changedTouches[0].clientX - tx;
+    if (Math.abs(dx) > 50) go(cur + (dx < 0 ? 1 : -1));
+  });
+
+  update();
+</script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+<script>
+  QRCode.toCanvas(
+    document.getElementById('qr-canvas'),
+    'https://issue-mba-pay-deutsche.trycloudflare.com',
+    { width: 200, margin: 1, color: { dark: '#111111', light: '#ffffff' } },
+    function(err) { if (err) console.error(err); }
+  );
+</script>
+</body>
+</html>

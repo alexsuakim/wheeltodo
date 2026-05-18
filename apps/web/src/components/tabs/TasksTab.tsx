@@ -5,6 +5,7 @@ import { HelpCircle, ChevronDown, ChevronUp, Timer, Plus, Trash2, Sparkles, Lock
 import { useApp, COLORS, type Task } from "@/context/AppContext";
 import { Confetti } from "@/components/Confetti";
 import { useSubscription } from "@/hooks/useSubscription";
+import { fnUrl, fnHeaders } from "@/lib/functions";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -100,9 +101,9 @@ function BreakdownModal({
     setPhase("loading");
     setError(null);
     try {
-      const res = await fetch("/api/break-task", {
+      const res = await fetch(fnUrl("break-task"), {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: fnHeaders(),
         body: JSON.stringify({
           taskName: task.name,
           taskMinutes: task.minutes,
@@ -324,9 +325,9 @@ function VoiceModal({
     }
     setPhase("processing");
     try {
-      const res = await fetch("/api/voice-tasks", {
+      const res = await fetch(fnUrl("voice-tasks"), {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: fnHeaders(),
         body: JSON.stringify({ transcript }),
       });
       if (!res.ok) throw new Error("Request failed");
@@ -528,9 +529,9 @@ function TaskModal({ task, categories, isPremium, onAdd, onSave, onClose, onAddC
 
         if (isPremium) {
           // Haiku: higher accuracy, uses few-shot corrections server-side
-          const res = await fetch("/api/suggest-category", {
+          const res = await fetch(fnUrl("suggest-category"), {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: fnHeaders(),
             body: JSON.stringify({ taskName: name.trim(), categories, examples: corrections }),
           });
           const data = (await res.json()) as { category: string | null };
