@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ionstudioapps — Getting Started</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #F7F4EF;
+      color: #1A1714;
+      line-height: 1.6;
+      padding: 48px 24px 96px;
+    }
+
+    .page { max-width: 680px; margin: 0 auto; }
+
+    /* Header */
+    .header { text-align: center; margin-bottom: 56px; }
+    .logo {
+      display: inline-flex; align-items: center; gap: 10px;
+      background: #1A1714; color: #F7F4EF;
+      padding: 10px 20px; border-radius: 100px;
+      font-size: 13px; font-weight: 600; letter-spacing: 0.04em;
+      margin-bottom: 28px;
+    }
+    .logo-dot { width: 8px; height: 8px; background: #E59880; border-radius: 50%; }
+    h1 { font-size: 36px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.2; margin-bottom: 12px; }
+    .subtitle { font-size: 17px; color: #7A7370; }
+
+    /* Steps */
+    .steps { display: flex; flex-direction: column; gap: 16px; }
+
+    .step {
+      background: #fff;
+      border-radius: 20px;
+      overflow: hidden;
+      border: 1px solid #EBE8E3;
+    }
+
+    .step-header {
+      display: flex; align-items: center; gap: 16px;
+      padding: 20px 24px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .step-number {
+      width: 36px; height: 36px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 700; flex-shrink: 0;
+      background: #F7F4EF; color: #7A7370;
+    }
+    .step.done .step-number { background: #E8F5E9; color: #2E7D32; }
+    .step.active .step-number { background: #E59880; color: #fff; }
+
+    .step-title { flex: 1; }
+    .step-title h3 { font-size: 16px; font-weight: 650; margin-bottom: 2px; }
+    .step-title p { font-size: 13px; color: #7A7370; }
+
+    .step-badge {
+      font-size: 11px; font-weight: 600; padding: 4px 10px;
+      border-radius: 100px; letter-spacing: 0.03em;
+    }
+    .badge-browser { background: #EEF2FF; color: #4338CA; }
+    .badge-terminal { background: #F0FDF4; color: #166534; }
+    .badge-app { background: #FFF7ED; color: #C2410C; }
+
+    .step-body {
+      padding: 0 24px 24px;
+      border-top: 1px solid #EBE8E3;
+    }
+
+    .step-body p { font-size: 15px; color: #3D3A37; margin: 16px 0 12px; }
+    .step-body ul { padding-left: 20px; }
+    .step-body li { font-size: 15px; color: #3D3A37; margin-bottom: 6px; }
+
+    /* Code block */
+    .code-block {
+      background: #1A1714;
+      border-radius: 12px;
+      padding: 16px 20px;
+      position: relative;
+      margin: 12px 0;
+    }
+    .code-block code {
+      font-family: "SF Mono", "Fira Code", monospace;
+      font-size: 13px;
+      color: #E8E5E0;
+      word-break: break-all;
+      display: block;
+    }
+    .copy-btn {
+      position: absolute; top: 10px; right: 10px;
+      background: #2E2B28; border: none; color: #9A9590;
+      font-size: 11px; font-weight: 600; padding: 5px 10px;
+      border-radius: 8px; cursor: pointer; letter-spacing: 0.02em;
+      transition: background 0.15s, color 0.15s;
+    }
+    .copy-btn:hover { background: #3E3B38; color: #E8E5E0; }
+    .copy-btn.copied { background: #1B4D2E; color: #6EE7A0; }
+
+    /* Image placeholder */
+    .img-box {
+      background: #F7F4EF; border: 1.5px dashed #D4CFC9;
+      border-radius: 12px; padding: 32px;
+      text-align: center; color: #A09890;
+      font-size: 13px; margin: 12px 0;
+    }
+
+    /* Note */
+    .note {
+      background: #FFFBF0; border: 1px solid #F5E6B8;
+      border-radius: 12px; padding: 12px 16px;
+      font-size: 13px; color: #7A6318; margin: 12px 0;
+      display: flex; gap: 10px; align-items: flex-start;
+    }
+    .note-icon { flex-shrink: 0; font-size: 15px; margin-top: 1px; }
+
+    /* Done card */
+    .done-card {
+      background: #1A1714; color: #F7F4EF;
+      border-radius: 20px; padding: 32px;
+      text-align: center; margin-top: 16px;
+    }
+    .done-card .emoji { font-size: 40px; margin-bottom: 12px; }
+    .done-card h3 { font-size: 22px; font-weight: 700; margin-bottom: 8px; }
+    .done-card p { font-size: 15px; color: #9A9590; margin-bottom: 20px; }
+    .done-card .command {
+      background: #2E2B28; border-radius: 12px;
+      padding: 14px 20px; display: inline-block;
+      font-family: "SF Mono", "Fira Code", monospace;
+      font-size: 14px; color: #E59880;
+    }
+
+    /* Progress bar */
+    .progress {
+      display: flex; gap: 6px; justify-content: center;
+      margin-bottom: 40px;
+    }
+    .progress-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: #D4CFC9; transition: background 0.2s;
+    }
+    .progress-dot.active { background: #E59880; width: 24px; border-radius: 4px; }
+    .progress-dot.done { background: #1A1714; }
+
+    a { color: #E59880; text-decoration: none; font-weight: 500; }
+    a:hover { text-decoration: underline; }
+
+    .divider { height: 1px; background: #EBE8E3; margin: 8px 0 0; }
+  </style>
+</head>
+<body>
+  <div class="page">
+
+    <!-- Header -->
+    <div class="header">
+      <div class="logo">
+        <div class="logo-dot"></div>
+        ionstudioapps
+      </div>
+      <h1>Welcome to the team 👋</h1>
+      <p class="subtitle">Follow these 6 steps to get your machine set up.<br>Takes about 10 minutes.</p>
+    </div>
+
+    <!-- Progress -->
+    <div class="progress" id="progress">
+      <div class="progress-dot active" data-i="0"></div>
+      <div class="progress-dot" data-i="1"></div>
+      <div class="progress-dot" data-i="2"></div>
+      <div class="progress-dot" data-i="3"></div>
+      <div class="progress-dot" data-i="4"></div>
+      <div class="progress-dot" data-i="5"></div>
+    </div>
+
+    <!-- Steps -->
+    <div class="steps">
+
+      <!-- Step 1 -->
+      <div class="step active" id="step-0">
+        <div class="step-header" onclick="toggle(0)">
+          <div class="step-number">1</div>
+          <div class="step-title">
+            <h3>Create a GitHub account</h3>
+            <p>You need this to access the team's code</p>
+          </div>
+          <span class="step-badge badge-browser">Browser</span>
+        </div>
+        <div class="step-body">
+          <p>Go to <a href="https://github.com/signup" target="_blank">github.com/signup</a> and create a free account.</p>
+          <div class="note">
+            <span class="note-icon">💡</span>
+            <span>Use your personal email — you'll use this account for everything ionstudio-related.</span>
+          </div>
+          <p>Once you have an account, <strong>send your GitHub username to Sua</strong> so she can invite you to the team.</p>
+        </div>
+      </div>
+
+      <!-- Step 2 -->
+      <div class="step" id="step-1">
+        <div class="step-header" onclick="toggle(1)">
+          <div class="step-number">2</div>
+          <div class="step-title">
+            <h3>Accept the team invite</h3>
+            <p>Check your email after Sua adds you</p>
+          </div>
+          <span class="step-badge badge-browser">Browser</span>
+        </div>
+        <div class="step-body">
+          <p>You'll get an email from GitHub with the subject <strong>"You've been invited to join ionstudioapps"</strong>. Click the link and accept.</p>
+          <div class="note">
+            <span class="note-icon">⚠️</span>
+            <span>If you don't see it, check your spam folder or go to <a href="https://github.com/orgs/ionstudioapps/invitation" target="_blank">github.com/orgs/ionstudioapps/invitation</a> directly.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3 -->
+      <div class="step" id="step-2">
+        <div class="step-header" onclick="toggle(2)">
+          <div class="step-number">3</div>
+          <div class="step-title">
+            <h3>Install Claude Code</h3>
+            <p>Your AI coding assistant</p>
+          </div>
+          <span class="step-badge badge-app">App</span>
+        </div>
+        <div class="step-body">
+          <p>Download and install Claude Code from <a href="https://claude.ai/download" target="_blank">claude.ai/download</a>.</p>
+          <p>Open it and sign in (or create an Anthropic account). You'll use this every day.</p>
+          <div class="note">
+            <span class="note-icon">💡</span>
+            <span>Claude Code works best in the desktop app. Make sure to open it at least once before running the setup script.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 4 -->
+      <div class="step" id="step-3">
+        <div class="step-header" onclick="toggle(3)">
+          <div class="step-number">4</div>
+          <div class="step-title">
+            <h3>Open Terminal</h3>
+            <p>The command line app on your Mac</p>
+          </div>
+          <span class="step-badge badge-terminal">Terminal</span>
+        </div>
+        <div class="step-body">
+          <p>Press <strong>⌘ + Space</strong>, type <strong>Terminal</strong>, and hit Enter.</p>
+          <div class="img-box">
+            📸 Screenshot placeholder — Spotlight search showing Terminal
+          </div>
+          <p>A window with a black or white background and a blinking cursor will open. That's the terminal — don't worry, you only need to paste one thing into it.</p>
+        </div>
+      </div>
+
+      <!-- Step 5 -->
+      <div class="step" id="step-4">
+        <div class="step-header" onclick="toggle(4)">
+          <div class="step-number">5</div>
+          <div class="step-title">
+            <h3>Run the setup script</h3>
+            <p>This installs everything automatically</p>
+          </div>
+          <span class="step-badge badge-terminal">Terminal</span>
+        </div>
+        <div class="step-body">
+          <p>Copy this line and paste it into your terminal, then press <strong>Enter</strong>:</p>
+          <div class="code-block">
+            <code id="setup-cmd">bash &lt;(curl -fsSL https://raw.githubusercontent.com/ionstudioapps/wheeltodo/main/scripts/setup.sh)</code>
+            <button class="copy-btn" onclick="copy('setup-cmd', this)">Copy</button>
+          </div>
+          <p>The script will:</p>
+          <ul>
+            <li>Install developer tools (Homebrew, Node.js, GitHub CLI)</li>
+            <li>Log you into GitHub in the browser</li>
+            <li>Clone all the ionstudio repos onto your Mac</li>
+            <li>Install all dependencies</li>
+          </ul>
+          <div class="note">
+            <span class="note-icon">⚠️</span>
+            <span>It may ask for your Mac password at some point — that's normal. Nothing harmful is being installed.</span>
+          </div>
+          <p>The whole thing takes 3–5 minutes. When you see <strong>"Done!"</strong> you're all set.</p>
+        </div>
+      </div>
+
+      <!-- Step 6 -->
+      <div class="step" id="step-5">
+        <div class="step-header" onclick="toggle(5)">
+          <div class="step-number">6</div>
+          <div class="step-title">
+            <h3>Get the secrets file</h3>
+            <p>API keys and credentials from Sua</p>
+          </div>
+          <span class="step-badge badge-app">Manual</span>
+        </div>
+        <div class="step-body">
+          <p>Ask Sua for the <strong>rocky.env</strong> file and save it to:</p>
+          <div class="code-block">
+            <code id="secrets-path">~/Projects/rocky/.env</code>
+            <button class="copy-btn" onclick="copy('secrets-path', this)">Copy</button>
+          </div>
+          <div class="note">
+            <span class="note-icon">🔒</span>
+            <span>Never share this file or commit it to GitHub. It contains private API keys.</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Done card -->
+    <div class="done-card" style="margin-top: 32px;">
+      <div class="emoji">🚀</div>
+      <h3>You're ready to go</h3>
+      <p>Open Claude Code inside the wheeltodo project by running this in your terminal:</p>
+      <div class="command">cd ~/Projects/wheeltodo &amp;&amp; claude</div>
+    </div>
+
+  </div>
+
+  <script>
+    const STEPS = 6;
+
+    function toggle(i) {
+      const step = document.getElementById(`step-${i}`);
+      const isOpen = step.querySelector('.step-body').style.display !== 'none';
+
+      // Close all
+      for (let j = 0; j < STEPS; j++) {
+        const s = document.getElementById(`step-${j}`);
+        s.querySelector('.step-body').style.display = 'none';
+      }
+
+      // Open clicked one (unless it was already open)
+      if (!isOpen) {
+        step.querySelector('.step-body').style.display = 'block';
+        markActive(i);
+      }
+    }
+
+    function markActive(i) {
+      for (let j = 0; j < STEPS; j++) {
+        const step = document.getElementById(`step-${j}`);
+        const dot = document.querySelector(`[data-i="${j}"]`);
+        step.classList.remove('active', 'done');
+        dot.classList.remove('active', 'done');
+        if (j < i) { step.classList.add('done'); dot.classList.add('done'); }
+        if (j === i) { step.classList.add('active'); dot.classList.add('active'); }
+      }
+    }
+
+    function copy(id, btn) {
+      const text = document.getElementById(id).innerText;
+      // Decode HTML entities for copy
+      const decoded = text.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+      navigator.clipboard.writeText(decoded).then(() => {
+        btn.textContent = 'Copied!';
+        btn.classList.add('copied');
+        setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+      });
+    }
+
+    // Open first step by default
+    document.getElementById('step-0').querySelector('.step-body').style.display = 'block';
+
+    // Hide all others
+    for (let i = 1; i < STEPS; i++) {
+      document.getElementById(`step-${i}`).querySelector('.step-body').style.display = 'none';
+    }
+  </script>
+</body>
+</html>
