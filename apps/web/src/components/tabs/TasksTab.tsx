@@ -19,17 +19,17 @@ function formatMmSs(seconds: number) {
 function TasksFaqAccordion() {
   const [open, setOpen] = useState(false);
   return (
-    <div className="bg-white rounded-2xl overflow-hidden">
+    <div className="rounded-2xl overflow-hidden" style={{ background: 'var(--bg-card)' }}>
       <button onClick={() => setOpen((v) => !v)} className="w-full flex items-center gap-2.5 px-4 py-3.5 text-left">
-        <HelpCircle size={15} strokeWidth={2} className="text-[#E59880] shrink-0" />
-        <span className="flex-1 text-sm font-bold text-[#2A2520]">How do tasks work?</span>
+        <HelpCircle size={15} strokeWidth={2} className="shrink-0" style={{ color: 'var(--accent)' }} />
+        <span className="flex-1 text-sm font-bold" style={{ color: 'var(--text-primary)' }}>How do tasks work?</span>
         {open
-          ? <ChevronUp size={15} strokeWidth={2} className="text-[#aaaaaa] shrink-0" />
-          : <ChevronDown size={15} strokeWidth={2} className="text-[#aaaaaa] shrink-0" />
+          ? <ChevronUp size={15} strokeWidth={2} className="shrink-0" style={{ color: 'var(--text-muted)' }} />
+          : <ChevronDown size={15} strokeWidth={2} className="shrink-0" style={{ color: 'var(--text-muted)' }} />
         }
       </button>
       {open && (
-        <div className="px-4 pb-4 text-sm text-[#aaaaaa] leading-relaxed">
+        <div className="px-4 pb-4 text-sm leading-relaxed" style={{ color: 'var(--text-muted)' }}>
           Click the timer icon to start a focus session. Click the task name to edit it. Use the bin icon to delete.
         </div>
       )}
@@ -76,12 +76,13 @@ function TaskModal({ task, categories, onAdd, onSave, onClose, onAddCategory }: 
   return (
     <div className="fixed inset-0 bg-black/40 z-40 flex items-end md:items-center justify-center" onClick={onClose}>
       <div
-        className="bg-white w-full max-w-md rounded-t-3xl md:rounded-2xl p-6 shadow-2xl"
+        className="w-full max-w-md rounded-t-3xl md:rounded-2xl p-6 shadow-2xl"
+        style={{ background: 'var(--bg-card)' }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="w-9 h-1 rounded-full bg-[#e0e0e0] mb-5 mx-auto md:hidden" />
-        <h2 className="text-xl font-bold text-[#2A2520] mb-1">{isEdit ? "Edit task" : "Add task"}</h2>
-        <p className="text-sm text-[#aaaaaa] mb-5">{isEdit ? "Update the details below." : "What needs doing?"}</p>
+        <div className="w-9 h-1 rounded-full mb-5 mx-auto md:hidden" style={{ background: 'var(--border)' }} />
+        <h2 className="text-xl font-bold mb-1" style={{ color: 'var(--text-primary)' }}>{isEdit ? "Edit task" : "Add task"}</h2>
+        <p className="text-sm mb-5" style={{ color: 'var(--text-muted)' }}>{isEdit ? "Update the details below." : "What needs doing?"}</p>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <input
@@ -90,18 +91,19 @@ function TaskModal({ task, categories, onAdd, onSave, onClose, onAddCategory }: 
             placeholder="Task name..."
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full bg-[#f7f6f3] rounded-xl px-4 py-3.5 text-base text-[#2A2520] placeholder-[#aaaaaa] focus:outline-none focus:ring-2 focus:ring-[#2A2520]/20 transition"
+            className="w-full rounded-xl px-4 py-3.5 text-base focus:outline-none transition"
+            style={{ background: 'var(--bg-input)', color: 'var(--text-primary)' }}
           />
 
           <div>
-            <p className="text-xs font-semibold text-[#aaaaaa] uppercase tracking-wide mb-2">Colour</p>
+            <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: 'var(--text-muted)' }}>Colour</p>
             <div className="flex gap-2.5">
               {COLORS.map((c) => (
                 <button
                   type="button"
                   key={c}
                   onClick={() => setColor(c)}
-                  className={`w-8 h-8 rounded-full transition-transform ${color === c ? "ring-2 ring-offset-2 ring-[#2A2520] scale-110" : ""}`}
+                  className={`w-8 h-8 rounded-full transition-transform ${color === c ? "ring-2 ring-offset-2 ring-[color:var(--text-primary)] scale-110" : ""}`}
                   style={{ backgroundColor: c }}
                 />
               ))}
@@ -109,7 +111,7 @@ function TaskModal({ task, categories, onAdd, onSave, onClose, onAddCategory }: 
           </div>
 
           <div>
-            <p className="text-xs font-semibold text-[#aaaaaa] uppercase tracking-wide mb-2">Duration</p>
+            <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: 'var(--text-muted)' }}>Duration</p>
             <div className="flex items-center gap-2">
               <div className="flex flex-col items-center">
                 <input
@@ -118,11 +120,12 @@ function TaskModal({ task, categories, onAdd, onSave, onClose, onAddCategory }: 
                   onChange={(e) => setHours(Math.max(0, Math.min(8, parseInt(e.target.value) || 0)))}
                   min={0}
                   max={8}
-                  className="w-20 bg-[#f7f6f3] rounded-xl px-3 py-3 text-2xl font-bold text-[#2A2520] text-center focus:outline-none focus:ring-2 focus:ring-[#2A2520]/20 transition"
+                  className="w-20 rounded-xl px-3 py-3 text-2xl font-bold text-center focus:outline-none transition"
+                  style={{ background: 'var(--bg-input)', color: 'var(--text-primary)' }}
                 />
-                <span className="text-xs text-[#aaaaaa] mt-1">hours</span>
+                <span className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>hours</span>
               </div>
-              <span className="text-2xl font-bold text-[#aaaaaa] mb-4">:</span>
+              <span className="text-2xl font-bold mb-4" style={{ color: 'var(--text-muted)' }}>:</span>
               <div className="flex flex-col items-center">
                 <input
                   type="number"
@@ -130,24 +133,27 @@ function TaskModal({ task, categories, onAdd, onSave, onClose, onAddCategory }: 
                   onChange={(e) => setMins(Math.max(0, Math.min(59, parseInt(e.target.value) || 0)))}
                   min={0}
                   max={59}
-                  className="w-20 bg-[#f7f6f3] rounded-xl px-3 py-3 text-2xl font-bold text-[#2A2520] text-center focus:outline-none focus:ring-2 focus:ring-[#2A2520]/20 transition"
+                  className="w-20 rounded-xl px-3 py-3 text-2xl font-bold text-center focus:outline-none transition"
+                  style={{ background: 'var(--bg-input)', color: 'var(--text-primary)' }}
                 />
-                <span className="text-xs text-[#aaaaaa] mt-1">mins</span>
+                <span className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>mins</span>
               </div>
             </div>
           </div>
 
           <div>
-            <p className="text-xs font-semibold text-[#aaaaaa] uppercase tracking-wide mb-2">Category</p>
+            <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: 'var(--text-muted)' }}>Category</p>
             <div className="flex flex-wrap gap-2">
               {categories.map((cat) => (
                 <button
                   type="button"
                   key={cat}
                   onClick={() => setCategory(category === cat ? "" : cat)}
-                  className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                    category === cat ? "bg-[#2A2520] text-white" : "bg-[#f0f0f0] text-[#aaaaaa] hover:text-[#2A2520]"
-                  }`}
+                  className="px-3 py-1.5 rounded-full text-sm font-medium transition-colors"
+                  style={{
+                    background: category === cat ? 'var(--text-primary)' : 'var(--bg-track)',
+                    color: category === cat ? 'white' : 'var(--text-muted)',
+                  }}
                 >
                   {cat}
                 </button>
@@ -170,13 +176,15 @@ function TaskModal({ task, categories, onAdd, onSave, onClose, onAddCategory }: 
                   }}
                   onBlur={() => { setNewCat(""); setAddingCat(false); }}
                   placeholder="Label…"
-                  className="px-3 py-1.5 rounded-full text-sm bg-[#f0f0f0] focus:outline-none w-24"
+                  className="px-3 py-1.5 rounded-full text-sm focus:outline-none w-24"
+                  style={{ background: 'var(--bg-track)' }}
                 />
               ) : (
                 <button
                   type="button"
                   onClick={() => setAddingCat(true)}
-                  className="px-3 py-1.5 rounded-full text-sm font-medium bg-[#f0f0f0] text-[#E59880] hover:bg-[#fff0ee] transition-colors"
+                  className="px-3 py-1.5 rounded-full text-sm font-medium transition-colors"
+                  style={{ background: 'var(--bg-track)', color: 'var(--accent)' }}
                 >
                   + Add
                 </button>
@@ -186,7 +194,8 @@ function TaskModal({ task, categories, onAdd, onSave, onClose, onAddCategory }: 
 
           <button
             type="submit"
-            className="w-full bg-[#2A2520] text-white font-semibold text-base rounded-full py-3.5 hover:bg-[#333333] active:scale-[0.98] transition mt-1"
+            className="w-full text-white font-semibold text-base rounded-full py-3.5 active:scale-[0.98] transition mt-1"
+            style={{ background: 'var(--text-primary)' }}
           >
             {isEdit ? "Save changes" : "Add task"}
           </button>
@@ -211,29 +220,29 @@ interface TaskRowProps {
 function TaskRow({ task, isActive, displayTime, onFocus, onComplete, onDelete, onEdit }: TaskRowProps) {
   return (
     <div
-      className={`flex items-center gap-3 bg-white rounded-2xl px-4 py-3.5 transition-opacity ${
-        isActive ? "opacity-60" : ""
-      }`}
+      className={`flex items-center gap-3 rounded-2xl px-4 py-3.5 transition-opacity ${isActive ? "opacity-60" : ""}`}
+      style={{ background: 'var(--bg-card)' }}
     >
       <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: task.color }} />
       <div className="flex-1 min-w-0">
         <button
           onClick={onEdit}
-          className="text-base font-medium text-[#2A2520] text-left truncate w-full hover:text-[#E59880] transition-colors"
+          className="text-base font-medium text-left truncate w-full transition-colors"
+          style={{ color: 'var(--text-primary)' }}
         >
           {task.name}
         </button>
         {task.category && (
-          <p className="text-xs text-[#aaaaaa] mt-0.5">{task.category}</p>
+          <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>{task.category}</p>
         )}
       </div>
-      <span className="text-sm text-[#aaaaaa] shrink-0">{displayTime}</span>
+      <span className="text-sm shrink-0" style={{ color: 'var(--text-muted)' }}>{displayTime}</span>
       <button
         onClick={onFocus}
         title="Start focus session"
-        className="w-9 h-9 flex items-center justify-center rounded-xl hover:bg-[#f7f6f3] transition-colors shrink-0"
+        className="w-9 h-9 flex items-center justify-center rounded-xl transition-colors shrink-0"
       >
-        <Timer size={18} strokeWidth={1.8} className="text-[#E59880]" />
+        <Timer size={18} strokeWidth={1.8} style={{ color: 'var(--accent)' }} />
       </button>
       <button
         onClick={onComplete}
@@ -247,7 +256,7 @@ function TaskRow({ task, isActive, displayTime, onFocus, onComplete, onDelete, o
         title="Delete"
         className="w-9 h-9 flex items-center justify-center rounded-xl hover:bg-red-50 transition-colors shrink-0"
       >
-        <Trash2 size={15} strokeWidth={1.8} className="text-[#aaaaaa] hover:text-[#E59880]" />
+        <Trash2 size={15} strokeWidth={1.8} style={{ color: 'var(--text-muted)' }} />
       </button>
     </div>
   );
@@ -283,7 +292,7 @@ function FocusCard({ onComplete }: { onComplete: () => void }) {
   const progress = (pomodoroSession.totalSeconds - pomodoroSession.remainingSeconds) / pomodoroSession.totalSeconds;
 
   return (
-    <div className="bg-[#2A2520] rounded-2xl p-5">
+    <div className="rounded-2xl p-5" style={{ background: 'var(--text-primary)' }}>
       <div className="flex items-center gap-2 mb-1">
         {activeTask && (
           <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: activeTask.color }} />
@@ -306,8 +315,8 @@ function FocusCard({ onComplete }: { onComplete: () => void }) {
       </p>
       <div className="h-0.5 bg-white/20 rounded-full mb-4">
         <div
-          className="h-0.5 bg-[#E59880] rounded-full transition-all"
-          style={{ width: `${Math.round(progress * 100)}%` }}
+          className="h-0.5 rounded-full transition-all"
+          style={{ width: `${Math.round(progress * 100)}%`, background: 'var(--accent)' }}
         />
       </div>
       <div className="flex gap-2.5">
@@ -373,12 +382,13 @@ export function TasksTab() {
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-[#2A2520]">Your tasks are set.</h1>
-          <p className="text-2xl font-bold text-[#E59880]">Time to get to work.</p>
+          <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Your tasks are set.</h1>
+          <p className="text-2xl font-bold" style={{ color: 'var(--accent)' }}>Time to get to work.</p>
         </div>
         <button
           onClick={() => setModalOpen(true)}
-          className="w-11 h-11 rounded-full bg-[#2A2520] text-white text-2xl flex items-center justify-center hover:bg-[#333333] active:scale-95 transition shrink-0 leading-none"
+          className="w-11 h-11 rounded-full text-white text-2xl flex items-center justify-center active:scale-95 transition shrink-0 leading-none"
+          style={{ background: 'var(--text-primary)' }}
         >
           <Plus size={20} strokeWidth={2.5} />
         </button>
@@ -389,20 +399,20 @@ export function TasksTab() {
 
       {/* Stats */}
       {todayCompleted.length > 0 && (
-        <div className="bg-white rounded-2xl flex py-5">
+        <div className="rounded-2xl flex py-5" style={{ background: 'var(--bg-card)' }}>
           <div className="flex-1 flex flex-col items-center gap-1">
-            <span className="text-2xl font-bold text-[#2A2520]">{totalMinutesDone}m</span>
-            <span className="text-xs text-[#aaaaaa]">Done</span>
+            <span className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>{totalMinutesDone}m</span>
+            <span className="text-xs" style={{ color: 'var(--text-muted)' }}>Done</span>
           </div>
-          <div className="w-px bg-[#e8e8e8]" />
+          <div className="w-px" style={{ background: 'var(--border)' }} />
           <div className="flex-1 flex flex-col items-center gap-1">
-            <span className="text-2xl font-bold text-[#2A2520]">{todayCompleted.length}/{dailyGoal}</span>
-            <span className="text-xs text-[#aaaaaa]">Tasks</span>
+            <span className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>{todayCompleted.length}/{dailyGoal}</span>
+            <span className="text-xs" style={{ color: 'var(--text-muted)' }}>Tasks</span>
           </div>
-          <div className="w-px bg-[#e8e8e8]" />
+          <div className="w-px" style={{ background: 'var(--border)' }} />
           <div className="flex-1 flex flex-col items-center gap-1">
-            <span className="text-2xl font-bold text-[#2A2520]">{goalPct}%</span>
-            <span className="text-xs text-[#aaaaaa]">Goal</span>
+            <span className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>{goalPct}%</span>
+            <span className="text-xs" style={{ color: 'var(--text-muted)' }}>Goal</span>
           </div>
         </div>
       )}
@@ -415,7 +425,7 @@ export function TasksTab() {
 
       {/* Task list */}
       {tasks.length > 0 && (
-        <p className="text-xs font-semibold text-[#aaaaaa] uppercase tracking-wide">Today's tasks</p>
+        <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>Today's tasks</p>
       )}
       <div className="space-y-2">
         {tasks.map((task) => {
@@ -437,9 +447,9 @@ export function TasksTab() {
           );
         })}
         {tasks.length === 0 && (
-          <div className="text-center py-10 text-[#aaaaaa] text-sm">
+          <div className="text-center py-10 text-sm" style={{ color: 'var(--text-muted)' }}>
             No tasks yet.{" "}
-            <button onClick={() => setModalOpen(true)} className="text-[#2A2520] font-semibold hover:underline">
+            <button onClick={() => setModalOpen(true)} className="font-semibold hover:underline" style={{ color: 'var(--text-primary)' }}>
               Add one
             </button>
             .

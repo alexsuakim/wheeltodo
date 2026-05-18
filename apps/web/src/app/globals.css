@@ -16,9 +16,12 @@ body {
   --bg-screen:       #FAF7F2;
   --bg-card:         #FFFFFF;
   --bg-input:        #F5F0EB;
+  --bg-subtle:       #EEEBE6;
+  --bg-track:        #F0F0F0;
+  --border:          #E8E5E0;
   --text-primary:    #2A2520;
   --text-secondary:  #8A7E7A;
-  --text-muted:      #B0A8A4;
+  --text-muted:      #aaaaaa;
   --accent:          #E59880;
   --primary:         #ADA8CC;
   --success:         #BCD4A5;
@@ -32,6 +35,9 @@ body {
   --bg-screen:       #1C1828;
   --bg-card:         #26223A;
   --bg-input:        #302C44;
+  --bg-subtle:       #2E2A42;
+  --bg-track:        #3A3650;
+  --border:          #302C44;
   --text-primary:    #EDE8E3;
   --text-secondary:  #9B8FA0;
   --text-muted:      #6A6278;
@@ -48,6 +54,9 @@ body {
   --bg-screen:       #FFFFFF;
   --bg-card:         #F5F5F5;
   --bg-input:        #EBEBEB;
+  --bg-subtle:       #DCDCDC;
+  --bg-track:        #D0D0D0;
+  --border:          #B8B8B8;
   --text-primary:    #1A1210;
   --text-secondary:  #4A4040;
   --text-muted:      #6A6060;
@@ -64,6 +73,9 @@ body {
   --bg-screen:       #0F0D18;
   --bg-card:         #1A1830;
   --bg-input:        #242240;
+  --bg-subtle:       #1E1C30;
+  --bg-track:        #2A2845;
+  --border:          #242240;
   --text-primary:    #FFFFFF;
   --text-secondary:  #C8C0D8;
   --text-muted:      #A098B0;

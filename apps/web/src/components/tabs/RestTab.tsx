@@ -24,12 +24,12 @@ import { Confetti } from "@/components/Confetti";
 
 // ─── Category meta ────────────────────────────────────────────────────────────
 
-const CATEGORY_META: Record<RestCategory, { Icon: React.ComponentType<{ size?: number; strokeWidth?: number; className?: string }>; color: string; bg: string }> = {
-  Physical:    { Icon: Activity,       color: "#EDB590", bg: "#FFF4EC" },
-  Mental:      { Icon: Brain,          color: "#ADA8CC", bg: "#F5F3FF" },
-  Social:      { Icon: MessageCircle,  color: "#9DC4BC", bg: "#EDFAFA" },
-  Nourishment: { Icon: Coffee,         color: "#F0D29D", bg: "#FFFDE8" },
-  "My Tasks":  { Icon: Pencil,         color: "#93C5FD", bg: "#EFF6FF" },
+const CATEGORY_META: Record<RestCategory, { Icon: React.ComponentType<{ size?: number; strokeWidth?: number; className?: string }>; colorVar: string; bg: string }> = {
+  Physical:    { Icon: Activity,       colorVar: "var(--wheel-1)", bg: "#FFF4EC" },
+  Mental:      { Icon: Brain,          colorVar: "var(--wheel-5)", bg: "#F5F3FF" },
+  Social:      { Icon: MessageCircle,  colorVar: "var(--wheel-3)", bg: "#EDFAFA" },
+  Nourishment: { Icon: Coffee,         colorVar: "var(--wheel-4)", bg: "#FFFDE8" },
+  "My Tasks":  { Icon: Pencil,         colorVar: "#93C5FD",        bg: "#EFF6FF" },
 };
 
 const MOOD_ORDER: Record<string, string[]> = {
@@ -53,17 +53,17 @@ function fmt(s: number) {
 function RestFaqAccordion() {
   const [open, setOpen] = useState(false);
   return (
-    <div className="bg-white rounded-2xl overflow-hidden">
+    <div className="rounded-2xl overflow-hidden" style={{ background: 'var(--bg-card)' }}>
       <button onClick={() => setOpen((v) => !v)} className="w-full flex items-center gap-2.5 px-4 py-3.5 text-left">
-        <Shield size={15} strokeWidth={2} className="text-[#E59880] shrink-0" />
-        <span className="flex-1 text-sm font-bold text-[#2A2520]">How does Rest Mode protect my streak?</span>
+        <Shield size={15} strokeWidth={2} className="shrink-0" style={{ color: 'var(--accent)' }} />
+        <span className="flex-1 text-sm font-bold" style={{ color: 'var(--text-primary)' }}>How does Rest Mode protect my streak?</span>
         {open
-          ? <ChevronUp size={15} strokeWidth={2} className="text-[#aaaaaa] shrink-0" />
-          : <ChevronDown size={15} strokeWidth={2} className="text-[#aaaaaa] shrink-0" />
+          ? <ChevronUp size={15} strokeWidth={2} className="shrink-0" style={{ color: 'var(--text-muted)' }} />
+          : <ChevronDown size={15} strokeWidth={2} className="shrink-0" style={{ color: 'var(--text-muted)' }} />
         }
       </button>
       {open && (
-        <div className="px-4 pb-4 text-sm text-[#aaaaaa] leading-relaxed">
+        <div className="px-4 pb-4 text-sm leading-relaxed" style={{ color: 'var(--text-muted)' }}>
           Complete your daily rest goal to protect your streak — even on off days. Rest days count towards consecutive days, so taking a break never breaks your momentum.
         </div>
       )}
@@ -78,20 +78,20 @@ function RestMeter({ minutesDone, goalMinutes }: { minutesDone: number; goalMinu
   const goalMet = pct >= 1;
 
   return (
-    <div className="bg-white rounded-2xl p-4 flex flex-col gap-2.5">
+    <div className="rounded-2xl p-4 flex flex-col gap-2.5" style={{ background: 'var(--bg-card)' }}>
       <div className="flex items-center justify-between">
-        <span className="text-sm font-bold text-[#2A2520]">Rest Meter</span>
-        <span className="text-sm font-semibold text-[#aaaaaa]">
+        <span className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>Rest Meter</span>
+        <span className="text-sm font-semibold" style={{ color: 'var(--text-muted)' }}>
           {minutesDone} / {goalMinutes}m
         </span>
       </div>
-      <div className="h-2.5 bg-[#f0f0f0] rounded-full overflow-hidden">
+      <div className="h-2.5 rounded-full overflow-hidden" style={{ background: 'var(--bg-track)' }}>
         <div
-          className={`h-2.5 rounded-full transition-all ${goalMet ? "bg-[#22a722]" : "bg-[#9DC4BC]"}`}
-          style={{ width: `${Math.round(pct * 100)}%` }}
+          className="h-2.5 rounded-full transition-all"
+          style={{ width: `${Math.round(pct * 100)}%`, background: goalMet ? 'var(--success)' : 'var(--wheel-3)' }}
         />
       </div>
-      <p className={`text-sm ${goalMet ? "text-[#22a722] font-semibold" : "text-[#aaaaaa]"}`}>
+      <p className="text-sm" style={{ color: goalMet ? 'var(--success)' : 'var(--text-muted)', fontWeight: goalMet ? 600 : 400 }}>
         {goalMet
           ? "Streak protected!"
           : `${goalMinutes - minutesDone}m more to protect your streak`}
@@ -103,25 +103,26 @@ function RestMeter({ minutesDone, goalMinutes }: { minutesDone: number; goalMinu
 // ─── Energy check-in ──────────────────────────────────────────────────────────
 
 function EnergyCheckIn({ onSelect }: { onSelect: (mood: DailyMood) => void }) {
-  const moods: { key: DailyMood; label: string; Icon: React.ComponentType<{ size?: number; strokeWidth?: number; className?: string }>; color: string }[] = [
-    { key: "drained",  label: "Drained",  Icon: Frown, color: "#ADA8CC" },
-    { key: "okay",     label: "Okay",     Icon: Meh,   color: "#9DC4BC" },
-    { key: "restless", label: "Restless", Icon: Zap,   color: "#EDB590" },
+  const moods: { key: DailyMood; label: string; Icon: React.ComponentType<{ size?: number; strokeWidth?: number; className?: string }>; colorVar: string }[] = [
+    { key: "drained",  label: "Drained",  Icon: Frown, colorVar: "var(--wheel-5)" },
+    { key: "okay",     label: "Okay",     Icon: Meh,   colorVar: "var(--wheel-3)" },
+    { key: "restless", label: "Restless", Icon: Zap,   colorVar: "var(--wheel-1)" },
   ];
 
   return (
-    <div className="bg-white rounded-2xl p-4">
-      <p className="text-base font-bold text-[#2A2520] mb-1">How are you feeling?</p>
-      <p className="text-sm text-[#aaaaaa] mb-3">We'll suggest the best activities for you.</p>
+    <div className="rounded-2xl p-4" style={{ background: 'var(--bg-card)' }}>
+      <p className="text-base font-bold mb-1" style={{ color: 'var(--text-primary)' }}>How are you feeling?</p>
+      <p className="text-sm mb-3" style={{ color: 'var(--text-muted)' }}>We'll suggest the best activities for you.</p>
       <div className="flex gap-2">
-        {moods.map(({ key, label, Icon, color }) => (
+        {moods.map(({ key, label, Icon, colorVar }) => (
           <button
             key={key}
             onClick={() => onSelect(key)}
-            className="flex-1 flex flex-col items-center gap-2 py-3.5 rounded-xl bg-[#f7f6f3] hover:bg-[#f0f0f0] transition-colors"
+            className="flex-1 flex flex-col items-center gap-2 py-3.5 rounded-xl transition-colors"
+            style={{ background: 'var(--bg-input)' }}
           >
-            <span style={{ color }}><Icon size={22} strokeWidth={2} /></span>
-            <span className="text-xs font-semibold text-[#aaaaaa]">{label}</span>
+            <span style={{ color: colorVar }}><Icon size={22} strokeWidth={2} /></span>
+            <span className="text-xs font-semibold" style={{ color: 'var(--text-muted)' }}>{label}</span>
           </button>
         ))}
       </div>
@@ -149,12 +150,12 @@ function RestTaskRow({ task, isTimerActive, timerRemaining, timerTotal, onToggle
     return (
       <div className="flex items-center gap-3 px-4 py-3">
         <button onClick={onToggle} className="shrink-0">
-          <div className="w-5 h-5 rounded-full bg-[#22a722] flex items-center justify-center">
+          <div className="w-5 h-5 rounded-full flex items-center justify-center" style={{ background: 'var(--success)' }}>
             <Check size={11} strokeWidth={3} className="text-white" />
           </div>
         </button>
-        <span className="flex-1 text-sm text-[#aaaaaa] line-through">{task.name}</span>
-        <span className="text-xs text-[#aaaaaa]">{task.durationMinutes}m</span>
+        <span className="flex-1 text-sm line-through" style={{ color: 'var(--text-muted)' }}>{task.name}</span>
+        <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{task.durationMinutes}m</span>
       </div>
     );
   }
@@ -163,19 +164,19 @@ function RestTaskRow({ task, isTimerActive, timerRemaining, timerTotal, onToggle
     return (
       <div className="px-4 py-3">
         <div className="flex items-center gap-3">
-          <div className="w-6 h-6 rounded-full bg-[#F5F3FF] flex items-center justify-center shrink-0">
-            <Timer size={12} strokeWidth={2} className="text-[#ADA8CC]" />
+          <div className="w-6 h-6 rounded-full flex items-center justify-center shrink-0" style={{ background: 'var(--bg-input)' }}>
+            <Timer size={12} strokeWidth={2} style={{ color: 'var(--wheel-5)' }} />
           </div>
-          <span className="flex-1 text-sm font-semibold text-[#2A2520]">{task.name}</span>
-          <span className="text-base font-bold text-[#ADA8CC] tabular-nums">{fmt(timerRemaining)}</span>
+          <span className="flex-1 text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{task.name}</span>
+          <span className="text-base font-bold tabular-nums" style={{ color: 'var(--wheel-5)' }}>{fmt(timerRemaining)}</span>
           <button onClick={onCancel} className="shrink-0">
-            <X size={13} strokeWidth={2.5} className="text-[#aaaaaa]" />
+            <X size={13} strokeWidth={2.5} style={{ color: 'var(--text-muted)' }} />
           </button>
         </div>
-        <div className="h-1 bg-[#ebebeb] rounded-full mt-2.5 overflow-hidden">
+        <div className="h-1 rounded-full mt-2.5 overflow-hidden" style={{ background: 'var(--bg-track)' }}>
           <div
-            className="h-1 bg-[#ADA8CC] rounded-full transition-all"
-            style={{ width: `${Math.round(timerPct * 100)}%` }}
+            className="h-1 rounded-full transition-all"
+            style={{ width: `${Math.round(timerPct * 100)}%`, background: 'var(--wheel-5)' }}
           />
         </div>
       </div>
@@ -185,16 +186,16 @@ function RestTaskRow({ task, isTimerActive, timerRemaining, timerTotal, onToggle
   return (
     <div className="flex items-center gap-3 px-4 py-3">
       <button onClick={onToggle} className="shrink-0">
-        <div className="w-5 h-5 rounded-full border-2 border-[#d0d0d0]" />
+        <div className="w-5 h-5 rounded-full border-2" style={{ borderColor: 'var(--border)' }} />
       </button>
-      <span className="flex-1 text-sm text-[#2A2520]">{task.name}</span>
-      <span className="text-xs text-[#aaaaaa]">{task.durationMinutes}m</span>
-      <button onClick={onStart} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[#f7f6f3] transition-colors shrink-0">
-        <Timer size={16} strokeWidth={1.8} className="text-[#2A2520]" />
+      <span className="flex-1 text-sm" style={{ color: 'var(--text-primary)' }}>{task.name}</span>
+      <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{task.durationMinutes}m</span>
+      <button onClick={onStart} className="w-8 h-8 flex items-center justify-center rounded-lg transition-colors shrink-0">
+        <Timer size={16} strokeWidth={1.8} style={{ color: 'var(--text-primary)' }} />
       </button>
       {!task.isPreset && (
         <button onClick={onRemove} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-red-50 transition-colors shrink-0">
-          <X size={13} strokeWidth={2} className="text-[#aaaaaa]" />
+          <X size={13} strokeWidth={2} style={{ color: 'var(--text-muted)' }} />
         </button>
       )}
     </div>
@@ -229,23 +230,23 @@ function CategorySection({
   const doneCount = tasks.filter((t) => t.completedToday).length;
 
   return (
-    <div className="bg-white rounded-2xl overflow-hidden">
+    <div className="rounded-2xl overflow-hidden" style={{ background: 'var(--bg-card)' }}>
       <button onClick={onToggle} className="w-full flex items-center gap-3 px-4 py-3 text-left">
         <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: meta.bg }}>
-          <span style={{ color: meta.color }}><CatIcon size={15} strokeWidth={2} /></span>
+          <span style={{ color: meta.colorVar }}><CatIcon size={15} strokeWidth={2} /></span>
         </div>
-        <span className="flex-1 text-sm font-bold" style={{ color: meta.color }}>{category}</span>
-        <span className="text-xs text-[#aaaaaa]">{doneCount}/{tasks.length}</span>
+        <span className="flex-1 text-sm font-bold" style={{ color: meta.colorVar }}>{category}</span>
+        <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{doneCount}/{tasks.length}</span>
         {isCollapsed
-          ? <ChevronDown size={15} strokeWidth={2} className="text-[#aaaaaa] shrink-0" />
-          : <ChevronUp size={15} strokeWidth={2} className="text-[#aaaaaa] shrink-0" />
+          ? <ChevronDown size={15} strokeWidth={2} className="shrink-0" style={{ color: 'var(--text-muted)' }} />
+          : <ChevronUp size={15} strokeWidth={2} className="shrink-0" style={{ color: 'var(--text-muted)' }} />
         }
       </button>
       {!isCollapsed && (
-        <div className="border-t border-[#f0f0f0]">
+        <div style={{ borderTop: '1px solid var(--bg-track)' }}>
           {tasks.map((task, i) => (
             <div key={task.id}>
-              {i > 0 && <div className="h-px bg-[#f0f0f0] mx-4" />}
+              {i > 0 && <div className="h-px mx-4" style={{ background: 'var(--bg-track)' }} />}
               <RestTaskRow
                 task={task}
                 isTimerActive={activeRestTimer?.taskId === task.id}
@@ -320,8 +321,8 @@ export function RestTab() {
     <div className="max-w-2xl mx-auto px-4 md:px-6 py-4 md:py-6 space-y-3">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-[#2A2520]">Need a day off?</h1>
-        <p className={`text-2xl font-bold ${atRisk ? "text-[#E59880]" : "text-[#E59880]"}`}>
+        <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Need a day off?</h1>
+        <p className="text-2xl font-bold" style={{ color: 'var(--accent)' }}>
           {atRisk ? "Streak at risk!" : "Take it easy today."}
         </p>
       </div>
@@ -330,9 +331,9 @@ export function RestTab() {
       <RestMeter minutesDone={restMinutesToday} goalMinutes={restGoalMinutes} />
 
       {restStreak > 0 && (
-        <div className="inline-flex items-center gap-2 bg-white rounded-xl px-3.5 py-2.5">
-          <Moon size={15} strokeWidth={2} className="text-[#ADA8CC]" />
-          <span className="text-sm font-semibold text-[#2A2520]">{restStreak}-day rest streak</span>
+        <div className="inline-flex items-center gap-2 rounded-xl px-3.5 py-2.5" style={{ background: 'var(--bg-card)' }}>
+          <Moon size={15} strokeWidth={2} style={{ color: 'var(--wheel-5)' }} />
+          <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{restStreak}-day rest streak</span>
         </div>
       )}
 
@@ -359,8 +360,8 @@ export function RestTab() {
 
       {/* Add custom task */}
       <div>
-        <p className="text-xs font-semibold text-[#aaaaaa] uppercase tracking-wide mb-2">My Tasks</p>
-        <div className="bg-white rounded-2xl flex items-center px-4 py-2 gap-3">
+        <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: 'var(--text-muted)' }}>My Tasks</p>
+        <div className="rounded-2xl flex items-center px-4 py-2 gap-3" style={{ background: 'var(--bg-card)' }}>
           <input
             type="text"
             placeholder="Add your own rest activity…"
@@ -373,12 +374,14 @@ export function RestTab() {
               }
             }}
             maxLength={60}
-            className="flex-1 py-2.5 text-sm text-[#2A2520] placeholder-[#aaaaaa] bg-transparent focus:outline-none"
+            className="flex-1 py-2.5 text-sm bg-transparent focus:outline-none"
+            style={{ color: 'var(--text-primary)' }}
           />
           <button
             onClick={() => { if (inputText.trim()) { addRestTask(inputText.trim()); setInputText(""); } }}
             disabled={!inputText.trim()}
-            className="w-8 h-8 rounded-full bg-[#2A2520] flex items-center justify-center disabled:opacity-30 transition-opacity"
+            className="w-8 h-8 rounded-full flex items-center justify-center disabled:opacity-30 transition-opacity"
+            style={{ background: 'var(--text-primary)' }}
           >
             <Plus size={16} strokeWidth={2.5} className="text-white" />
           </button>
@@ -391,13 +394,18 @@ export function RestTab() {
       {/* Celebration overlay */}
       {showCelebration && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-6" onClick={() => setShowCelebration(false)}>
-          <div className="bg-white rounded-2xl p-8 max-w-xs w-full flex flex-col items-center gap-4 text-center" onClick={(e) => e.stopPropagation()}>
+          <div
+            className="rounded-2xl p-8 max-w-xs w-full flex flex-col items-center gap-4 text-center"
+            style={{ background: 'var(--bg-card)' }}
+            onClick={(e) => e.stopPropagation()}
+          >
             <span className="text-5xl">🌿</span>
-            <h2 className="text-xl font-bold text-[#2A2520]">Rest complete!</h2>
-            <p className="text-sm text-[#aaaaaa]">Streak protected. You've earned your rest.</p>
+            <h2 className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>Rest complete!</h2>
+            <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Streak protected. You've earned your rest.</p>
             <button
               onClick={() => setShowCelebration(false)}
-              className="w-full bg-[#2A2520] text-white font-semibold text-base rounded-full py-3.5 hover:bg-[#333333] transition"
+              className="w-full text-white font-semibold text-base rounded-full py-3.5 transition"
+              style={{ background: 'var(--text-primary)' }}
             >
               Close
             </button>

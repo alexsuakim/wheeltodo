@@ -23,35 +23,36 @@ const ICON_MAP: Record<string, IconComp> = {
   Flame, Target, Trophy, Clock, Zap, Moon, RotateCcw,
 };
 
-// Achievement icon components
 const ACHIEVEMENT_ICONS: Record<string, IconComp> = {
   Flame, Trophy, Clock, Zap, Moon, RotateCcw,
 };
 
-// ─── Wheel colors matching the mobile app ────────────────────────────────────
-
-const WHEEL_COLORS = ["#E59880", "#EDB590", "#9DC4BC", "#F0D29D", "#ADA8CC", "#D4A5C8"];
+// Wheel colours use CSS variables so they respond to theme changes
+const WHEEL_COLORS = [
+  "var(--wheel-2)", "var(--wheel-1)", "var(--wheel-3)",
+  "var(--wheel-4)", "var(--wheel-5)", "var(--wheel-6)",
+];
 
 // ─── FAQ Accordion ────────────────────────────────────────────────────────────
 
 function SpinFaqAccordion() {
   const [open, setOpen] = useState(false);
   return (
-    <div className="bg-white rounded-2xl overflow-hidden">
+    <div className="rounded-2xl overflow-hidden" style={{ background: 'var(--bg-card)' }}>
       <button
         onClick={() => setOpen((v) => !v)}
         className="w-full flex items-center gap-2.5 px-4 py-3.5 text-left"
       >
-        <HelpCircle size={15} strokeWidth={2} className="text-[#E59880] shrink-0" />
-        <span className="flex-1 text-sm font-bold text-[#2A2520]">How do I use the wheel?</span>
+        <HelpCircle size={15} strokeWidth={2} className="shrink-0" style={{ color: 'var(--accent)' }} />
+        <span className="flex-1 text-sm font-bold" style={{ color: 'var(--text-primary)' }}>How do I use the wheel?</span>
         {open
-          ? <ChevronUp size={15} strokeWidth={2} className="text-[#aaaaaa] shrink-0" />
-          : <ChevronDown size={15} strokeWidth={2} className="text-[#aaaaaa] shrink-0" />
+          ? <ChevronUp size={15} strokeWidth={2} className="shrink-0" style={{ color: 'var(--text-muted)' }} />
+          : <ChevronDown size={15} strokeWidth={2} className="shrink-0" style={{ color: 'var(--text-muted)' }} />
         }
       </button>
       {open && (
-        <div className="px-4 pb-4 text-sm text-[#aaaaaa] leading-relaxed">
-          Click a slice to pick a task, or hit <strong className="text-[#2A2520]">Spin</strong> to get a random one. Then start a focus session to track your time.
+        <div className="px-4 pb-4 text-sm leading-relaxed" style={{ color: 'var(--text-muted)' }}>
+          Click a slice to pick a task, or hit <strong style={{ color: 'var(--text-primary)' }}>Spin</strong> to get a random one. Then start a focus session to track your time.
         </div>
       )}
     </div>
@@ -77,8 +78,8 @@ function SpinWheel({ tasks, rotation, spinning, onSliceClick }: WheelProps) {
   if (tasks.length === 0) {
     return (
       <svg width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`} className="block">
-        <circle cx={CX} cy={CY} r={R} fill="#f0f0f0" />
-        <circle cx={CX} cy={CY} r={R * 0.15} fill="white" />
+        <circle cx={CX} cy={CY} r={R} style={{ fill: 'var(--bg-track)' }} />
+        <circle cx={CX} cy={CY} r={R * 0.15} style={{ fill: 'var(--bg-card)' }} />
       </svg>
     );
   }
@@ -102,7 +103,6 @@ function SpinWheel({ tasks, rotation, spinning, onSliceClick }: WheelProps) {
     const iconX = CX + ICON_R * Math.cos(midAngle);
     const iconY = CY + ICON_R * Math.sin(midAngle);
 
-    // For text fallback (many slices)
     const maxChars = n > 6 ? 12 : 16;
     const labelText = task.name.length > maxChars ? task.name.slice(0, maxChars - 1) + "…" : task.name;
 
@@ -126,7 +126,7 @@ function SpinWheel({ tasks, rotation, spinning, onSliceClick }: WheelProps) {
         <g key={task.id}>
           <path
             d={pathD}
-            fill={color}
+            style={{ fill: color }}
             stroke="white"
             strokeWidth={1.5}
             className={!spinning ? "cursor-pointer" : ""}
@@ -163,8 +163,7 @@ function SpinWheel({ tasks, rotation, spinning, onSliceClick }: WheelProps) {
           )}
         </g>
       ))}
-      {/* Center circle */}
-      <circle cx={CX} cy={CY} r={R * 0.12} fill="white" />
+      <circle cx={CX} cy={CY} r={R * 0.12} style={{ fill: 'var(--bg-card)' }} />
     </svg>
   );
 }
@@ -198,15 +197,21 @@ function WeekBubbles() {
       {days.map((day, i) => (
         <div
           key={i}
-          className={`flex-1 h-9 rounded-xl flex items-center justify-center text-xs font-bold transition-colors ${
-            day.isToday
-              ? "bg-[#E59880] text-white"
+          className="flex-1 h-9 rounded-xl flex items-center justify-center text-xs font-bold transition-colors"
+          style={{
+            background: day.isToday
+              ? 'var(--accent)'
               : day.active
-              ? "bg-[#2A2520] text-white"
+              ? 'var(--text-primary)'
               : day.isFuture
-              ? "bg-[#EEEBE6] text-[#cccccc]"
-              : "bg-[#E0DDD8] text-[#BCBAB6]"
-          }`}
+              ? 'var(--bg-subtle)'
+              : 'var(--bg-input)',
+            color: day.isToday || day.active
+              ? 'white'
+              : day.isFuture
+              ? 'var(--text-muted)'
+              : 'var(--text-secondary)',
+          }}
         >
           {day.label}
         </div>
@@ -224,31 +229,33 @@ interface ResultSheetProps {
 }
 
 function ResultSheet({ task, onStartFocus, onDismiss }: ResultSheetProps) {
-  const color = WHEEL_COLORS[0];
   return (
     <div className="fixed inset-0 bg-black/40 z-40 flex items-end md:items-center justify-center" onClick={onDismiss}>
       <div
-        className="bg-white w-full max-w-sm rounded-t-3xl md:rounded-2xl p-7 shadow-2xl flex flex-col items-center gap-3"
+        className="w-full max-w-sm rounded-t-3xl md:rounded-2xl p-7 shadow-2xl flex flex-col items-center gap-3"
+        style={{ background: 'var(--bg-card)' }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="w-9 h-1 rounded-full bg-[#e0e0e0] mb-3 md:hidden" />
-        <div className="w-10 h-10 rounded-full mb-1 flex items-center justify-center" style={{ backgroundColor: color }}>
+        <div className="w-9 h-1 rounded-full mb-3 md:hidden" style={{ background: 'var(--border)' }} />
+        <div className="w-10 h-10 rounded-full mb-1 flex items-center justify-center" style={{ backgroundColor: 'var(--wheel-2)' }}>
           {ICON_MAP[task.icon]
             ? (() => { const I = ICON_MAP[task.icon]; return <I size={18} color="white" strokeWidth={1.8} />; })()
             : null}
         </div>
-        <p className="text-xs font-semibold text-[#aaaaaa] uppercase tracking-wider">You got</p>
-        <p className="text-2xl font-bold text-[#2A2520] text-center">{task.name}</p>
-        <p className="text-sm text-[#aaaaaa]">{task.minutes}-minute focus session</p>
+        <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>You got</p>
+        <p className="text-2xl font-bold text-center" style={{ color: 'var(--text-primary)' }}>{task.name}</p>
+        <p className="text-sm" style={{ color: 'var(--text-muted)' }}>{task.minutes}-minute focus session</p>
         <button
           onClick={onStartFocus}
-          className="w-full bg-[#2A2520] text-white font-semibold text-base rounded-full py-3.5 mt-2 hover:bg-[#333333] active:scale-[0.98] transition"
+          className="w-full text-white font-semibold text-base rounded-full py-3.5 mt-2 active:scale-[0.98] transition"
+          style={{ background: 'var(--text-primary)' }}
         >
           Start Focus
         </button>
         <button
           onClick={onDismiss}
-          className="w-full text-[#aaaaaa] font-medium text-base py-2 hover:text-[#2A2520] transition"
+          className="w-full font-medium text-base py-2 transition"
+          style={{ color: 'var(--text-muted)' }}
         >
           Dismiss
         </button>
@@ -275,7 +282,6 @@ export function SpinTab({ onNavigateToTasks }: SpinTabProps) {
     return completedTasks.filter((t) => { const d = new Date(t.completedAt); d.setHours(0, 0, 0, 0); return d.getTime() === today.getTime(); }).length;
   })();
 
-  // Achievement next milestone
   const nextAch = getNextAchievement(achievementValues);
 
   function easeOutCubic(t: number) {
@@ -333,19 +339,19 @@ export function SpinTab({ onNavigateToTasks }: SpinTabProps) {
     <div className="max-w-2xl mx-auto px-4 md:px-6 py-4 md:py-6 space-y-4">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-[#2A2520]">Not sure where to start?</h1>
-        <p className="text-2xl font-bold text-[#E59880]">Spin the wheel.</p>
+        <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Not sure where to start?</h1>
+        <p className="text-2xl font-bold" style={{ color: 'var(--accent)' }}>Spin the wheel.</p>
       </div>
 
       {/* FAQ */}
       <SpinFaqAccordion />
 
       {/* Week bubbles + streak */}
-      <div className="bg-white rounded-2xl px-4 py-4">
+      <div className="rounded-2xl px-4 py-4" style={{ background: 'var(--bg-card)' }}>
         <div className="flex items-center justify-between mb-1">
-          <span className="text-xs font-semibold text-[#aaaaaa] uppercase tracking-wide">This week</span>
+          <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>This week</span>
           {streak > 0 && (
-            <div className="flex items-center gap-1 text-xs font-semibold text-[#E59880]">
+            <div className="flex items-center gap-1 text-xs font-semibold" style={{ color: 'var(--accent)' }}>
               <Flame size={12} strokeWidth={2} />
               {streak}-day streak
             </div>
@@ -356,27 +362,28 @@ export function SpinTab({ onNavigateToTasks }: SpinTabProps) {
 
       {/* Wheel + Spin button */}
       {tasks.length === 0 ? (
-        <div className="bg-white rounded-2xl flex flex-col items-center py-12 px-6 gap-3 text-center">
-          <span className="text-5xl text-[#cccccc]">◎</span>
-          <p className="text-lg font-bold text-[#2A2520]">Your wheel is empty</p>
-          <p className="text-sm text-[#aaaaaa]">Add tasks to start spinning.</p>
+        <div className="rounded-2xl flex flex-col items-center py-12 px-6 gap-3 text-center" style={{ background: 'var(--bg-card)' }}>
+          <span className="text-5xl" style={{ color: 'var(--text-muted)' }}>◎</span>
+          <p className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>Your wheel is empty</p>
+          <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Add tasks to start spinning.</p>
           <button
             onClick={onNavigateToTasks}
-            className="mt-2 bg-[#2A2520] text-white font-semibold text-sm rounded-full px-6 py-2.5 hover:bg-[#333333] transition"
+            className="mt-2 text-white font-semibold text-sm rounded-full px-6 py-2.5 transition"
+            style={{ background: 'var(--text-primary)' }}
           >
             Add tasks
           </button>
         </div>
       ) : (
-        <div className="bg-white rounded-2xl flex flex-col items-center py-6 px-6 gap-5">
+        <div className="rounded-2xl flex flex-col items-center py-6 px-6 gap-5" style={{ background: 'var(--bg-card)' }}>
           <div className="relative w-[320px] h-[320px]">
-            {/* Pointer — sits at the top, pointing down into the wheel */}
+            {/* Pointer */}
             <div
               className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1 z-10 w-0 h-0"
               style={{
                 borderLeft: "10px solid transparent",
                 borderRight: "10px solid transparent",
-                borderTop: "22px solid #2A2520",
+                borderTop: "22px solid var(--text-primary)",
               }}
             />
             <SpinWheel
@@ -387,8 +394,8 @@ export function SpinTab({ onNavigateToTasks }: SpinTabProps) {
             />
           </div>
           {/* Daily goal */}
-          <div className="flex items-center justify-center gap-1.5 text-sm text-[#aaaaaa]">
-            <span className="font-semibold text-[#2A2520]">{todayDone}</span>
+          <div className="flex items-center justify-center gap-1.5 text-sm" style={{ color: 'var(--text-muted)' }}>
+            <span className="font-semibold" style={{ color: 'var(--text-primary)' }}>{todayDone}</span>
             <span>/</span>
             <span>{dailyGoal}</span>
             <span>tasks today</span>
@@ -396,22 +403,23 @@ export function SpinTab({ onNavigateToTasks }: SpinTabProps) {
           <button
             onClick={spinWheel}
             disabled={spinning || tasks.length === 0}
-            className="w-full max-w-xs bg-[#E59880] text-white font-semibold text-base rounded-full py-3.5 hover:bg-[#d4856c] active:scale-[0.98] transition disabled:opacity-40"
+            className="w-full max-w-xs text-white font-semibold text-base rounded-full py-3.5 active:scale-[0.98] transition disabled:opacity-40"
+            style={{ background: 'var(--accent)' }}
           >
             {spinning ? "Spinning…" : "Spin the wheel"}
           </button>
         </div>
       )}
 
-      {/* Next milestone — uses real achievement system */}
+      {/* Next milestone */}
       {(() => {
         if (!nextAch) {
           return (
-            <div className="bg-white rounded-2xl flex items-center gap-3 px-4 py-4">
-              <Target size={26} strokeWidth={1.8} className="text-[#E59880] shrink-0" />
+            <div className="rounded-2xl flex items-center gap-3 px-4 py-4" style={{ background: 'var(--bg-card)' }}>
+              <Target size={26} strokeWidth={1.8} className="shrink-0" style={{ color: 'var(--accent)' }} />
               <div>
-                <p className="text-sm font-bold text-[#2A2520]">All achievements unlocked!</p>
-                <p className="text-xs text-[#aaaaaa] mt-0.5">You're an absolute legend.</p>
+                <p className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>All achievements unlocked!</p>
+                <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>You're an absolute legend.</p>
               </div>
             </div>
           );
@@ -422,8 +430,8 @@ export function SpinTab({ onNavigateToTasks }: SpinTabProps) {
         const pctDisplay = Math.round(pct * 100);
 
         return (
-          <div className="bg-white rounded-2xl overflow-hidden">
-            <p className="text-xs font-semibold text-[#aaaaaa] uppercase tracking-wide px-4 pt-4 pb-2">Next milestone</p>
+          <div className="rounded-2xl overflow-hidden" style={{ background: 'var(--bg-card)' }}>
+            <p className="text-xs font-semibold uppercase tracking-wide px-4 pt-4 pb-2" style={{ color: 'var(--text-muted)' }}>Next milestone</p>
             <div className="flex items-center gap-3 px-4 pb-4">
               <div
                 className="w-11 h-11 rounded-2xl flex items-center justify-center shrink-0"
@@ -433,12 +441,11 @@ export function SpinTab({ onNavigateToTasks }: SpinTabProps) {
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between mb-0.5">
-                  <p className="text-sm font-bold text-[#2A2520]">{tier.badge}</p>
-                  <p className="text-xs font-semibold text-[#aaaaaa]">{current} / {tier.target}</p>
+                  <p className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>{tier.badge}</p>
+                  <p className="text-xs font-semibold" style={{ color: 'var(--text-muted)' }}>{current} / {tier.target}</p>
                 </div>
-                <p className="text-xs text-[#aaaaaa] mb-2">{def.description(tier.target)}</p>
-                {/* Progress bar */}
-                <div className="h-1.5 bg-[#f0f0f0] rounded-full overflow-hidden">
+                <p className="text-xs mb-2" style={{ color: 'var(--text-muted)' }}>{def.description(tier.target)}</p>
+                <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'var(--bg-track)' }}>
                   <div
                     className="h-full rounded-full transition-all"
                     style={{ width: `${pctDisplay}%`, backgroundColor: def.color }}

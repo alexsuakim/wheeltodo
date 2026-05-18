@@ -12,7 +12,7 @@ export type TabId = "spin" | "tasks" | "rest" | "history";
 const NAV_ITEMS: {
   id: TabId;
   label: string;
-  Icon: React.ComponentType<{ size?: number; strokeWidth?: number; className?: string }>;
+  Icon: React.ComponentType<{ size?: number; strokeWidth?: number; className?: string; style?: React.CSSProperties }>;
 }[] = [
   { id: "spin",    label: "Spin",    Icon: RotateCcw },
   { id: "tasks",   label: "Tasks",   Icon: ListTodo  },
@@ -43,16 +43,16 @@ export function AppShell({ children, user, activeTab, setActiveTab, onSignOut }:
   }
 
   return (
-    <div className="flex h-screen bg-[#FAF7F2] overflow-hidden">
+    <div className="flex h-screen overflow-hidden" style={{ background: 'var(--bg-screen)' }}>
       {/* ── Desktop sidebar ─────────────────────────────── */}
-      <aside className="hidden md:flex flex-col w-56 bg-white border-r border-[#E8E5E0] shrink-0">
+      <aside className="hidden md:flex flex-col w-56 shrink-0" style={{ background: 'var(--bg-card)', borderRight: '1px solid var(--border)' }}>
         {/* Brand */}
-        <div className="px-5 pt-6 pb-5 border-b border-[#E8E5E0]">
+        <div className="px-5 pt-6 pb-5" style={{ borderBottom: '1px solid var(--border)' }}>
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 bg-[#FAF7F2] rounded-xl flex items-center justify-center text-base select-none">
+            <div className="w-8 h-8 rounded-xl flex items-center justify-center text-base select-none" style={{ background: 'var(--bg-screen)' }}>
               ◎
             </div>
-            <span className="font-bold text-[#2A2520] text-base tracking-tight">Wheel Todo</span>
+            <span className="font-bold text-base tracking-tight" style={{ color: 'var(--text-primary)' }}>Wheel Todo</span>
           </div>
         </div>
 
@@ -62,11 +62,11 @@ export function AppShell({ children, user, activeTab, setActiveTab, onSignOut }:
             <button
               key={id}
               onClick={() => setActiveTab(id)}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
-                activeTab === id
-                  ? "bg-[#FAF7F2] text-[#2A2520]"
-                  : "text-[#aaaaaa] hover:text-[#2A2520] hover:bg-[#f7f6f3]"
-              }`}
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors"
+              style={{
+                background: activeTab === id ? 'var(--bg-screen)' : 'transparent',
+                color: activeTab === id ? 'var(--text-primary)' : 'var(--text-muted)',
+              }}
             >
               <Icon size={17} strokeWidth={activeTab === id ? 2.2 : 1.8} />
               {label}
@@ -76,7 +76,8 @@ export function AppShell({ children, user, activeTab, setActiveTab, onSignOut }:
           {streak > 0 && (
             <button
               onClick={() => setActiveTab("history")}
-              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-[#E59880] hover:bg-[#fff0ee] transition-colors"
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors"
+              style={{ color: 'var(--accent)' }}
             >
               <Flame size={17} strokeWidth={2} />
               {streak}-day streak
@@ -85,12 +86,13 @@ export function AppShell({ children, user, activeTab, setActiveTab, onSignOut }:
         </nav>
 
         {/* User footer */}
-        <div className="border-t border-[#E8E5E0] px-3 py-4">
+        <div className="px-3 py-4" style={{ borderTop: '1px solid var(--border)' }}>
           <button
             onClick={() => setProfileOpen(true)}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-[#aaaaaa] hover:text-[#2A2520] hover:bg-[#f7f6f3] transition-colors"
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors"
+            style={{ color: 'var(--text-muted)' }}
           >
-            <div className="w-7 h-7 rounded-full bg-[#FAF7F2] flex items-center justify-center shrink-0">
+            <div className="w-7 h-7 rounded-full flex items-center justify-center shrink-0" style={{ background: 'var(--bg-screen)' }}>
               <User size={14} strokeWidth={1.8} />
             </div>
             <span className="truncate flex-1 text-left text-xs">
@@ -103,26 +105,28 @@ export function AppShell({ children, user, activeTab, setActiveTab, onSignOut }:
       {/* ── Main content area ─────────────────────────────── */}
       <main className="flex-1 flex flex-col overflow-hidden">
         {/* Mobile header */}
-        <header className="md:hidden flex items-center justify-between px-4 pt-4 pb-2 shrink-0 bg-[#FAF7F2]">
+        <header className="md:hidden flex items-center justify-between px-4 pt-4 pb-2 shrink-0" style={{ background: 'var(--bg-screen)' }}>
           <div className="flex items-center gap-2">
             <span className="text-base select-none">◎</span>
-            <span className="font-bold text-[#2A2520] text-sm">Wheel Todo</span>
+            <span className="font-bold text-sm" style={{ color: 'var(--text-primary)' }}>Wheel Todo</span>
           </div>
           <div className="flex items-center gap-2">
             {streak > 0 && (
               <button
                 onClick={() => setActiveTab("history")}
-                className="flex items-center gap-1 bg-white border border-[#E8E5E0] rounded-full px-2.5 py-1"
+                className="flex items-center gap-1 rounded-full px-2.5 py-1"
+                style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
               >
-                <Flame size={12} strokeWidth={2} className="text-[#E59880]" />
-                <span className="text-xs font-bold text-[#E59880]">{streak}</span>
+                <Flame size={12} strokeWidth={2} style={{ color: 'var(--accent)' }} />
+                <span className="text-xs font-bold" style={{ color: 'var(--accent)' }}>{streak}</span>
               </button>
             )}
             <button
               onClick={() => setProfileOpen(true)}
-              className="w-8 h-8 rounded-full bg-white border border-[#E8E5E0] flex items-center justify-center"
+              className="w-8 h-8 rounded-full flex items-center justify-center"
+              style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
             >
-              <User size={14} strokeWidth={1.8} className="text-[#aaaaaa]" />
+              <User size={14} strokeWidth={1.8} style={{ color: 'var(--text-muted)' }} />
             </button>
           </div>
         </header>
@@ -133,7 +137,7 @@ export function AppShell({ children, user, activeTab, setActiveTab, onSignOut }:
         </div>
 
         {/* ── Mobile bottom nav ──────────────────────────── */}
-        <nav className="md:hidden flex border-t border-[#E8E5E0] bg-white shrink-0 safe-area-bottom">
+        <nav className="md:hidden flex shrink-0 safe-area-bottom" style={{ borderTop: '1px solid var(--border)', background: 'var(--bg-card)' }}>
           {NAV_ITEMS.map(({ id, label, Icon }) => (
             <button
               key={id}
@@ -143,12 +147,11 @@ export function AppShell({ children, user, activeTab, setActiveTab, onSignOut }:
               <Icon
                 size={20}
                 strokeWidth={activeTab === id ? 2.2 : 1.8}
-                className={activeTab === id ? "text-[#E59880]" : "text-[#aaaaaa]"}
+                style={{ color: activeTab === id ? 'var(--accent)' : 'var(--text-muted)' }}
               />
               <span
-                className={`text-[10px] font-semibold ${
-                  activeTab === id ? "text-[#E59880]" : "text-[#aaaaaa]"
-                }`}
+                className="text-[10px] font-semibold"
+                style={{ color: activeTab === id ? 'var(--accent)' : 'var(--text-muted)' }}
               >
                 {label}
               </span>
@@ -177,18 +180,20 @@ function Stepper({ value, min, max, step = 1, onChange, format }: {
         type="button"
         onClick={() => onChange(Math.max(min, value - step))}
         disabled={value <= min}
-        className="w-8 h-8 rounded-full bg-[#FAF7F2] flex items-center justify-center disabled:opacity-30 hover:bg-[#e8e5e0] transition-colors"
+        className="w-8 h-8 rounded-full flex items-center justify-center disabled:opacity-30 transition-colors"
+        style={{ background: 'var(--bg-screen)' }}
       >
         <Minus size={14} strokeWidth={2.5} />
       </button>
-      <span className="w-14 text-center text-base font-bold text-[#2A2520]">
+      <span className="w-14 text-center text-base font-bold" style={{ color: 'var(--text-primary)' }}>
         {format ? format(value) : value}
       </span>
       <button
         type="button"
         onClick={() => onChange(Math.min(max, value + step))}
         disabled={value >= max}
-        className="w-8 h-8 rounded-full bg-[#FAF7F2] flex items-center justify-center disabled:opacity-30 hover:bg-[#e8e5e0] transition-colors"
+        className="w-8 h-8 rounded-full flex items-center justify-center disabled:opacity-30 transition-colors"
+        style={{ background: 'var(--bg-screen)' }}
       >
         <Plus size={14} strokeWidth={2.5} />
       </button>
@@ -244,7 +249,6 @@ function ProfileModal({ user, onClose, onSignOut }: ProfileModalProps) {
   const [message, setMessage] = useState<string | null>(null);
   const [newCat, setNewCat] = useState("");
 
-  // Stats
   const totalHours = completedTasks.reduce((s, t) => s + t.minutesActual, 0) / 60;
   const onTimePct = completedTasks.length > 0
     ? Math.round((completedTasks.filter((t) => t.minutesActual <= t.minutesEstimated).length / completedTasks.length) * 100)
@@ -283,26 +287,30 @@ function ProfileModal({ user, onClose, onSignOut }: ProfileModalProps) {
       onClick={onClose}
     >
       <div
-        className="bg-white w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col"
+        className="w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col"
+        style={{ background: 'var(--bg-card)' }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex items-center justify-between px-6 pt-6 pb-0">
-          <h2 className="text-lg font-bold text-[#2A2520]">Profile</h2>
-          <button onClick={onClose} className="text-[#aaaaaa] hover:text-[#2A2520] transition-colors">
+          <h2 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>Profile</h2>
+          <button onClick={onClose} className="transition-colors" style={{ color: 'var(--text-muted)' }}>
             <X size={18} strokeWidth={2} />
           </button>
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-1 mx-6 mt-4 bg-[#FAF7F2] rounded-xl p-1">
+        <div className="flex gap-1 mx-6 mt-4 rounded-xl p-1" style={{ background: 'var(--bg-screen)' }}>
           {(["account", "settings"] as const).map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
-              className={`flex-1 py-1.5 rounded-lg text-sm font-semibold transition-colors capitalize ${
-                tab === t ? "bg-white text-[#2A2520] shadow-sm" : "text-[#aaaaaa]"
-              }`}
+              className="flex-1 py-1.5 rounded-lg text-sm font-semibold transition-colors capitalize"
+              style={{
+                background: tab === t ? 'var(--bg-card)' : 'transparent',
+                color: tab === t ? 'var(--text-primary)' : 'var(--text-muted)',
+                boxShadow: tab === t ? '0 1px 2px rgba(0,0,0,0.06)' : 'none',
+              }}
             >
               {t}
             </button>
@@ -314,33 +322,33 @@ function ProfileModal({ user, onClose, onSignOut }: ProfileModalProps) {
           {tab === "account" ? (
             <>
               {/* Stats row */}
-              <div className="bg-[#f7f6f3] rounded-2xl flex py-4">
+              <div className="rounded-2xl flex py-4" style={{ background: 'var(--bg-input)' }}>
                 <div className="flex-1 flex flex-col items-center gap-0.5">
-                  <span className="text-xl font-bold text-[#2A2520]">{completedTasks.length}</span>
-                  <span className="text-xs text-[#aaaaaa]">Tasks done</span>
+                  <span className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>{completedTasks.length}</span>
+                  <span className="text-xs" style={{ color: 'var(--text-muted)' }}>Tasks done</span>
                 </div>
-                <div className="w-px bg-[#e8e8e8]" />
+                <div className="w-px" style={{ background: 'var(--border)' }} />
                 <div className="flex-1 flex flex-col items-center gap-0.5">
-                  <span className="text-xl font-bold text-[#2A2520]">{totalHours.toFixed(1)}h</span>
-                  <span className="text-xs text-[#aaaaaa]">Focused</span>
+                  <span className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>{totalHours.toFixed(1)}h</span>
+                  <span className="text-xs" style={{ color: 'var(--text-muted)' }}>Focused</span>
                 </div>
-                <div className="w-px bg-[#e8e8e8]" />
+                <div className="w-px" style={{ background: 'var(--border)' }} />
                 <div className="flex-1 flex flex-col items-center gap-0.5">
-                  <span className="text-xl font-bold text-[#2A2520]">{onTimePct}%</span>
-                  <span className="text-xs text-[#aaaaaa]">On time</span>
+                  <span className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>{onTimePct}%</span>
+                  <span className="text-xs" style={{ color: 'var(--text-muted)' }}>On time</span>
                 </div>
               </div>
 
               {/* Achievements */}
               <div>
-                <p className="text-xs font-semibold text-[#aaaaaa] uppercase tracking-wide mb-3">Achievements</p>
+                <p className="text-xs font-semibold uppercase tracking-wide mb-3" style={{ color: 'var(--text-muted)' }}>Achievements</p>
                 <div className="space-y-2">
                   {ACHIEVEMENT_DEFS.map((def) => {
                     const val = achievementValues[def.key];
                     const AchievIcon = ACHIEVEMENT_ICON_MAP[def.iconName];
                     const unlockedCount = def.tiers.filter((t) => unlockedIds.includes(t.id)).length;
                     return (
-                      <div key={def.key} className="bg-[#f7f6f3] rounded-2xl p-3.5">
+                      <div key={def.key} className="rounded-2xl p-3.5" style={{ background: 'var(--bg-input)' }}>
                         <div className="flex items-center gap-3 mb-2.5">
                           <div
                             className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
@@ -353,10 +361,10 @@ function ProfileModal({ user, onClose, onSignOut }: ProfileModalProps) {
                             )}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold text-[#2A2520] leading-tight">{def.label}</p>
-                            <p className="text-xs text-[#aaaaaa] leading-tight">{def.description(val)}</p>
+                            <p className="text-sm font-semibold leading-tight" style={{ color: 'var(--text-primary)' }}>{def.label}</p>
+                            <p className="text-xs leading-tight" style={{ color: 'var(--text-muted)' }}>{def.description(val)}</p>
                           </div>
-                          <span className="text-xs font-semibold text-[#aaaaaa] shrink-0">
+                          <span className="text-xs font-semibold shrink-0" style={{ color: 'var(--text-muted)' }}>
                             {unlockedCount}/{def.tiers.length}
                           </span>
                         </div>
@@ -367,11 +375,11 @@ function ProfileModal({ user, onClose, onSignOut }: ProfileModalProps) {
                               <div key={tier.id} className="flex-1 flex flex-col items-center gap-1">
                                 <div
                                   className="w-2 h-2 rounded-full"
-                                  style={{ backgroundColor: isUnlocked ? def.color : "#D1D0CD" }}
+                                  style={{ backgroundColor: isUnlocked ? def.color : 'var(--bg-track)' }}
                                 />
                                 <span
                                   className="text-[9px] text-center leading-tight font-medium"
-                                  style={{ color: isUnlocked ? "#2A2520" : "#aaaaaa" }}
+                                  style={{ color: isUnlocked ? 'var(--text-primary)' : 'var(--text-muted)' }}
                                 >
                                   {tier.badge}
                                 </span>
@@ -387,27 +395,29 @@ function ProfileModal({ user, onClose, onSignOut }: ProfileModalProps) {
 
               {user ? (
                 <>
-                  <p className="text-sm text-[#aaaaaa] truncate">{user.email}</p>
+                  <p className="text-sm truncate" style={{ color: 'var(--text-muted)' }}>{user.email}</p>
                   <form onSubmit={handleSave} className="flex flex-col gap-3">
                     <div>
-                      <label className="text-xs font-semibold text-[#aaaaaa] uppercase tracking-wide block mb-1.5">Display name</label>
+                      <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: 'var(--text-muted)' }}>Display name</label>
                       <input
                         type="text"
                         placeholder="Your name"
                         value={displayName}
                         onChange={(e) => setDisplayName(e.target.value)}
-                        className="w-full bg-[#f7f6f3] rounded-xl px-4 py-3 text-sm text-[#2A2520] placeholder-[#aaaaaa] focus:outline-none focus:ring-2 focus:ring-[#2A2520]/20 transition"
+                        className="w-full rounded-xl px-4 py-3 text-sm focus:outline-none transition"
+                        style={{ background: 'var(--bg-input)', color: 'var(--text-primary)' }}
                       />
                     </div>
                     <div>
-                      <label className="text-xs font-semibold text-[#aaaaaa] uppercase tracking-wide block mb-1.5">New password</label>
+                      <label className="text-xs font-semibold uppercase tracking-wide block mb-1.5" style={{ color: 'var(--text-muted)' }}>New password</label>
                       <input
                         type="password"
                         placeholder="Leave blank to keep current"
                         value={newPassword}
                         onChange={(e) => setNewPassword(e.target.value)}
                         autoComplete="new-password"
-                        className="w-full bg-[#f7f6f3] rounded-xl px-4 py-3 text-sm text-[#2A2520] placeholder-[#aaaaaa] focus:outline-none focus:ring-2 focus:ring-[#2A2520]/20 transition"
+                        className="w-full rounded-xl px-4 py-3 text-sm focus:outline-none transition"
+                        style={{ background: 'var(--bg-input)', color: 'var(--text-primary)' }}
                       />
                     </div>
                     {message && (
@@ -416,19 +426,21 @@ function ProfileModal({ user, onClose, onSignOut }: ProfileModalProps) {
                     <button
                       type="submit"
                       disabled={saving}
-                      className="w-full bg-[#2A2520] text-white font-semibold text-sm rounded-full py-3 hover:bg-[#333333] transition disabled:opacity-50"
+                      className="w-full text-white font-semibold text-sm rounded-full py-3 transition disabled:opacity-50"
+                      style={{ background: 'var(--text-primary)' }}
                     >
                       {saving ? "Saving…" : "Save changes"}
                     </button>
                   </form>
                 </>
               ) : (
-                <p className="text-sm text-[#aaaaaa]">Running without an account. Add Supabase credentials to enable sign-in.</p>
+                <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Running without an account. Add Supabase credentials to enable sign-in.</p>
               )}
 
               <button
                 onClick={onSignOut}
-                className="w-full flex items-center justify-center gap-2 text-sm text-[#aaaaaa] hover:text-[#E59880] transition-colors py-2"
+                className="w-full flex items-center justify-center gap-2 text-sm transition-colors py-2"
+                style={{ color: 'var(--text-muted)' }}
               >
                 <LogOut size={15} strokeWidth={2} />
                 Sign out
@@ -439,76 +451,79 @@ function ProfileModal({ user, onClose, onSignOut }: ProfileModalProps) {
               {/* Default timer */}
               <div className="flex items-center justify-between py-1">
                 <div>
-                  <p className="text-sm font-semibold text-[#2A2520]">Default timer</p>
-                  <p className="text-xs text-[#aaaaaa]">Pre-filled when adding tasks</p>
+                  <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Default timer</p>
+                  <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Pre-filled when adding tasks</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
                     onClick={() => stepTimer(-1)}
                     disabled={defaultTimerMinutes <= TIMER_STEPS[0]}
-                    className="w-8 h-8 rounded-full bg-[#FAF7F2] flex items-center justify-center disabled:opacity-30 hover:bg-[#e8e5e0] transition-colors"
+                    className="w-8 h-8 rounded-full flex items-center justify-center disabled:opacity-30 transition-colors"
+                    style={{ background: 'var(--bg-screen)' }}
                   >
                     <Minus size={14} strokeWidth={2.5} />
                   </button>
-                  <span className="w-14 text-center text-base font-bold text-[#2A2520]">{defaultTimerMinutes}m</span>
+                  <span className="w-14 text-center text-base font-bold" style={{ color: 'var(--text-primary)' }}>{defaultTimerMinutes}m</span>
                   <button
                     type="button"
                     onClick={() => stepTimer(1)}
                     disabled={defaultTimerMinutes >= TIMER_STEPS[TIMER_STEPS.length - 1]}
-                    className="w-8 h-8 rounded-full bg-[#FAF7F2] flex items-center justify-center disabled:opacity-30 hover:bg-[#e8e5e0] transition-colors"
+                    className="w-8 h-8 rounded-full flex items-center justify-center disabled:opacity-30 transition-colors"
+                    style={{ background: 'var(--bg-screen)' }}
                   >
                     <Plus size={14} strokeWidth={2.5} />
                   </button>
                 </div>
               </div>
 
-              <div className="h-px bg-[#f0f0f0]" />
+              <div className="h-px" style={{ background: 'var(--bg-track)' }} />
 
               {/* Daily goal */}
               <div className="flex items-center justify-between py-1">
                 <div>
-                  <p className="text-sm font-semibold text-[#2A2520]">Daily goal</p>
-                  <p className="text-xs text-[#aaaaaa]">Tasks to complete each day</p>
+                  <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Daily goal</p>
+                  <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Tasks to complete each day</p>
                 </div>
                 <Stepper value={dailyGoal} min={1} max={20} onChange={setDailyGoal} />
               </div>
 
-              <div className="h-px bg-[#f0f0f0]" />
+              <div className="h-px" style={{ background: 'var(--bg-track)' }} />
 
               {/* Rest goal tier */}
               <div>
-                <p className="text-sm font-semibold text-[#2A2520] mb-2">Rest goal</p>
+                <p className="text-sm font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>Rest goal</p>
                 <div className="flex gap-2">
                   {REST_TIERS.map(({ id, label, description }) => (
                     <button
                       key={id}
                       onClick={() => setRestGoalTier(id)}
-                      className={`flex-1 rounded-xl py-2.5 flex flex-col items-center gap-0.5 border-2 transition-colors ${
-                        restGoalTier === id
-                          ? "border-[#2A2520] bg-[#f7f6f3]"
-                          : "border-transparent bg-[#f7f6f3] hover:border-[#e0e0e0]"
-                      }`}
+                      className="flex-1 rounded-xl py-2.5 flex flex-col items-center gap-0.5 border-2 transition-colors"
+                      style={{
+                        background: 'var(--bg-input)',
+                        borderColor: restGoalTier === id ? 'var(--text-primary)' : 'transparent',
+                      }}
                     >
-                      <span className={`text-xs font-bold ${restGoalTier === id ? "text-[#2A2520]" : "text-[#aaaaaa]"}`}>{label}</span>
-                      <span className="text-xs text-[#aaaaaa]">{description}</span>
+                      <span className="text-xs font-bold" style={{ color: restGoalTier === id ? 'var(--text-primary)' : 'var(--text-muted)' }}>{label}</span>
+                      <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{description}</span>
                     </button>
                   ))}
                 </div>
               </div>
 
-              <div className="h-px bg-[#f0f0f0]" />
+              <div className="h-px" style={{ background: 'var(--bg-track)' }} />
 
               {/* Task labels */}
               <div>
-                <p className="text-sm font-semibold text-[#2A2520] mb-2">Task labels</p>
+                <p className="text-sm font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>Task labels</p>
                 <div className="flex flex-wrap gap-2 mb-2">
                   {categories.map((cat) => (
-                    <div key={cat} className="flex items-center gap-1 bg-[#FAF7F2] rounded-full px-3 py-1.5">
-                      <span className="text-xs font-medium text-[#2A2520]">{cat}</span>
+                    <div key={cat} className="flex items-center gap-1 rounded-full px-3 py-1.5" style={{ background: 'var(--bg-screen)' }}>
+                      <span className="text-xs font-medium" style={{ color: 'var(--text-primary)' }}>{cat}</span>
                       <button
                         onClick={() => removeCategory(cat)}
-                        className="text-[#aaaaaa] hover:text-[#E59880] transition-colors ml-0.5"
+                        className="transition-colors ml-0.5"
+                        style={{ color: 'var(--text-muted)' }}
                       >
                         <X size={11} strokeWidth={2.5} />
                       </button>
@@ -528,12 +543,14 @@ function ProfileModal({ user, onClose, onSignOut }: ProfileModalProps) {
                       }
                     }}
                     maxLength={30}
-                    className="flex-1 bg-[#f7f6f3] rounded-xl px-4 py-2.5 text-sm text-[#2A2520] placeholder-[#aaaaaa] focus:outline-none focus:ring-2 focus:ring-[#2A2520]/20 transition"
+                    className="flex-1 rounded-xl px-4 py-2.5 text-sm focus:outline-none transition"
+                    style={{ background: 'var(--bg-input)', color: 'var(--text-primary)' }}
                   />
                   <button
                     onClick={() => { if (newCat.trim()) { addCategory(newCat.trim()); setNewCat(""); } }}
                     disabled={!newCat.trim()}
-                    className="w-10 h-10 rounded-xl bg-[#2A2520] flex items-center justify-center disabled:opacity-30 transition-opacity"
+                    className="w-10 h-10 rounded-xl flex items-center justify-center disabled:opacity-30 transition-opacity"
+                    style={{ background: 'var(--text-primary)' }}
                   >
                     <Plus size={16} strokeWidth={2.5} className="text-white" />
                   </button>

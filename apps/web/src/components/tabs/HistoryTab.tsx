@@ -11,19 +11,19 @@ const MILESTONES = [7, 14, 21, 30, 60, 90, 100, 180, 365];
 function StreakAccordion() {
   const [open, setOpen] = useState(false);
   return (
-    <div className="bg-white rounded-2xl overflow-hidden">
+    <div className="rounded-2xl overflow-hidden" style={{ background: 'var(--bg-card)' }}>
       <button onClick={() => setOpen((v) => !v)} className="w-full flex items-center gap-2.5 px-4 py-3.5 text-left">
-        <HelpCircle size={15} strokeWidth={2} className="text-[#E59880] shrink-0" />
-        <span className="flex-1 text-sm font-bold text-[#2A2520]">How do streaks work?</span>
+        <HelpCircle size={15} strokeWidth={2} className="shrink-0" style={{ color: 'var(--accent)' }} />
+        <span className="flex-1 text-sm font-bold" style={{ color: 'var(--text-primary)' }}>How do streaks work?</span>
         {open
-          ? <ChevronUp size={15} strokeWidth={2} className="text-[#aaaaaa] shrink-0" />
-          : <ChevronDown size={15} strokeWidth={2} className="text-[#aaaaaa] shrink-0" />
+          ? <ChevronUp size={15} strokeWidth={2} className="shrink-0" style={{ color: 'var(--text-muted)' }} />
+          : <ChevronDown size={15} strokeWidth={2} className="shrink-0" style={{ color: 'var(--text-muted)' }} />
         }
       </button>
       {open && (
-        <div className="px-4 pb-4 text-sm text-[#aaaaaa] leading-relaxed space-y-2">
+        <div className="px-4 pb-4 text-sm leading-relaxed space-y-2" style={{ color: 'var(--text-muted)' }}>
           <p>
-            Your streak counts consecutive days where you either completed a task <strong className="text-[#2A2520]">or</strong> hit your Rest Mode goal.
+            Your streak counts consecutive days where you either completed a task <strong style={{ color: 'var(--text-primary)' }}>or</strong> hit your Rest Mode goal.
           </p>
           <p>Rest days protect your streak — so taking a break never breaks your momentum.</p>
         </div>
@@ -36,12 +36,12 @@ function StreakAccordion() {
 
 function TaskCard({ task, onUntick }: { task: CompletedTask; onUntick: () => void }) {
   return (
-    <div className="flex items-center gap-3 bg-white rounded-2xl px-4 py-3.5 mb-2">
+    <div className="flex items-center gap-3 rounded-2xl px-4 py-3.5 mb-2" style={{ background: 'var(--bg-card)' }}>
       <button onClick={onUntick}>
-        <CircleCheck size={20} strokeWidth={2.5} className="text-[#22a722] shrink-0" />
+        <CircleCheck size={20} strokeWidth={2.5} className="shrink-0" style={{ color: 'var(--success)' }} />
       </button>
-      <span className="flex-1 text-base font-medium text-[#2A2520] truncate">{task.taskName}</span>
-      <span className="text-sm text-[#aaaaaa]">{task.minutesEstimated}m</span>
+      <span className="flex-1 text-base font-medium truncate" style={{ color: 'var(--text-primary)' }}>{task.taskName}</span>
+      <span className="text-sm" style={{ color: 'var(--text-muted)' }}>{task.minutesEstimated}m</span>
       <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: task.color }} />
     </div>
   );
@@ -110,38 +110,38 @@ export function HistoryTab() {
     <div className="max-w-2xl mx-auto px-4 md:px-6 py-4 md:py-6 space-y-4">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-[#2A2520]">Your progress.</h1>
-        <p className="text-2xl font-bold text-[#E59880]">Look how far you've come.</p>
+        <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Your progress.</h1>
+        <p className="text-2xl font-bold" style={{ color: 'var(--accent)' }}>Look how far you've come.</p>
       </div>
 
       <StreakAccordion />
 
       {/* Lifetime stats */}
-      <div className="bg-white rounded-2xl flex py-5">
+      <div className="rounded-2xl flex py-5" style={{ background: 'var(--bg-card)' }}>
         <div className="flex-1 flex flex-col items-center gap-1">
-          <span className="text-2xl font-bold text-[#2A2520]">{completedTasks.length}</span>
-          <span className="text-xs text-[#aaaaaa]">Tasks Done</span>
+          <span className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>{completedTasks.length}</span>
+          <span className="text-xs" style={{ color: 'var(--text-muted)' }}>Tasks Done</span>
         </div>
-        <div className="w-px bg-[#e8e8e8]" />
+        <div className="w-px" style={{ background: 'var(--border)' }} />
         <div className="flex-1 flex flex-col items-center gap-1">
-          <span className="text-2xl font-bold text-[#E59880]">{streak}</span>
+          <span className="text-2xl font-bold" style={{ color: 'var(--accent)' }}>{streak}</span>
           <div className="flex items-center gap-1">
-            <Flame size={11} strokeWidth={2} className="text-[#E59880]" />
-            <span className="text-xs text-[#aaaaaa]">Streak</span>
+            <Flame size={11} strokeWidth={2} style={{ color: 'var(--accent)' }} />
+            <span className="text-xs" style={{ color: 'var(--text-muted)' }}>Streak</span>
           </div>
         </div>
-        <div className="w-px bg-[#e8e8e8]" />
+        <div className="w-px" style={{ background: 'var(--border)' }} />
         <div className="flex-1 flex flex-col items-center gap-1">
-          <span className="text-2xl font-bold text-[#2A2520]">{restStreak}</span>
+          <span className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>{restStreak}</span>
           <div className="flex items-center gap-1">
-            <Moon size={11} strokeWidth={2} className="text-[#aaaaaa]" />
-            <span className="text-xs text-[#aaaaaa]">Rest</span>
+            <Moon size={11} strokeWidth={2} style={{ color: 'var(--text-muted)' }} />
+            <span className="text-xs" style={{ color: 'var(--text-muted)' }}>Rest</span>
           </div>
         </div>
-        <div className="w-px bg-[#e8e8e8]" />
+        <div className="w-px" style={{ background: 'var(--border)' }} />
         <div className="flex-1 flex flex-col items-center gap-1">
-          <span className="text-2xl font-bold text-[#2A2520]">{bestStreak}</span>
-          <span className="text-xs text-[#aaaaaa]">Best</span>
+          <span className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>{bestStreak}</span>
+          <span className="text-xs" style={{ color: 'var(--text-muted)' }}>Best</span>
         </div>
       </div>
 
@@ -150,21 +150,21 @@ export function HistoryTab() {
         <div className="flex items-center justify-between mb-2">
           <button
             onClick={() => setWeekOffset((o) => o - 1)}
-            className="p-1.5 rounded-lg hover:bg-[#f0f0f0] transition-colors"
+            className="p-1.5 rounded-lg transition-colors"
           >
-            <ChevronLeft size={17} strokeWidth={2} className="text-[#aaaaaa]" />
+            <ChevronLeft size={17} strokeWidth={2} style={{ color: 'var(--text-muted)' }} />
           </button>
-          <span className="text-xs font-semibold text-[#aaaaaa] uppercase tracking-wide">{weekLabel}</span>
+          <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>{weekLabel}</span>
           <button
             onClick={() => setWeekOffset((o) => Math.min(o + 1, 0))}
             disabled={weekOffset >= 0}
-            className="p-1.5 rounded-lg hover:bg-[#f0f0f0] transition-colors disabled:opacity-30"
+            className="p-1.5 rounded-lg transition-colors disabled:opacity-30"
           >
-            <ChevronRight size={17} strokeWidth={2} className="text-[#aaaaaa]" />
+            <ChevronRight size={17} strokeWidth={2} style={{ color: 'var(--text-muted)' }} />
           </button>
         </div>
 
-        <div className="bg-white rounded-2xl px-3 py-5 flex justify-between">
+        <div className="rounded-2xl px-3 py-5 flex justify-between" style={{ background: 'var(--bg-card)' }}>
           {weekDays.map((day, i) => {
             const isToday = day.getTime() === today.getTime();
             const isFuture = day > today;
@@ -174,27 +174,34 @@ export function HistoryTab() {
             const isPartial = !active && partialPct !== null;
             const dayName = ["M", "T", "W", "T", "F", "S", "S"][i];
 
+            const bubbleBg = isToday && active ? 'var(--accent)'
+              : isToday ? 'transparent'
+              : active && isRestOnly ? 'var(--primary)'
+              : active ? 'var(--text-primary)'
+              : isPartial ? 'var(--bg-track)'
+              : isFuture ? 'var(--bg-subtle)'
+              : 'var(--bg-track)';
+
             return (
               <div key={i} className="flex flex-col items-center gap-2">
                 <div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
-                    isToday && active ? "bg-[#E59880]"
-                    : isToday ? "border-2 border-[#E59880] bg-transparent"
-                    : active && isRestOnly ? "bg-[#ADA8CC]"
-                    : active ? "bg-[#2A2520]"
-                    : isPartial ? "bg-[#e8e8e8]"
-                    : isFuture ? "bg-[#f5f5f5]"
-                    : "bg-[#f0f0f0]"
-                  }`}
+                  className="w-8 h-8 rounded-full flex items-center justify-center transition-colors"
+                  style={{
+                    background: bubbleBg,
+                    border: isToday && !active ? '2px solid var(--accent)' : 'none',
+                  }}
                 >
                   {isRestOnly && !isToday && (
                     <Moon size={12} strokeWidth={2} className="text-white" />
                   )}
                   {isPartial && (
-                    <Moon size={12} strokeWidth={2} className="text-[#aaaaaa]" />
+                    <Moon size={12} strokeWidth={2} style={{ color: 'var(--text-muted)' }} />
                   )}
                 </div>
-                <span className={`text-xs ${isToday ? "text-[#E59880] font-semibold" : "text-[#aaaaaa]"}`}>
+                <span
+                  className="text-xs"
+                  style={{ color: isToday ? 'var(--accent)' : 'var(--text-muted)', fontWeight: isToday ? 600 : 400 }}
+                >
                   {dayName}
                 </span>
               </div>
@@ -204,25 +211,25 @@ export function HistoryTab() {
       </div>
 
       {/* Next milestone */}
-      <div className="bg-white rounded-2xl flex items-center gap-3 px-4 py-4">
-        <Target size={26} strokeWidth={1.8} className="text-[#E59880] shrink-0" />
+      <div className="rounded-2xl flex items-center gap-3 px-4 py-4" style={{ background: 'var(--bg-card)' }}>
+        <Target size={26} strokeWidth={1.8} className="shrink-0" style={{ color: 'var(--accent)' }} />
         <div className="flex-1">
           {streak === 0 ? (
             <>
-              <p className="text-sm font-bold text-[#2A2520]">Start your streak</p>
-              <p className="text-xs text-[#aaaaaa] mt-0.5">Complete a task today to begin!</p>
+              <p className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>Start your streak</p>
+              <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>Complete a task today to begin!</p>
             </>
           ) : daysToMilestone !== null ? (
             <>
-              <p className="text-sm font-bold text-[#2A2520]">
+              <p className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>
                 {daysToMilestone} more day{daysToMilestone !== 1 ? "s" : ""} to {nextMilestone}
               </p>
-              <p className="text-xs text-[#aaaaaa] mt-0.5">Keep going — you're on a roll</p>
+              <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>Keep going — you're on a roll</p>
             </>
           ) : (
             <>
-              <p className="text-sm font-bold text-[#2A2520]">365 days — legendary!</p>
-              <p className="text-xs text-[#aaaaaa] mt-0.5">You've hit every milestone. Incredible.</p>
+              <p className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>365 days — legendary!</p>
+              <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>You've hit every milestone. Incredible.</p>
             </>
           )}
         </div>
@@ -231,7 +238,7 @@ export function HistoryTab() {
       {/* Today's tasks */}
       {todayTasks.length > 0 && (
         <div>
-          <p className="text-xs font-semibold text-[#aaaaaa] uppercase tracking-wide mb-2">Today</p>
+          <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: 'var(--text-muted)' }}>Today</p>
           {todayTasks.map((t) => (
             <TaskCard key={t.id} task={t} onUntick={() => uncompleteTask(t.id)} />
           ))}
@@ -241,7 +248,7 @@ export function HistoryTab() {
       {/* Yesterday's tasks */}
       {yesterdayTasks.length > 0 && (
         <div>
-          <p className="text-xs font-semibold text-[#aaaaaa] uppercase tracking-wide mb-2">Yesterday</p>
+          <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: 'var(--text-muted)' }}>Yesterday</p>
           {yesterdayTasks.map((t) => (
             <TaskCard key={t.id} task={t} onUntick={() => uncompleteTask(t.id)} />
           ))}
@@ -249,7 +256,7 @@ export function HistoryTab() {
       )}
 
       {completedTasks.length === 0 && (
-        <p className="text-center text-sm text-[#aaaaaa] py-8">
+        <p className="text-center text-sm py-8" style={{ color: 'var(--text-muted)' }}>
           No completed tasks yet.
           <br />
           Spin the wheel to get started!
