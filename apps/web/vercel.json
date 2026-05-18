@@ -1,6 +1,6 @@
 {
   "framework": "nextjs",
-  "installCommand": "rm -rf node_modules apps/web/node_modules apps/mobile/node_modules packages/shared/node_modules package-lock.json && npm install",
+  "installCommand": "cd ../.. && npm install",
   "buildCommand": "npm run build",
   "outputDirectory": ".next"
 }
