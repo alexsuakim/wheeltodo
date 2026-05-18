@@ -17,8 +17,10 @@
   },
   "submit": {
     "production": {
-      "appleId": "sua@bagelcode.com",
-      "ascAppId": "6770420802"
+      "ios": {
+        "appleId": "sua@bagelcode.com",
+        "ascAppId": "6770420802"
+      }
     }
   }
 }
