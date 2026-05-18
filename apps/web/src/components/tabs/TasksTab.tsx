@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { HelpCircle, ChevronDown, ChevronUp, Timer, Plus, Trash2, Sparkles, Lock } from "lucide-react";
+import { HelpCircle, ChevronDown, ChevronUp, Timer, Plus, Trash2, Sparkles, Lock, Mic } from "lucide-react";
 import { useApp, COLORS, type Task } from "@/context/AppContext";
 import { Confetti } from "@/components/Confetti";
 import { useSubscription } from "@/hooks/useSubscription";
@@ -256,6 +256,225 @@ function BreakdownModal({
   );
 }
 
+// ─── Voice Modal ─────────────────────────────────────────────────────────────
+
+type VoicePhase = "recording" | "processing" | "results" | "error" | "unsupported";
+
+interface VoiceTask {
+  name: string;
+  minutes: number;
+  category?: string;
+}
+
+function VoiceModal({
+  onClose,
+  onAdd,
+}: {
+  onClose: () => void;
+  onAdd: (tasks: VoiceTask[]) => void;
+}) {
+  const recognitionRef = useRef<{ stop: () => void; abort: () => void } | null>(null);
+  const [phase, setPhase] = useState<VoicePhase>(() => {
+    if (typeof window === "undefined") return "unsupported";
+    const SR = (window as unknown as Record<string, unknown>).SpeechRecognition
+      ?? (window as unknown as Record<string, unknown>).webkitSpeechRecognition;
+    return SR ? "recording" : "unsupported";
+  });
+  const [transcript, setTranscript] = useState("");
+  const [tasks, setTasks] = useState<VoiceTask[]>([]);
+  const [selected, setSelected] = useState<Set<number>>(new Set());
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (phase !== "recording") return;
+    const SR = (window as unknown as Record<string, unknown>).SpeechRecognition
+      ?? (window as unknown as Record<string, unknown>).webkitSpeechRecognition;
+    if (!SR) return;
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const recognition = new (SR as any)();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = "en-US";
+
+    recognition.onresult = (e: { results: SpeechRecognitionResultList }) => {
+      const full = Array.from(e.results)
+        .map((r) => r[0].transcript)
+        .join(" ");
+      setTranscript(full);
+    };
+
+    recognition.onerror = () => {
+      setError("Microphone access was denied or an error occurred.");
+      setPhase("error");
+    };
+
+    recognition.start();
+    recognitionRef.current = recognition;
+
+    return () => { recognition.abort(); };
+  }, [phase]);
+
+  async function handleDone() {
+    recognitionRef.current?.stop();
+    if (!transcript.trim()) {
+      setError("Nothing was captured. Please try again.");
+      setPhase("error");
+      return;
+    }
+    setPhase("processing");
+    try {
+      const res = await fetch("/api/voice-tasks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ transcript }),
+      });
+      if (!res.ok) throw new Error("Request failed");
+      const data = (await res.json()) as { tasks?: VoiceTask[]; error?: string };
+      if (data.error) throw new Error(data.error);
+      const items = data.tasks ?? [];
+      setTasks(items);
+      setSelected(new Set(items.map((_, i) => i)));
+      setPhase("results");
+    } catch {
+      setError("Could not extract tasks. Please try again.");
+      setPhase("error");
+    }
+  }
+
+  function toggle(i: number) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      next.has(i) ? next.delete(i) : next.add(i);
+      return next;
+    });
+  }
+
+  const selectedCount = selected.size;
+
+  return (
+    <div className="fixed inset-0 bg-black/40 z-40 flex items-end md:items-center justify-center" onClick={onClose}>
+      <div
+        className="w-full max-w-md rounded-t-3xl md:rounded-2xl p-6 shadow-2xl"
+        style={{ background: 'var(--bg-card)' }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="w-9 h-1 rounded-full mb-5 mx-auto md:hidden" style={{ background: 'var(--border)' }} />
+        <div className="flex items-center gap-2 mb-1">
+          <Mic size={16} strokeWidth={1.8} style={{ color: 'var(--accent)' }} />
+          <h2 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>What's on your plate?</h2>
+        </div>
+
+        {phase === "unsupported" && (
+          <p className="text-sm py-6 text-center" style={{ color: 'var(--text-muted)' }}>
+            Voice input isn't supported in this browser. Try Chrome or Edge.
+          </p>
+        )}
+
+        {phase === "recording" && (
+          <div className="flex flex-col gap-4">
+            <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+              Tell me everything you need to get done — I'll turn it into tasks.
+            </p>
+            <div
+              className="min-h-[80px] rounded-xl px-4 py-3 text-sm leading-relaxed"
+              style={{ background: 'var(--bg-input)', color: transcript ? 'var(--text-primary)' : 'var(--text-muted)' }}
+            >
+              {transcript || "Listening…"}
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2" style={{ color: 'var(--accent)' }}>
+                <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: 'var(--accent)' }} />
+                <span className="text-xs font-semibold">Recording</span>
+              </div>
+              <button
+                onClick={handleDone}
+                className="flex-1 text-white font-semibold text-sm rounded-full py-3 active:scale-[0.98] transition"
+                style={{ background: 'var(--text-primary)' }}
+              >
+                Done — make my tasks
+              </button>
+            </div>
+          </div>
+        )}
+
+        {phase === "processing" && (
+          <div className="flex flex-col items-center gap-3 py-8">
+            <span className="text-3xl animate-spin inline-block" style={{ color: 'var(--accent)' }}>◎</span>
+            <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Extracting tasks…</p>
+          </div>
+        )}
+
+        {phase === "error" && (
+          <div className="flex flex-col items-center gap-3 py-6">
+            <p className="text-sm text-center" style={{ color: 'var(--text-muted)' }}>{error}</p>
+            <button
+              onClick={() => { setTranscript(""); setPhase("recording"); }}
+              className="px-4 py-2 rounded-full text-sm font-semibold"
+              style={{ background: 'var(--bg-track)', color: 'var(--text-primary)' }}
+            >
+              Try again
+            </button>
+          </div>
+        )}
+
+        {phase === "results" && tasks.length > 0 && (
+          <>
+            <p className="text-sm mb-4" style={{ color: 'var(--text-muted)' }}>
+              Select the tasks to add to your wheel.
+            </p>
+            <div className="space-y-2 mb-5">
+              {tasks.map((t, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => toggle(i)}
+                  className="w-full flex items-center gap-3 rounded-xl px-4 py-3 text-left transition-colors"
+                  style={{ background: 'var(--bg-input)' }}
+                >
+                  <span
+                    className="w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-colors"
+                    style={{
+                      background: selected.has(i) ? 'var(--text-primary)' : 'transparent',
+                      borderColor: selected.has(i) ? 'var(--text-primary)' : 'var(--border)',
+                    }}
+                  >
+                    {selected.has(i) && <span className="text-white text-xs font-bold">✓</span>}
+                  </span>
+                  <span className="flex-1 text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{t.name}</span>
+                  <div className="flex flex-col items-end shrink-0">
+                    <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{t.minutes}m</span>
+                    {t.category && (
+                      <span className="text-xs mt-0.5" style={{ color: 'var(--accent)' }}>{t.category}</span>
+                    )}
+                  </div>
+                </button>
+              ))}
+            </div>
+            <div className="flex gap-2.5">
+              <button
+                onClick={() => { setTranscript(""); setPhase("recording"); }}
+                className="px-4 py-3.5 rounded-full text-sm font-semibold transition"
+                style={{ background: 'var(--bg-track)', color: 'var(--text-primary)' }}
+              >
+                Redo
+              </button>
+              <button
+                onClick={() => { onAdd(tasks.filter((_, i) => selected.has(i))); onClose(); }}
+                disabled={selectedCount === 0}
+                className="flex-1 text-white font-semibold text-base rounded-full py-3.5 active:scale-[0.98] transition disabled:opacity-40"
+                style={{ background: 'var(--text-primary)' }}
+              >
+                Add {selectedCount} task{selectedCount !== 1 ? "s" : ""}
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ─── Add/Edit Task Modal ──────────────────────────────────────────────────────
 
 interface TaskModalProps {
@@ -267,6 +486,18 @@ interface TaskModalProps {
   onAddCategory: (cat: string) => void;
 }
 
+const CAT_CORRECTIONS_KEY = "wt.cat-corrections";
+type CatCorrection = { task: string; category: string };
+
+function loadCorrections(): CatCorrection[] {
+  try { return JSON.parse(localStorage.getItem(CAT_CORRECTIONS_KEY) ?? "[]") as CatCorrection[]; }
+  catch { return []; }
+}
+function saveCorrection(task: string, category: string) {
+  const next = [...loadCorrections().filter((e) => e.task !== task), { task, category }].slice(-50);
+  localStorage.setItem(CAT_CORRECTIONS_KEY, JSON.stringify(next));
+}
+
 function TaskModal({ task, categories, onAdd, onSave, onClose, onAddCategory }: TaskModalProps) {
   const { defaultTimerMinutes } = useApp();
   const isEdit = !!task;
@@ -275,14 +506,44 @@ function TaskModal({ task, categories, onAdd, onSave, onClose, onAddCategory }: 
   const [hours, setHours] = useState(Math.floor(defaultMins / 60));
   const [mins, setMins] = useState(defaultMins % 60);
   const [category, setCategory] = useState(task?.category ?? "");
+  const [userSetCategory, setUserSetCategory] = useState(isEdit);
+  const [suggestion, setSuggestion] = useState<string | null>(null);
+  const [suggestionLoading, setSuggestionLoading] = useState(false);
   const [addingCat, setAddingCat] = useState(false);
   const [newCat, setNewCat] = useState("");
+
+  useEffect(() => {
+    if (isEdit || userSetCategory || name.trim().length < 3) {
+      setSuggestion(null);
+      return;
+    }
+    let cancelled = false;
+    const timer = setTimeout(async () => {
+      if (cancelled) return;
+      setSuggestionLoading(true);
+      try {
+        const res = await fetch("/api/suggest-category", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ taskName: name.trim(), categories, examples: loadCorrections() }),
+        });
+        const data = (await res.json()) as { category: string | null };
+        if (!cancelled && data.category) {
+          setSuggestion(data.category);
+          setCategory(data.category);
+        }
+      } catch { /* silent */ }
+      if (!cancelled) setSuggestionLoading(false);
+    }, 600);
+    return () => { cancelled = true; clearTimeout(timer); };
+  }, [name, categories, isEdit, userSetCategory]);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const v = name.trim();
     if (!v) return;
     const total = Math.max(1, hours * 60 + mins);
+    if (category) saveCorrection(v, category);
     if (isEdit && task) {
       onSave(task.id, v, total, category);
     } else {
@@ -345,13 +606,27 @@ function TaskModal({ task, categories, onAdd, onSave, onClose, onAddCategory }: 
           </div>
 
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: 'var(--text-muted)' }}>Category</p>
+            <div className="flex items-center gap-2 mb-2">
+              <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>Category</p>
+              {suggestionLoading && (
+                <span className="text-xs" style={{ color: 'var(--text-muted)' }}>Suggesting…</span>
+              )}
+              {!suggestionLoading && suggestion && !userSetCategory && (
+                <span className="text-xs flex items-center gap-1" style={{ color: 'var(--accent)' }}>
+                  <Sparkles size={10} strokeWidth={2} />suggested
+                </span>
+              )}
+            </div>
             <div className="flex flex-wrap gap-2">
               {categories.map((cat) => (
                 <button
                   type="button"
                   key={cat}
-                  onClick={() => setCategory(category === cat ? "" : cat)}
+                  onClick={() => {
+                    setCategory(category === cat ? "" : cat);
+                    setUserSetCategory(true);
+                    setSuggestion(null);
+                  }}
                   className="px-3 py-1.5 rounded-full text-sm font-medium transition-colors"
                   style={{
                     background: category === cat ? 'var(--text-primary)' : 'var(--bg-track)',
@@ -371,6 +646,8 @@ function TaskModal({ task, categories, onAdd, onSave, onClose, onAddCategory }: 
                     if (e.key === "Enter" && newCat.trim()) {
                       onAddCategory(newCat.trim());
                       setCategory(newCat.trim());
+                      setUserSetCategory(true);
+                      setSuggestion(null);
                       setNewCat("");
                       setAddingCat(false);
                     } else if (e.key === "Escape") {
@@ -559,6 +836,7 @@ export function TasksTab() {
   const [confetti, setConfetti] = useState(false);
   const [breakdownTask, setBreakdownTask] = useState<Task | null>(null);
   const [showUpgrade, setShowUpgrade] = useState(false);
+  const [voiceOpen, setVoiceOpen] = useState(false);
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -601,6 +879,18 @@ export function TasksTab() {
     });
   }
 
+  function handleAddVoiceTasks(voiceTasks: VoiceTask[]) {
+    voiceTasks.forEach((t, i) => {
+      addTask({
+        name: t.name,
+        minutes: t.minutes,
+        color: COLORS[(tasks.length + i) % COLORS.length],
+        icon: "BookOpen",
+        category: t.category ?? "",
+      });
+    });
+  }
+
   function handleFocus(task: Task) {
     if (pomodoroSession && pomodoroSession.taskId !== task.id) {
       if (!window.confirm(`Switch focus from "${pomodoroSession.taskName}" to "${task.name}"?`)) return;
@@ -626,13 +916,26 @@ export function TasksTab() {
           <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Your tasks are set.</h1>
           <p className="text-2xl font-bold" style={{ color: 'var(--accent)' }}>Time to get to work.</p>
         </div>
-        <button
-          onClick={() => setModalOpen(true)}
-          className="w-11 h-11 rounded-full text-white text-2xl flex items-center justify-center active:scale-95 transition shrink-0 leading-none"
-          style={{ background: 'var(--text-primary)' }}
-        >
-          <Plus size={20} strokeWidth={2.5} />
-        </button>
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            onClick={() => isPremium ? setVoiceOpen(true) : setShowUpgrade(true)}
+            title={isPremium ? "Add tasks by voice" : "Premium: Add tasks by voice"}
+            className="w-11 h-11 rounded-full flex items-center justify-center active:scale-95 transition"
+            style={{ background: 'var(--bg-card)' }}
+          >
+            {isPremium
+              ? <Mic size={18} strokeWidth={1.8} style={{ color: 'var(--accent)' }} />
+              : <Mic size={18} strokeWidth={1.8} style={{ color: 'var(--text-muted)' }} />
+            }
+          </button>
+          <button
+            onClick={() => setModalOpen(true)}
+            className="w-11 h-11 rounded-full text-white flex items-center justify-center active:scale-95 transition"
+            style={{ background: 'var(--text-primary)' }}
+          >
+            <Plus size={20} strokeWidth={2.5} />
+          </button>
+        </div>
       </div>
 
       {/* FAQ */}
@@ -723,6 +1026,13 @@ export function TasksTab() {
           task={breakdownTask}
           onClose={() => setBreakdownTask(null)}
           onAdd={(subtasks) => handleAddSubtasks(subtasks, breakdownTask)}
+        />
+      )}
+
+      {voiceOpen && (
+        <VoiceModal
+          onClose={() => setVoiceOpen(false)}
+          onAdd={handleAddVoiceTasks}
         />
       )}
     </div>
