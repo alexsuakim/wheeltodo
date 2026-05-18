@@ -21,8 +21,8 @@ function TasksFaqAccordion() {
   return (
     <div className="bg-white rounded-2xl overflow-hidden">
       <button onClick={() => setOpen((v) => !v)} className="w-full flex items-center gap-2.5 px-4 py-3.5 text-left">
-        <HelpCircle size={15} strokeWidth={2} className="text-[#FF5C4D] shrink-0" />
-        <span className="flex-1 text-sm font-bold text-[#111111]">How do tasks work?</span>
+        <HelpCircle size={15} strokeWidth={2} className="text-[#E59880] shrink-0" />
+        <span className="flex-1 text-sm font-bold text-[#2A2520]">How do tasks work?</span>
         {open
           ? <ChevronUp size={15} strokeWidth={2} className="text-[#aaaaaa] shrink-0" />
           : <ChevronDown size={15} strokeWidth={2} className="text-[#aaaaaa] shrink-0" />
@@ -80,7 +80,7 @@ function TaskModal({ task, categories, onAdd, onSave, onClose, onAddCategory }: 
         onClick={(e) => e.stopPropagation()}
       >
         <div className="w-9 h-1 rounded-full bg-[#e0e0e0] mb-5 mx-auto md:hidden" />
-        <h2 className="text-xl font-bold text-[#111111] mb-1">{isEdit ? "Edit task" : "Add task"}</h2>
+        <h2 className="text-xl font-bold text-[#2A2520] mb-1">{isEdit ? "Edit task" : "Add task"}</h2>
         <p className="text-sm text-[#aaaaaa] mb-5">{isEdit ? "Update the details below." : "What needs doing?"}</p>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -90,7 +90,7 @@ function TaskModal({ task, categories, onAdd, onSave, onClose, onAddCategory }: 
             placeholder="Task name..."
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full bg-[#f7f6f3] rounded-xl px-4 py-3.5 text-base text-[#111111] placeholder-[#aaaaaa] focus:outline-none focus:ring-2 focus:ring-[#111111]/20 transition"
+            className="w-full bg-[#f7f6f3] rounded-xl px-4 py-3.5 text-base text-[#2A2520] placeholder-[#aaaaaa] focus:outline-none focus:ring-2 focus:ring-[#2A2520]/20 transition"
           />
 
           <div>
@@ -101,7 +101,7 @@ function TaskModal({ task, categories, onAdd, onSave, onClose, onAddCategory }: 
                   type="button"
                   key={c}
                   onClick={() => setColor(c)}
-                  className={`w-8 h-8 rounded-full transition-transform ${color === c ? "ring-2 ring-offset-2 ring-[#111111] scale-110" : ""}`}
+                  className={`w-8 h-8 rounded-full transition-transform ${color === c ? "ring-2 ring-offset-2 ring-[#2A2520] scale-110" : ""}`}
                   style={{ backgroundColor: c }}
                 />
               ))}
@@ -118,7 +118,7 @@ function TaskModal({ task, categories, onAdd, onSave, onClose, onAddCategory }: 
                   onChange={(e) => setHours(Math.max(0, Math.min(8, parseInt(e.target.value) || 0)))}
                   min={0}
                   max={8}
-                  className="w-20 bg-[#f7f6f3] rounded-xl px-3 py-3 text-2xl font-bold text-[#111111] text-center focus:outline-none focus:ring-2 focus:ring-[#111111]/20 transition"
+                  className="w-20 bg-[#f7f6f3] rounded-xl px-3 py-3 text-2xl font-bold text-[#2A2520] text-center focus:outline-none focus:ring-2 focus:ring-[#2A2520]/20 transition"
                 />
                 <span className="text-xs text-[#aaaaaa] mt-1">hours</span>
               </div>
@@ -130,7 +130,7 @@ function TaskModal({ task, categories, onAdd, onSave, onClose, onAddCategory }: 
                   onChange={(e) => setMins(Math.max(0, Math.min(59, parseInt(e.target.value) || 0)))}
                   min={0}
                   max={59}
-                  className="w-20 bg-[#f7f6f3] rounded-xl px-3 py-3 text-2xl font-bold text-[#111111] text-center focus:outline-none focus:ring-2 focus:ring-[#111111]/20 transition"
+                  className="w-20 bg-[#f7f6f3] rounded-xl px-3 py-3 text-2xl font-bold text-[#2A2520] text-center focus:outline-none focus:ring-2 focus:ring-[#2A2520]/20 transition"
                 />
                 <span className="text-xs text-[#aaaaaa] mt-1">mins</span>
               </div>
@@ -146,7 +146,7 @@ function TaskModal({ task, categories, onAdd, onSave, onClose, onAddCategory }: 
                   key={cat}
                   onClick={() => setCategory(category === cat ? "" : cat)}
                   className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                    category === cat ? "bg-[#111111] text-white" : "bg-[#f0f0f0] text-[#aaaaaa] hover:text-[#111111]"
+                    category === cat ? "bg-[#2A2520] text-white" : "bg-[#f0f0f0] text-[#aaaaaa] hover:text-[#2A2520]"
                   }`}
                 >
                   {cat}
@@ -176,7 +176,7 @@ function TaskModal({ task, categories, onAdd, onSave, onClose, onAddCategory }: 
                 <button
                   type="button"
                   onClick={() => setAddingCat(true)}
-                  className="px-3 py-1.5 rounded-full text-sm font-medium bg-[#f0f0f0] text-[#FF5C4D] hover:bg-[#fff0ee] transition-colors"
+                  className="px-3 py-1.5 rounded-full text-sm font-medium bg-[#f0f0f0] text-[#E59880] hover:bg-[#fff0ee] transition-colors"
                 >
                   + Add
                 </button>
@@ -186,7 +186,7 @@ function TaskModal({ task, categories, onAdd, onSave, onClose, onAddCategory }: 
 
           <button
             type="submit"
-            className="w-full bg-[#111111] text-white font-semibold text-base rounded-full py-3.5 hover:bg-[#333333] active:scale-[0.98] transition mt-1"
+            className="w-full bg-[#2A2520] text-white font-semibold text-base rounded-full py-3.5 hover:bg-[#333333] active:scale-[0.98] transition mt-1"
           >
             {isEdit ? "Save changes" : "Add task"}
           </button>
@@ -219,7 +219,7 @@ function TaskRow({ task, isActive, displayTime, onFocus, onComplete, onDelete, o
       <div className="flex-1 min-w-0">
         <button
           onClick={onEdit}
-          className="text-base font-medium text-[#111111] text-left truncate w-full hover:text-[#FF5C4D] transition-colors"
+          className="text-base font-medium text-[#2A2520] text-left truncate w-full hover:text-[#E59880] transition-colors"
         >
           {task.name}
         </button>
@@ -233,7 +233,7 @@ function TaskRow({ task, isActive, displayTime, onFocus, onComplete, onDelete, o
         title="Start focus session"
         className="w-9 h-9 flex items-center justify-center rounded-xl hover:bg-[#f7f6f3] transition-colors shrink-0"
       >
-        <Timer size={18} strokeWidth={1.8} className="text-[#FF5C4D]" />
+        <Timer size={18} strokeWidth={1.8} className="text-[#E59880]" />
       </button>
       <button
         onClick={onComplete}
@@ -247,7 +247,7 @@ function TaskRow({ task, isActive, displayTime, onFocus, onComplete, onDelete, o
         title="Delete"
         className="w-9 h-9 flex items-center justify-center rounded-xl hover:bg-red-50 transition-colors shrink-0"
       >
-        <Trash2 size={15} strokeWidth={1.8} className="text-[#aaaaaa] hover:text-[#FF5C4D]" />
+        <Trash2 size={15} strokeWidth={1.8} className="text-[#aaaaaa] hover:text-[#E59880]" />
       </button>
     </div>
   );
@@ -283,7 +283,7 @@ function FocusCard({ onComplete }: { onComplete: () => void }) {
   const progress = (pomodoroSession.totalSeconds - pomodoroSession.remainingSeconds) / pomodoroSession.totalSeconds;
 
   return (
-    <div className="bg-[#111111] rounded-2xl p-5">
+    <div className="bg-[#2A2520] rounded-2xl p-5">
       <div className="flex items-center gap-2 mb-1">
         {activeTask && (
           <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: activeTask.color }} />
@@ -306,7 +306,7 @@ function FocusCard({ onComplete }: { onComplete: () => void }) {
       </p>
       <div className="h-0.5 bg-white/20 rounded-full mb-4">
         <div
-          className="h-0.5 bg-[#FF5C4D] rounded-full transition-all"
+          className="h-0.5 bg-[#E59880] rounded-full transition-all"
           style={{ width: `${Math.round(progress * 100)}%` }}
         />
       </div>
@@ -373,12 +373,12 @@ export function TasksTab() {
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-[#111111]">Your tasks are set.</h1>
-          <p className="text-2xl font-bold text-[#FF5C4D]">Time to get to work.</p>
+          <h1 className="text-2xl font-bold text-[#2A2520]">Your tasks are set.</h1>
+          <p className="text-2xl font-bold text-[#E59880]">Time to get to work.</p>
         </div>
         <button
           onClick={() => setModalOpen(true)}
-          className="w-11 h-11 rounded-full bg-[#111111] text-white text-2xl flex items-center justify-center hover:bg-[#333333] active:scale-95 transition shrink-0 leading-none"
+          className="w-11 h-11 rounded-full bg-[#2A2520] text-white text-2xl flex items-center justify-center hover:bg-[#333333] active:scale-95 transition shrink-0 leading-none"
         >
           <Plus size={20} strokeWidth={2.5} />
         </button>
@@ -391,17 +391,17 @@ export function TasksTab() {
       {todayCompleted.length > 0 && (
         <div className="bg-white rounded-2xl flex py-5">
           <div className="flex-1 flex flex-col items-center gap-1">
-            <span className="text-2xl font-bold text-[#111111]">{totalMinutesDone}m</span>
+            <span className="text-2xl font-bold text-[#2A2520]">{totalMinutesDone}m</span>
             <span className="text-xs text-[#aaaaaa]">Done</span>
           </div>
           <div className="w-px bg-[#e8e8e8]" />
           <div className="flex-1 flex flex-col items-center gap-1">
-            <span className="text-2xl font-bold text-[#111111]">{todayCompleted.length}/{dailyGoal}</span>
+            <span className="text-2xl font-bold text-[#2A2520]">{todayCompleted.length}/{dailyGoal}</span>
             <span className="text-xs text-[#aaaaaa]">Tasks</span>
           </div>
           <div className="w-px bg-[#e8e8e8]" />
           <div className="flex-1 flex flex-col items-center gap-1">
-            <span className="text-2xl font-bold text-[#111111]">{goalPct}%</span>
+            <span className="text-2xl font-bold text-[#2A2520]">{goalPct}%</span>
             <span className="text-xs text-[#aaaaaa]">Goal</span>
           </div>
         </div>
@@ -439,7 +439,7 @@ export function TasksTab() {
         {tasks.length === 0 && (
           <div className="text-center py-10 text-[#aaaaaa] text-sm">
             No tasks yet.{" "}
-            <button onClick={() => setModalOpen(true)} className="text-[#111111] font-semibold hover:underline">
+            <button onClick={() => setModalOpen(true)} className="text-[#2A2520] font-semibold hover:underline">
               Add one
             </button>
             .

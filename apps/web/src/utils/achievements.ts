@@ -23,7 +23,7 @@ export const ACHIEVEMENT_DEFS: AchievementDef[] = [
     label: "On Fire",
     description: (t) => `${t}-day streak`,
     iconName: "Flame",
-    color: "#FF5C4D",
+    color: "#E59880",
     tiers: [
       { id: "streak_3",   target: 3,   badge: "Spark"    },
       { id: "streak_7",   target: 7,   badge: "Blazing"  },
@@ -36,7 +36,7 @@ export const ACHIEVEMENT_DEFS: AchievementDef[] = [
     label: "Achiever",
     description: (t) => `${t} task${t !== 1 ? "s" : ""} done`,
     iconName: "Trophy",
-    color: "#A78BFA",
+    color: "#ADA8CC",
     tiers: [
       { id: "tasks_1",   target: 1,   badge: "First Step" },
       { id: "tasks_10",  target: 10,  badge: "Momentum"   },
@@ -49,7 +49,7 @@ export const ACHIEVEMENT_DEFS: AchievementDef[] = [
     label: "Deep Work",
     description: (t) => t >= 60 ? `${t / 60}h focused` : `${t}m focused`,
     iconName: "Clock",
-    color: "#4ECDC4",
+    color: "#9DC4BC",
     tiers: [
       { id: "focus_60",   target: 60,   badge: "Focused"     },
       { id: "focus_300",  target: 300,  badge: "In The Zone" },
@@ -62,7 +62,7 @@ export const ACHIEVEMENT_DEFS: AchievementDef[] = [
     label: "Speed Run",
     description: (t) => `${t} task${t !== 1 ? "s" : ""} under time`,
     iconName: "Zap",
-    color: "#FFE66D",
+    color: "#F0D29D",
     tiers: [
       { id: "speed_1",  target: 1,  badge: "Quick Fix"   },
       { id: "speed_5",  target: 5,  badge: "Sprinter"    },
@@ -86,7 +86,7 @@ export const ACHIEVEMENT_DEFS: AchievementDef[] = [
     label: "Spin Doctor",
     description: (t) => `Spin the wheel ${t} time${t !== 1 ? "s" : ""}`,
     iconName: "RotateCcw",
-    color: "#F9A8D4",
+    color: "#D4A5C8",
     tiers: [
       { id: "spin_1",  target: 1,  badge: "First Spin"      },
       { id: "spin_10", target: 10, badge: "Spin Doctor"      },

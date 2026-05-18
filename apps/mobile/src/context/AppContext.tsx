@@ -169,16 +169,16 @@ const STORAGE_KEYS = {
 const DEFAULT_CATEGORIES = ['Work', 'Personal', 'Learning', 'Health'];
 
 export const COLORS = [
-  '#FF5C4D', '#FF9B50', '#4ECDC4', '#FFE66D', '#A78BFA', '#F9A8D4',
+  '#E59880', '#EDB590', '#9DC4BC', '#F0D29D', '#ADA8CC', '#D4A5C8',
 ];
 
 const defaultTasks: Task[] = [
-  { id: '1', name: 'Write blog post',  minutes: 25, color: '#FF5C4D', icon: 'PenLine'   },
-  { id: '2', name: 'Review code',      minutes: 15, color: '#FF9B50', icon: 'Code'      },
-  { id: '3', name: 'Design mockups',   minutes: 30, color: '#4ECDC4', icon: 'Palette'   },
-  { id: '4', name: 'Team meeting',     minutes: 20, color: '#FFE66D', icon: 'Users'     },
-  { id: '5', name: 'Email replies',    minutes: 10, color: '#A78BFA', icon: 'Mail'      },
-  { id: '6', name: 'Research',         minutes: 25, color: '#F9A8D4', icon: 'BookOpen'  },
+  { id: '1', name: 'Write blog post',  minutes: 25, color: '#E59880', icon: 'PenLine'   },
+  { id: '2', name: 'Review code',      minutes: 15, color: '#EDB590', icon: 'Code'      },
+  { id: '3', name: 'Design mockups',   minutes: 30, color: '#9DC4BC', icon: 'Palette'   },
+  { id: '4', name: 'Team meeting',     minutes: 20, color: '#F0D29D', icon: 'Users'     },
+  { id: '5', name: 'Email replies',    minutes: 10, color: '#ADA8CC', icon: 'Mail'      },
+  { id: '6', name: 'Research',         minutes: 25, color: '#D4A5C8', icon: 'BookOpen'  },
 ];
 
 export function AppProvider({ children }: { children: ReactNode }) {

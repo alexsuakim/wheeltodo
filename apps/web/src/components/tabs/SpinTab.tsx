@@ -30,7 +30,7 @@ const ACHIEVEMENT_ICONS: Record<string, IconComp> = {
 
 // ─── Wheel colors matching the mobile app ────────────────────────────────────
 
-const WHEEL_COLORS = ["#FF5C4D", "#FF9B50", "#4ECDC4", "#FFE66D", "#A78BFA", "#F9A8D4"];
+const WHEEL_COLORS = ["#E59880", "#EDB590", "#9DC4BC", "#F0D29D", "#ADA8CC", "#D4A5C8"];
 
 // ─── FAQ Accordion ────────────────────────────────────────────────────────────
 
@@ -42,8 +42,8 @@ function SpinFaqAccordion() {
         onClick={() => setOpen((v) => !v)}
         className="w-full flex items-center gap-2.5 px-4 py-3.5 text-left"
       >
-        <HelpCircle size={15} strokeWidth={2} className="text-[#FF5C4D] shrink-0" />
-        <span className="flex-1 text-sm font-bold text-[#111111]">How do I use the wheel?</span>
+        <HelpCircle size={15} strokeWidth={2} className="text-[#E59880] shrink-0" />
+        <span className="flex-1 text-sm font-bold text-[#2A2520]">How do I use the wheel?</span>
         {open
           ? <ChevronUp size={15} strokeWidth={2} className="text-[#aaaaaa] shrink-0" />
           : <ChevronDown size={15} strokeWidth={2} className="text-[#aaaaaa] shrink-0" />
@@ -51,7 +51,7 @@ function SpinFaqAccordion() {
       </button>
       {open && (
         <div className="px-4 pb-4 text-sm text-[#aaaaaa] leading-relaxed">
-          Click a slice to pick a task, or hit <strong className="text-[#111111]">Spin</strong> to get a random one. Then start a focus session to track your time.
+          Click a slice to pick a task, or hit <strong className="text-[#2A2520]">Spin</strong> to get a random one. Then start a focus session to track your time.
         </div>
       )}
     </div>
@@ -200,9 +200,9 @@ function WeekBubbles() {
           key={i}
           className={`flex-1 h-9 rounded-xl flex items-center justify-center text-xs font-bold transition-colors ${
             day.isToday
-              ? "bg-[#FF5C4D] text-white"
+              ? "bg-[#E59880] text-white"
               : day.active
-              ? "bg-[#111111] text-white"
+              ? "bg-[#2A2520] text-white"
               : day.isFuture
               ? "bg-[#EEEBE6] text-[#cccccc]"
               : "bg-[#E0DDD8] text-[#BCBAB6]"
@@ -238,17 +238,17 @@ function ResultSheet({ task, onStartFocus, onDismiss }: ResultSheetProps) {
             : null}
         </div>
         <p className="text-xs font-semibold text-[#aaaaaa] uppercase tracking-wider">You got</p>
-        <p className="text-2xl font-bold text-[#111111] text-center">{task.name}</p>
+        <p className="text-2xl font-bold text-[#2A2520] text-center">{task.name}</p>
         <p className="text-sm text-[#aaaaaa]">{task.minutes}-minute focus session</p>
         <button
           onClick={onStartFocus}
-          className="w-full bg-[#111111] text-white font-semibold text-base rounded-full py-3.5 mt-2 hover:bg-[#333333] active:scale-[0.98] transition"
+          className="w-full bg-[#2A2520] text-white font-semibold text-base rounded-full py-3.5 mt-2 hover:bg-[#333333] active:scale-[0.98] transition"
         >
           Start Focus
         </button>
         <button
           onClick={onDismiss}
-          className="w-full text-[#aaaaaa] font-medium text-base py-2 hover:text-[#111111] transition"
+          className="w-full text-[#aaaaaa] font-medium text-base py-2 hover:text-[#2A2520] transition"
         >
           Dismiss
         </button>
@@ -333,8 +333,8 @@ export function SpinTab({ onNavigateToTasks }: SpinTabProps) {
     <div className="max-w-2xl mx-auto px-4 md:px-6 py-4 md:py-6 space-y-4">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-[#111111]">Not sure where to start?</h1>
-        <p className="text-2xl font-bold text-[#FF5C4D]">Spin the wheel.</p>
+        <h1 className="text-2xl font-bold text-[#2A2520]">Not sure where to start?</h1>
+        <p className="text-2xl font-bold text-[#E59880]">Spin the wheel.</p>
       </div>
 
       {/* FAQ */}
@@ -345,7 +345,7 @@ export function SpinTab({ onNavigateToTasks }: SpinTabProps) {
         <div className="flex items-center justify-between mb-1">
           <span className="text-xs font-semibold text-[#aaaaaa] uppercase tracking-wide">This week</span>
           {streak > 0 && (
-            <div className="flex items-center gap-1 text-xs font-semibold text-[#FF5C4D]">
+            <div className="flex items-center gap-1 text-xs font-semibold text-[#E59880]">
               <Flame size={12} strokeWidth={2} />
               {streak}-day streak
             </div>
@@ -358,11 +358,11 @@ export function SpinTab({ onNavigateToTasks }: SpinTabProps) {
       {tasks.length === 0 ? (
         <div className="bg-white rounded-2xl flex flex-col items-center py-12 px-6 gap-3 text-center">
           <span className="text-5xl text-[#cccccc]">◎</span>
-          <p className="text-lg font-bold text-[#111111]">Your wheel is empty</p>
+          <p className="text-lg font-bold text-[#2A2520]">Your wheel is empty</p>
           <p className="text-sm text-[#aaaaaa]">Add tasks to start spinning.</p>
           <button
             onClick={onNavigateToTasks}
-            className="mt-2 bg-[#111111] text-white font-semibold text-sm rounded-full px-6 py-2.5 hover:bg-[#333333] transition"
+            className="mt-2 bg-[#2A2520] text-white font-semibold text-sm rounded-full px-6 py-2.5 hover:bg-[#333333] transition"
           >
             Add tasks
           </button>
@@ -376,7 +376,7 @@ export function SpinTab({ onNavigateToTasks }: SpinTabProps) {
               style={{
                 borderLeft: "10px solid transparent",
                 borderRight: "10px solid transparent",
-                borderTop: "22px solid #111111",
+                borderTop: "22px solid #2A2520",
               }}
             />
             <SpinWheel
@@ -388,7 +388,7 @@ export function SpinTab({ onNavigateToTasks }: SpinTabProps) {
           </div>
           {/* Daily goal */}
           <div className="flex items-center justify-center gap-1.5 text-sm text-[#aaaaaa]">
-            <span className="font-semibold text-[#111111]">{todayDone}</span>
+            <span className="font-semibold text-[#2A2520]">{todayDone}</span>
             <span>/</span>
             <span>{dailyGoal}</span>
             <span>tasks today</span>
@@ -396,7 +396,7 @@ export function SpinTab({ onNavigateToTasks }: SpinTabProps) {
           <button
             onClick={spinWheel}
             disabled={spinning || tasks.length === 0}
-            className="w-full max-w-xs bg-[#FF5C4D] text-white font-semibold text-base rounded-full py-3.5 hover:bg-[#e04f41] active:scale-[0.98] transition disabled:opacity-40"
+            className="w-full max-w-xs bg-[#E59880] text-white font-semibold text-base rounded-full py-3.5 hover:bg-[#d4856c] active:scale-[0.98] transition disabled:opacity-40"
           >
             {spinning ? "Spinning…" : "Spin the wheel"}
           </button>
@@ -408,9 +408,9 @@ export function SpinTab({ onNavigateToTasks }: SpinTabProps) {
         if (!nextAch) {
           return (
             <div className="bg-white rounded-2xl flex items-center gap-3 px-4 py-4">
-              <Target size={26} strokeWidth={1.8} className="text-[#FF5C4D] shrink-0" />
+              <Target size={26} strokeWidth={1.8} className="text-[#E59880] shrink-0" />
               <div>
-                <p className="text-sm font-bold text-[#111111]">All achievements unlocked!</p>
+                <p className="text-sm font-bold text-[#2A2520]">All achievements unlocked!</p>
                 <p className="text-xs text-[#aaaaaa] mt-0.5">You're an absolute legend.</p>
               </div>
             </div>
@@ -433,7 +433,7 @@ export function SpinTab({ onNavigateToTasks }: SpinTabProps) {
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between mb-0.5">
-                  <p className="text-sm font-bold text-[#111111]">{tier.badge}</p>
+                  <p className="text-sm font-bold text-[#2A2520]">{tier.badge}</p>
                   <p className="text-xs font-semibold text-[#aaaaaa]">{current} / {tier.target}</p>
                 </div>
                 <p className="text-xs text-[#aaaaaa] mb-2">{def.description(tier.target)}</p>

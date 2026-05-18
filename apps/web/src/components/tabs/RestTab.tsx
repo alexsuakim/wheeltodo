@@ -25,10 +25,10 @@ import { Confetti } from "@/components/Confetti";
 // ─── Category meta ────────────────────────────────────────────────────────────
 
 const CATEGORY_META: Record<RestCategory, { Icon: React.ComponentType<{ size?: number; strokeWidth?: number; className?: string }>; color: string; bg: string }> = {
-  Physical:    { Icon: Activity,       color: "#FF9B50", bg: "#FFF4EC" },
-  Mental:      { Icon: Brain,          color: "#A78BFA", bg: "#F5F3FF" },
-  Social:      { Icon: MessageCircle,  color: "#4ECDC4", bg: "#EDFAFA" },
-  Nourishment: { Icon: Coffee,         color: "#FFE66D", bg: "#FFFDE8" },
+  Physical:    { Icon: Activity,       color: "#EDB590", bg: "#FFF4EC" },
+  Mental:      { Icon: Brain,          color: "#ADA8CC", bg: "#F5F3FF" },
+  Social:      { Icon: MessageCircle,  color: "#9DC4BC", bg: "#EDFAFA" },
+  Nourishment: { Icon: Coffee,         color: "#F0D29D", bg: "#FFFDE8" },
   "My Tasks":  { Icon: Pencil,         color: "#93C5FD", bg: "#EFF6FF" },
 };
 
@@ -55,8 +55,8 @@ function RestFaqAccordion() {
   return (
     <div className="bg-white rounded-2xl overflow-hidden">
       <button onClick={() => setOpen((v) => !v)} className="w-full flex items-center gap-2.5 px-4 py-3.5 text-left">
-        <Shield size={15} strokeWidth={2} className="text-[#FF5C4D] shrink-0" />
-        <span className="flex-1 text-sm font-bold text-[#111111]">How does Rest Mode protect my streak?</span>
+        <Shield size={15} strokeWidth={2} className="text-[#E59880] shrink-0" />
+        <span className="flex-1 text-sm font-bold text-[#2A2520]">How does Rest Mode protect my streak?</span>
         {open
           ? <ChevronUp size={15} strokeWidth={2} className="text-[#aaaaaa] shrink-0" />
           : <ChevronDown size={15} strokeWidth={2} className="text-[#aaaaaa] shrink-0" />
@@ -80,14 +80,14 @@ function RestMeter({ minutesDone, goalMinutes }: { minutesDone: number; goalMinu
   return (
     <div className="bg-white rounded-2xl p-4 flex flex-col gap-2.5">
       <div className="flex items-center justify-between">
-        <span className="text-sm font-bold text-[#111111]">Rest Meter</span>
+        <span className="text-sm font-bold text-[#2A2520]">Rest Meter</span>
         <span className="text-sm font-semibold text-[#aaaaaa]">
           {minutesDone} / {goalMinutes}m
         </span>
       </div>
       <div className="h-2.5 bg-[#f0f0f0] rounded-full overflow-hidden">
         <div
-          className={`h-2.5 rounded-full transition-all ${goalMet ? "bg-[#22a722]" : "bg-[#4ECDC4]"}`}
+          className={`h-2.5 rounded-full transition-all ${goalMet ? "bg-[#22a722]" : "bg-[#9DC4BC]"}`}
           style={{ width: `${Math.round(pct * 100)}%` }}
         />
       </div>
@@ -104,14 +104,14 @@ function RestMeter({ minutesDone, goalMinutes }: { minutesDone: number; goalMinu
 
 function EnergyCheckIn({ onSelect }: { onSelect: (mood: DailyMood) => void }) {
   const moods: { key: DailyMood; label: string; Icon: React.ComponentType<{ size?: number; strokeWidth?: number; className?: string }>; color: string }[] = [
-    { key: "drained",  label: "Drained",  Icon: Frown, color: "#A78BFA" },
-    { key: "okay",     label: "Okay",     Icon: Meh,   color: "#4ECDC4" },
-    { key: "restless", label: "Restless", Icon: Zap,   color: "#FF9B50" },
+    { key: "drained",  label: "Drained",  Icon: Frown, color: "#ADA8CC" },
+    { key: "okay",     label: "Okay",     Icon: Meh,   color: "#9DC4BC" },
+    { key: "restless", label: "Restless", Icon: Zap,   color: "#EDB590" },
   ];
 
   return (
     <div className="bg-white rounded-2xl p-4">
-      <p className="text-base font-bold text-[#111111] mb-1">How are you feeling?</p>
+      <p className="text-base font-bold text-[#2A2520] mb-1">How are you feeling?</p>
       <p className="text-sm text-[#aaaaaa] mb-3">We'll suggest the best activities for you.</p>
       <div className="flex gap-2">
         {moods.map(({ key, label, Icon, color }) => (
@@ -164,17 +164,17 @@ function RestTaskRow({ task, isTimerActive, timerRemaining, timerTotal, onToggle
       <div className="px-4 py-3">
         <div className="flex items-center gap-3">
           <div className="w-6 h-6 rounded-full bg-[#F5F3FF] flex items-center justify-center shrink-0">
-            <Timer size={12} strokeWidth={2} className="text-[#A78BFA]" />
+            <Timer size={12} strokeWidth={2} className="text-[#ADA8CC]" />
           </div>
-          <span className="flex-1 text-sm font-semibold text-[#111111]">{task.name}</span>
-          <span className="text-base font-bold text-[#A78BFA] tabular-nums">{fmt(timerRemaining)}</span>
+          <span className="flex-1 text-sm font-semibold text-[#2A2520]">{task.name}</span>
+          <span className="text-base font-bold text-[#ADA8CC] tabular-nums">{fmt(timerRemaining)}</span>
           <button onClick={onCancel} className="shrink-0">
             <X size={13} strokeWidth={2.5} className="text-[#aaaaaa]" />
           </button>
         </div>
         <div className="h-1 bg-[#ebebeb] rounded-full mt-2.5 overflow-hidden">
           <div
-            className="h-1 bg-[#A78BFA] rounded-full transition-all"
+            className="h-1 bg-[#ADA8CC] rounded-full transition-all"
             style={{ width: `${Math.round(timerPct * 100)}%` }}
           />
         </div>
@@ -187,10 +187,10 @@ function RestTaskRow({ task, isTimerActive, timerRemaining, timerTotal, onToggle
       <button onClick={onToggle} className="shrink-0">
         <div className="w-5 h-5 rounded-full border-2 border-[#d0d0d0]" />
       </button>
-      <span className="flex-1 text-sm text-[#111111]">{task.name}</span>
+      <span className="flex-1 text-sm text-[#2A2520]">{task.name}</span>
       <span className="text-xs text-[#aaaaaa]">{task.durationMinutes}m</span>
       <button onClick={onStart} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[#f7f6f3] transition-colors shrink-0">
-        <Timer size={16} strokeWidth={1.8} className="text-[#111111]" />
+        <Timer size={16} strokeWidth={1.8} className="text-[#2A2520]" />
       </button>
       {!task.isPreset && (
         <button onClick={onRemove} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-red-50 transition-colors shrink-0">
@@ -320,8 +320,8 @@ export function RestTab() {
     <div className="max-w-2xl mx-auto px-4 md:px-6 py-4 md:py-6 space-y-3">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-[#111111]">Need a day off?</h1>
-        <p className={`text-2xl font-bold ${atRisk ? "text-[#FF5C4D]" : "text-[#FF5C4D]"}`}>
+        <h1 className="text-2xl font-bold text-[#2A2520]">Need a day off?</h1>
+        <p className={`text-2xl font-bold ${atRisk ? "text-[#E59880]" : "text-[#E59880]"}`}>
           {atRisk ? "Streak at risk!" : "Take it easy today."}
         </p>
       </div>
@@ -331,8 +331,8 @@ export function RestTab() {
 
       {restStreak > 0 && (
         <div className="inline-flex items-center gap-2 bg-white rounded-xl px-3.5 py-2.5">
-          <Moon size={15} strokeWidth={2} className="text-[#A78BFA]" />
-          <span className="text-sm font-semibold text-[#111111]">{restStreak}-day rest streak</span>
+          <Moon size={15} strokeWidth={2} className="text-[#ADA8CC]" />
+          <span className="text-sm font-semibold text-[#2A2520]">{restStreak}-day rest streak</span>
         </div>
       )}
 
@@ -373,12 +373,12 @@ export function RestTab() {
               }
             }}
             maxLength={60}
-            className="flex-1 py-2.5 text-sm text-[#111111] placeholder-[#aaaaaa] bg-transparent focus:outline-none"
+            className="flex-1 py-2.5 text-sm text-[#2A2520] placeholder-[#aaaaaa] bg-transparent focus:outline-none"
           />
           <button
             onClick={() => { if (inputText.trim()) { addRestTask(inputText.trim()); setInputText(""); } }}
             disabled={!inputText.trim()}
-            className="w-8 h-8 rounded-full bg-[#111111] flex items-center justify-center disabled:opacity-30 transition-opacity"
+            className="w-8 h-8 rounded-full bg-[#2A2520] flex items-center justify-center disabled:opacity-30 transition-opacity"
           >
             <Plus size={16} strokeWidth={2.5} className="text-white" />
           </button>
@@ -393,11 +393,11 @@ export function RestTab() {
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-6" onClick={() => setShowCelebration(false)}>
           <div className="bg-white rounded-2xl p-8 max-w-xs w-full flex flex-col items-center gap-4 text-center" onClick={(e) => e.stopPropagation()}>
             <span className="text-5xl">🌿</span>
-            <h2 className="text-xl font-bold text-[#111111]">Rest complete!</h2>
+            <h2 className="text-xl font-bold text-[#2A2520]">Rest complete!</h2>
             <p className="text-sm text-[#aaaaaa]">Streak protected. You've earned your rest.</p>
             <button
               onClick={() => setShowCelebration(false)}
-              className="w-full bg-[#111111] text-white font-semibold text-base rounded-full py-3.5 hover:bg-[#333333] transition"
+              className="w-full bg-[#2A2520] text-white font-semibold text-base rounded-full py-3.5 hover:bg-[#333333] transition"
             >
               Close
             </button>

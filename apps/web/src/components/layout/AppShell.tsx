@@ -43,16 +43,16 @@ export function AppShell({ children, user, activeTab, setActiveTab, onSignOut }:
   }
 
   return (
-    <div className="flex h-screen bg-[#f2f0eb] overflow-hidden">
+    <div className="flex h-screen bg-[#FAF7F2] overflow-hidden">
       {/* ── Desktop sidebar ─────────────────────────────── */}
       <aside className="hidden md:flex flex-col w-56 bg-white border-r border-[#E8E5E0] shrink-0">
         {/* Brand */}
         <div className="px-5 pt-6 pb-5 border-b border-[#E8E5E0]">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 bg-[#f2f0eb] rounded-xl flex items-center justify-center text-base select-none">
+            <div className="w-8 h-8 bg-[#FAF7F2] rounded-xl flex items-center justify-center text-base select-none">
               ◎
             </div>
-            <span className="font-bold text-[#111111] text-base tracking-tight">Wheel Todo</span>
+            <span className="font-bold text-[#2A2520] text-base tracking-tight">Wheel Todo</span>
           </div>
         </div>
 
@@ -64,8 +64,8 @@ export function AppShell({ children, user, activeTab, setActiveTab, onSignOut }:
               onClick={() => setActiveTab(id)}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
                 activeTab === id
-                  ? "bg-[#f2f0eb] text-[#111111]"
-                  : "text-[#aaaaaa] hover:text-[#111111] hover:bg-[#f7f6f3]"
+                  ? "bg-[#FAF7F2] text-[#2A2520]"
+                  : "text-[#aaaaaa] hover:text-[#2A2520] hover:bg-[#f7f6f3]"
               }`}
             >
               <Icon size={17} strokeWidth={activeTab === id ? 2.2 : 1.8} />
@@ -76,7 +76,7 @@ export function AppShell({ children, user, activeTab, setActiveTab, onSignOut }:
           {streak > 0 && (
             <button
               onClick={() => setActiveTab("history")}
-              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-[#FF5C4D] hover:bg-[#fff0ee] transition-colors"
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-[#E59880] hover:bg-[#fff0ee] transition-colors"
             >
               <Flame size={17} strokeWidth={2} />
               {streak}-day streak
@@ -88,9 +88,9 @@ export function AppShell({ children, user, activeTab, setActiveTab, onSignOut }:
         <div className="border-t border-[#E8E5E0] px-3 py-4">
           <button
             onClick={() => setProfileOpen(true)}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-[#aaaaaa] hover:text-[#111111] hover:bg-[#f7f6f3] transition-colors"
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-[#aaaaaa] hover:text-[#2A2520] hover:bg-[#f7f6f3] transition-colors"
           >
-            <div className="w-7 h-7 rounded-full bg-[#f2f0eb] flex items-center justify-center shrink-0">
+            <div className="w-7 h-7 rounded-full bg-[#FAF7F2] flex items-center justify-center shrink-0">
               <User size={14} strokeWidth={1.8} />
             </div>
             <span className="truncate flex-1 text-left text-xs">
@@ -103,10 +103,10 @@ export function AppShell({ children, user, activeTab, setActiveTab, onSignOut }:
       {/* ── Main content area ─────────────────────────────── */}
       <main className="flex-1 flex flex-col overflow-hidden">
         {/* Mobile header */}
-        <header className="md:hidden flex items-center justify-between px-4 pt-4 pb-2 shrink-0 bg-[#f2f0eb]">
+        <header className="md:hidden flex items-center justify-between px-4 pt-4 pb-2 shrink-0 bg-[#FAF7F2]">
           <div className="flex items-center gap-2">
             <span className="text-base select-none">◎</span>
-            <span className="font-bold text-[#111111] text-sm">Wheel Todo</span>
+            <span className="font-bold text-[#2A2520] text-sm">Wheel Todo</span>
           </div>
           <div className="flex items-center gap-2">
             {streak > 0 && (
@@ -114,8 +114,8 @@ export function AppShell({ children, user, activeTab, setActiveTab, onSignOut }:
                 onClick={() => setActiveTab("history")}
                 className="flex items-center gap-1 bg-white border border-[#E8E5E0] rounded-full px-2.5 py-1"
               >
-                <Flame size={12} strokeWidth={2} className="text-[#FF5C4D]" />
-                <span className="text-xs font-bold text-[#FF5C4D]">{streak}</span>
+                <Flame size={12} strokeWidth={2} className="text-[#E59880]" />
+                <span className="text-xs font-bold text-[#E59880]">{streak}</span>
               </button>
             )}
             <button
@@ -143,11 +143,11 @@ export function AppShell({ children, user, activeTab, setActiveTab, onSignOut }:
               <Icon
                 size={20}
                 strokeWidth={activeTab === id ? 2.2 : 1.8}
-                className={activeTab === id ? "text-[#FF5C4D]" : "text-[#aaaaaa]"}
+                className={activeTab === id ? "text-[#E59880]" : "text-[#aaaaaa]"}
               />
               <span
                 className={`text-[10px] font-semibold ${
-                  activeTab === id ? "text-[#FF5C4D]" : "text-[#aaaaaa]"
+                  activeTab === id ? "text-[#E59880]" : "text-[#aaaaaa]"
                 }`}
               >
                 {label}
@@ -177,18 +177,18 @@ function Stepper({ value, min, max, step = 1, onChange, format }: {
         type="button"
         onClick={() => onChange(Math.max(min, value - step))}
         disabled={value <= min}
-        className="w-8 h-8 rounded-full bg-[#f2f0eb] flex items-center justify-center disabled:opacity-30 hover:bg-[#e8e5e0] transition-colors"
+        className="w-8 h-8 rounded-full bg-[#FAF7F2] flex items-center justify-center disabled:opacity-30 hover:bg-[#e8e5e0] transition-colors"
       >
         <Minus size={14} strokeWidth={2.5} />
       </button>
-      <span className="w-14 text-center text-base font-bold text-[#111111]">
+      <span className="w-14 text-center text-base font-bold text-[#2A2520]">
         {format ? format(value) : value}
       </span>
       <button
         type="button"
         onClick={() => onChange(Math.min(max, value + step))}
         disabled={value >= max}
-        className="w-8 h-8 rounded-full bg-[#f2f0eb] flex items-center justify-center disabled:opacity-30 hover:bg-[#e8e5e0] transition-colors"
+        className="w-8 h-8 rounded-full bg-[#FAF7F2] flex items-center justify-center disabled:opacity-30 hover:bg-[#e8e5e0] transition-colors"
       >
         <Plus size={14} strokeWidth={2.5} />
       </button>
@@ -288,20 +288,20 @@ function ProfileModal({ user, onClose, onSignOut }: ProfileModalProps) {
       >
         {/* Header */}
         <div className="flex items-center justify-between px-6 pt-6 pb-0">
-          <h2 className="text-lg font-bold text-[#111111]">Profile</h2>
-          <button onClick={onClose} className="text-[#aaaaaa] hover:text-[#111111] transition-colors">
+          <h2 className="text-lg font-bold text-[#2A2520]">Profile</h2>
+          <button onClick={onClose} className="text-[#aaaaaa] hover:text-[#2A2520] transition-colors">
             <X size={18} strokeWidth={2} />
           </button>
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-1 mx-6 mt-4 bg-[#f2f0eb] rounded-xl p-1">
+        <div className="flex gap-1 mx-6 mt-4 bg-[#FAF7F2] rounded-xl p-1">
           {(["account", "settings"] as const).map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
               className={`flex-1 py-1.5 rounded-lg text-sm font-semibold transition-colors capitalize ${
-                tab === t ? "bg-white text-[#111111] shadow-sm" : "text-[#aaaaaa]"
+                tab === t ? "bg-white text-[#2A2520] shadow-sm" : "text-[#aaaaaa]"
               }`}
             >
               {t}
@@ -316,17 +316,17 @@ function ProfileModal({ user, onClose, onSignOut }: ProfileModalProps) {
               {/* Stats row */}
               <div className="bg-[#f7f6f3] rounded-2xl flex py-4">
                 <div className="flex-1 flex flex-col items-center gap-0.5">
-                  <span className="text-xl font-bold text-[#111111]">{completedTasks.length}</span>
+                  <span className="text-xl font-bold text-[#2A2520]">{completedTasks.length}</span>
                   <span className="text-xs text-[#aaaaaa]">Tasks done</span>
                 </div>
                 <div className="w-px bg-[#e8e8e8]" />
                 <div className="flex-1 flex flex-col items-center gap-0.5">
-                  <span className="text-xl font-bold text-[#111111]">{totalHours.toFixed(1)}h</span>
+                  <span className="text-xl font-bold text-[#2A2520]">{totalHours.toFixed(1)}h</span>
                   <span className="text-xs text-[#aaaaaa]">Focused</span>
                 </div>
                 <div className="w-px bg-[#e8e8e8]" />
                 <div className="flex-1 flex flex-col items-center gap-0.5">
-                  <span className="text-xl font-bold text-[#111111]">{onTimePct}%</span>
+                  <span className="text-xl font-bold text-[#2A2520]">{onTimePct}%</span>
                   <span className="text-xs text-[#aaaaaa]">On time</span>
                 </div>
               </div>
@@ -353,7 +353,7 @@ function ProfileModal({ user, onClose, onSignOut }: ProfileModalProps) {
                             )}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold text-[#111111] leading-tight">{def.label}</p>
+                            <p className="text-sm font-semibold text-[#2A2520] leading-tight">{def.label}</p>
                             <p className="text-xs text-[#aaaaaa] leading-tight">{def.description(val)}</p>
                           </div>
                           <span className="text-xs font-semibold text-[#aaaaaa] shrink-0">
@@ -371,7 +371,7 @@ function ProfileModal({ user, onClose, onSignOut }: ProfileModalProps) {
                                 />
                                 <span
                                   className="text-[9px] text-center leading-tight font-medium"
-                                  style={{ color: isUnlocked ? "#111111" : "#aaaaaa" }}
+                                  style={{ color: isUnlocked ? "#2A2520" : "#aaaaaa" }}
                                 >
                                   {tier.badge}
                                 </span>
@@ -396,7 +396,7 @@ function ProfileModal({ user, onClose, onSignOut }: ProfileModalProps) {
                         placeholder="Your name"
                         value={displayName}
                         onChange={(e) => setDisplayName(e.target.value)}
-                        className="w-full bg-[#f7f6f3] rounded-xl px-4 py-3 text-sm text-[#111111] placeholder-[#aaaaaa] focus:outline-none focus:ring-2 focus:ring-[#111111]/20 transition"
+                        className="w-full bg-[#f7f6f3] rounded-xl px-4 py-3 text-sm text-[#2A2520] placeholder-[#aaaaaa] focus:outline-none focus:ring-2 focus:ring-[#2A2520]/20 transition"
                       />
                     </div>
                     <div>
@@ -407,7 +407,7 @@ function ProfileModal({ user, onClose, onSignOut }: ProfileModalProps) {
                         value={newPassword}
                         onChange={(e) => setNewPassword(e.target.value)}
                         autoComplete="new-password"
-                        className="w-full bg-[#f7f6f3] rounded-xl px-4 py-3 text-sm text-[#111111] placeholder-[#aaaaaa] focus:outline-none focus:ring-2 focus:ring-[#111111]/20 transition"
+                        className="w-full bg-[#f7f6f3] rounded-xl px-4 py-3 text-sm text-[#2A2520] placeholder-[#aaaaaa] focus:outline-none focus:ring-2 focus:ring-[#2A2520]/20 transition"
                       />
                     </div>
                     {message && (
@@ -416,7 +416,7 @@ function ProfileModal({ user, onClose, onSignOut }: ProfileModalProps) {
                     <button
                       type="submit"
                       disabled={saving}
-                      className="w-full bg-[#111111] text-white font-semibold text-sm rounded-full py-3 hover:bg-[#333333] transition disabled:opacity-50"
+                      className="w-full bg-[#2A2520] text-white font-semibold text-sm rounded-full py-3 hover:bg-[#333333] transition disabled:opacity-50"
                     >
                       {saving ? "Saving…" : "Save changes"}
                     </button>
@@ -428,7 +428,7 @@ function ProfileModal({ user, onClose, onSignOut }: ProfileModalProps) {
 
               <button
                 onClick={onSignOut}
-                className="w-full flex items-center justify-center gap-2 text-sm text-[#aaaaaa] hover:text-[#FF5C4D] transition-colors py-2"
+                className="w-full flex items-center justify-center gap-2 text-sm text-[#aaaaaa] hover:text-[#E59880] transition-colors py-2"
               >
                 <LogOut size={15} strokeWidth={2} />
                 Sign out
@@ -439,7 +439,7 @@ function ProfileModal({ user, onClose, onSignOut }: ProfileModalProps) {
               {/* Default timer */}
               <div className="flex items-center justify-between py-1">
                 <div>
-                  <p className="text-sm font-semibold text-[#111111]">Default timer</p>
+                  <p className="text-sm font-semibold text-[#2A2520]">Default timer</p>
                   <p className="text-xs text-[#aaaaaa]">Pre-filled when adding tasks</p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -447,16 +447,16 @@ function ProfileModal({ user, onClose, onSignOut }: ProfileModalProps) {
                     type="button"
                     onClick={() => stepTimer(-1)}
                     disabled={defaultTimerMinutes <= TIMER_STEPS[0]}
-                    className="w-8 h-8 rounded-full bg-[#f2f0eb] flex items-center justify-center disabled:opacity-30 hover:bg-[#e8e5e0] transition-colors"
+                    className="w-8 h-8 rounded-full bg-[#FAF7F2] flex items-center justify-center disabled:opacity-30 hover:bg-[#e8e5e0] transition-colors"
                   >
                     <Minus size={14} strokeWidth={2.5} />
                   </button>
-                  <span className="w-14 text-center text-base font-bold text-[#111111]">{defaultTimerMinutes}m</span>
+                  <span className="w-14 text-center text-base font-bold text-[#2A2520]">{defaultTimerMinutes}m</span>
                   <button
                     type="button"
                     onClick={() => stepTimer(1)}
                     disabled={defaultTimerMinutes >= TIMER_STEPS[TIMER_STEPS.length - 1]}
-                    className="w-8 h-8 rounded-full bg-[#f2f0eb] flex items-center justify-center disabled:opacity-30 hover:bg-[#e8e5e0] transition-colors"
+                    className="w-8 h-8 rounded-full bg-[#FAF7F2] flex items-center justify-center disabled:opacity-30 hover:bg-[#e8e5e0] transition-colors"
                   >
                     <Plus size={14} strokeWidth={2.5} />
                   </button>
@@ -468,7 +468,7 @@ function ProfileModal({ user, onClose, onSignOut }: ProfileModalProps) {
               {/* Daily goal */}
               <div className="flex items-center justify-between py-1">
                 <div>
-                  <p className="text-sm font-semibold text-[#111111]">Daily goal</p>
+                  <p className="text-sm font-semibold text-[#2A2520]">Daily goal</p>
                   <p className="text-xs text-[#aaaaaa]">Tasks to complete each day</p>
                 </div>
                 <Stepper value={dailyGoal} min={1} max={20} onChange={setDailyGoal} />
@@ -478,7 +478,7 @@ function ProfileModal({ user, onClose, onSignOut }: ProfileModalProps) {
 
               {/* Rest goal tier */}
               <div>
-                <p className="text-sm font-semibold text-[#111111] mb-2">Rest goal</p>
+                <p className="text-sm font-semibold text-[#2A2520] mb-2">Rest goal</p>
                 <div className="flex gap-2">
                   {REST_TIERS.map(({ id, label, description }) => (
                     <button
@@ -486,11 +486,11 @@ function ProfileModal({ user, onClose, onSignOut }: ProfileModalProps) {
                       onClick={() => setRestGoalTier(id)}
                       className={`flex-1 rounded-xl py-2.5 flex flex-col items-center gap-0.5 border-2 transition-colors ${
                         restGoalTier === id
-                          ? "border-[#111111] bg-[#f7f6f3]"
+                          ? "border-[#2A2520] bg-[#f7f6f3]"
                           : "border-transparent bg-[#f7f6f3] hover:border-[#e0e0e0]"
                       }`}
                     >
-                      <span className={`text-xs font-bold ${restGoalTier === id ? "text-[#111111]" : "text-[#aaaaaa]"}`}>{label}</span>
+                      <span className={`text-xs font-bold ${restGoalTier === id ? "text-[#2A2520]" : "text-[#aaaaaa]"}`}>{label}</span>
                       <span className="text-xs text-[#aaaaaa]">{description}</span>
                     </button>
                   ))}
@@ -501,14 +501,14 @@ function ProfileModal({ user, onClose, onSignOut }: ProfileModalProps) {
 
               {/* Task labels */}
               <div>
-                <p className="text-sm font-semibold text-[#111111] mb-2">Task labels</p>
+                <p className="text-sm font-semibold text-[#2A2520] mb-2">Task labels</p>
                 <div className="flex flex-wrap gap-2 mb-2">
                   {categories.map((cat) => (
-                    <div key={cat} className="flex items-center gap-1 bg-[#f2f0eb] rounded-full px-3 py-1.5">
-                      <span className="text-xs font-medium text-[#111111]">{cat}</span>
+                    <div key={cat} className="flex items-center gap-1 bg-[#FAF7F2] rounded-full px-3 py-1.5">
+                      <span className="text-xs font-medium text-[#2A2520]">{cat}</span>
                       <button
                         onClick={() => removeCategory(cat)}
-                        className="text-[#aaaaaa] hover:text-[#FF5C4D] transition-colors ml-0.5"
+                        className="text-[#aaaaaa] hover:text-[#E59880] transition-colors ml-0.5"
                       >
                         <X size={11} strokeWidth={2.5} />
                       </button>
@@ -528,12 +528,12 @@ function ProfileModal({ user, onClose, onSignOut }: ProfileModalProps) {
                       }
                     }}
                     maxLength={30}
-                    className="flex-1 bg-[#f7f6f3] rounded-xl px-4 py-2.5 text-sm text-[#111111] placeholder-[#aaaaaa] focus:outline-none focus:ring-2 focus:ring-[#111111]/20 transition"
+                    className="flex-1 bg-[#f7f6f3] rounded-xl px-4 py-2.5 text-sm text-[#2A2520] placeholder-[#aaaaaa] focus:outline-none focus:ring-2 focus:ring-[#2A2520]/20 transition"
                   />
                   <button
                     onClick={() => { if (newCat.trim()) { addCategory(newCat.trim()); setNewCat(""); } }}
                     disabled={!newCat.trim()}
-                    className="w-10 h-10 rounded-xl bg-[#111111] flex items-center justify-center disabled:opacity-30 transition-opacity"
+                    className="w-10 h-10 rounded-xl bg-[#2A2520] flex items-center justify-center disabled:opacity-30 transition-opacity"
                   >
                     <Plus size={16} strokeWidth={2.5} className="text-white" />
                   </button>

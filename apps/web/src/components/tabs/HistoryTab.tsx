@@ -13,8 +13,8 @@ function StreakAccordion() {
   return (
     <div className="bg-white rounded-2xl overflow-hidden">
       <button onClick={() => setOpen((v) => !v)} className="w-full flex items-center gap-2.5 px-4 py-3.5 text-left">
-        <HelpCircle size={15} strokeWidth={2} className="text-[#FF5C4D] shrink-0" />
-        <span className="flex-1 text-sm font-bold text-[#111111]">How do streaks work?</span>
+        <HelpCircle size={15} strokeWidth={2} className="text-[#E59880] shrink-0" />
+        <span className="flex-1 text-sm font-bold text-[#2A2520]">How do streaks work?</span>
         {open
           ? <ChevronUp size={15} strokeWidth={2} className="text-[#aaaaaa] shrink-0" />
           : <ChevronDown size={15} strokeWidth={2} className="text-[#aaaaaa] shrink-0" />
@@ -23,7 +23,7 @@ function StreakAccordion() {
       {open && (
         <div className="px-4 pb-4 text-sm text-[#aaaaaa] leading-relaxed space-y-2">
           <p>
-            Your streak counts consecutive days where you either completed a task <strong className="text-[#111111]">or</strong> hit your Rest Mode goal.
+            Your streak counts consecutive days where you either completed a task <strong className="text-[#2A2520]">or</strong> hit your Rest Mode goal.
           </p>
           <p>Rest days protect your streak — so taking a break never breaks your momentum.</p>
         </div>
@@ -40,7 +40,7 @@ function TaskCard({ task, onUntick }: { task: CompletedTask; onUntick: () => voi
       <button onClick={onUntick}>
         <CircleCheck size={20} strokeWidth={2.5} className="text-[#22a722] shrink-0" />
       </button>
-      <span className="flex-1 text-base font-medium text-[#111111] truncate">{task.taskName}</span>
+      <span className="flex-1 text-base font-medium text-[#2A2520] truncate">{task.taskName}</span>
       <span className="text-sm text-[#aaaaaa]">{task.minutesEstimated}m</span>
       <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: task.color }} />
     </div>
@@ -110,8 +110,8 @@ export function HistoryTab() {
     <div className="max-w-2xl mx-auto px-4 md:px-6 py-4 md:py-6 space-y-4">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-[#111111]">Your progress.</h1>
-        <p className="text-2xl font-bold text-[#FF5C4D]">Look how far you've come.</p>
+        <h1 className="text-2xl font-bold text-[#2A2520]">Your progress.</h1>
+        <p className="text-2xl font-bold text-[#E59880]">Look how far you've come.</p>
       </div>
 
       <StreakAccordion />
@@ -119,20 +119,20 @@ export function HistoryTab() {
       {/* Lifetime stats */}
       <div className="bg-white rounded-2xl flex py-5">
         <div className="flex-1 flex flex-col items-center gap-1">
-          <span className="text-2xl font-bold text-[#111111]">{completedTasks.length}</span>
+          <span className="text-2xl font-bold text-[#2A2520]">{completedTasks.length}</span>
           <span className="text-xs text-[#aaaaaa]">Tasks Done</span>
         </div>
         <div className="w-px bg-[#e8e8e8]" />
         <div className="flex-1 flex flex-col items-center gap-1">
-          <span className="text-2xl font-bold text-[#FF5C4D]">{streak}</span>
+          <span className="text-2xl font-bold text-[#E59880]">{streak}</span>
           <div className="flex items-center gap-1">
-            <Flame size={11} strokeWidth={2} className="text-[#FF5C4D]" />
+            <Flame size={11} strokeWidth={2} className="text-[#E59880]" />
             <span className="text-xs text-[#aaaaaa]">Streak</span>
           </div>
         </div>
         <div className="w-px bg-[#e8e8e8]" />
         <div className="flex-1 flex flex-col items-center gap-1">
-          <span className="text-2xl font-bold text-[#111111]">{restStreak}</span>
+          <span className="text-2xl font-bold text-[#2A2520]">{restStreak}</span>
           <div className="flex items-center gap-1">
             <Moon size={11} strokeWidth={2} className="text-[#aaaaaa]" />
             <span className="text-xs text-[#aaaaaa]">Rest</span>
@@ -140,7 +140,7 @@ export function HistoryTab() {
         </div>
         <div className="w-px bg-[#e8e8e8]" />
         <div className="flex-1 flex flex-col items-center gap-1">
-          <span className="text-2xl font-bold text-[#111111]">{bestStreak}</span>
+          <span className="text-2xl font-bold text-[#2A2520]">{bestStreak}</span>
           <span className="text-xs text-[#aaaaaa]">Best</span>
         </div>
       </div>
@@ -178,10 +178,10 @@ export function HistoryTab() {
               <div key={i} className="flex flex-col items-center gap-2">
                 <div
                   className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
-                    isToday && active ? "bg-[#FF5C4D]"
-                    : isToday ? "border-2 border-[#FF5C4D] bg-transparent"
-                    : active && isRestOnly ? "bg-[#A78BFA]"
-                    : active ? "bg-[#111111]"
+                    isToday && active ? "bg-[#E59880]"
+                    : isToday ? "border-2 border-[#E59880] bg-transparent"
+                    : active && isRestOnly ? "bg-[#ADA8CC]"
+                    : active ? "bg-[#2A2520]"
                     : isPartial ? "bg-[#e8e8e8]"
                     : isFuture ? "bg-[#f5f5f5]"
                     : "bg-[#f0f0f0]"
@@ -194,7 +194,7 @@ export function HistoryTab() {
                     <Moon size={12} strokeWidth={2} className="text-[#aaaaaa]" />
                   )}
                 </div>
-                <span className={`text-xs ${isToday ? "text-[#FF5C4D] font-semibold" : "text-[#aaaaaa]"}`}>
+                <span className={`text-xs ${isToday ? "text-[#E59880] font-semibold" : "text-[#aaaaaa]"}`}>
                   {dayName}
                 </span>
               </div>
@@ -205,23 +205,23 @@ export function HistoryTab() {
 
       {/* Next milestone */}
       <div className="bg-white rounded-2xl flex items-center gap-3 px-4 py-4">
-        <Target size={26} strokeWidth={1.8} className="text-[#FF5C4D] shrink-0" />
+        <Target size={26} strokeWidth={1.8} className="text-[#E59880] shrink-0" />
         <div className="flex-1">
           {streak === 0 ? (
             <>
-              <p className="text-sm font-bold text-[#111111]">Start your streak</p>
+              <p className="text-sm font-bold text-[#2A2520]">Start your streak</p>
               <p className="text-xs text-[#aaaaaa] mt-0.5">Complete a task today to begin!</p>
             </>
           ) : daysToMilestone !== null ? (
             <>
-              <p className="text-sm font-bold text-[#111111]">
+              <p className="text-sm font-bold text-[#2A2520]">
                 {daysToMilestone} more day{daysToMilestone !== 1 ? "s" : ""} to {nextMilestone}
               </p>
               <p className="text-xs text-[#aaaaaa] mt-0.5">Keep going — you're on a roll</p>
             </>
           ) : (
             <>
-              <p className="text-sm font-bold text-[#111111]">365 days — legendary!</p>
+              <p className="text-sm font-bold text-[#2A2520]">365 days — legendary!</p>
               <p className="text-xs text-[#aaaaaa] mt-0.5">You've hit every milestone. Incredible.</p>
             </>
           )}

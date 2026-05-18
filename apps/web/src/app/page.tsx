@@ -73,7 +73,7 @@ export default function Home() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#f2f0eb] flex items-center justify-center">
+      <div className="min-h-screen bg-[#FAF7F2] flex items-center justify-center">
         <span className="text-4xl text-[#aaaaaa] animate-spin inline-block">◎</span>
       </div>
     );
