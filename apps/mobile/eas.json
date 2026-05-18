@@ -16,6 +16,9 @@
     }
   },
   "submit": {
-    "production": {}
+    "production": {
+      "appleId": "sua@bagelcode.com",
+      "ascAppId": "6770420802"
+    }
   }
 }
