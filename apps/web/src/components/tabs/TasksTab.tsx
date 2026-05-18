@@ -78,6 +78,8 @@ interface SubtaskSuggestion {
   minutes: number;
 }
 
+type BreakdownPhase = "questions" | "loading" | "results" | "error";
+
 function BreakdownModal({
   task,
   onClose,
@@ -87,19 +89,26 @@ function BreakdownModal({
   onClose: () => void;
   onAdd: (subtasks: SubtaskSuggestion[]) => void;
 }) {
-  const [loading, setLoading] = useState(true);
+  const [phase, setPhase] = useState<BreakdownPhase>("questions");
+  const [goal, setGoal] = useState("");
+  const [constraints, setConstraints] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [suggestions, setSuggestions] = useState<SubtaskSuggestion[]>([]);
   const [selected, setSelected] = useState<Set<number>>(new Set());
 
   async function fetchBreakdown() {
-    setLoading(true);
+    setPhase("loading");
     setError(null);
     try {
       const res = await fetch("/api/break-task", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ taskName: task.name, taskMinutes: task.minutes }),
+        body: JSON.stringify({
+          taskName: task.name,
+          taskMinutes: task.minutes,
+          goal: goal.trim(),
+          constraints: constraints.trim(),
+        }),
       });
       if (!res.ok) throw new Error("Request failed");
       const data = (await res.json()) as { subtasks?: SubtaskSuggestion[]; error?: string };
@@ -107,14 +116,12 @@ function BreakdownModal({
       const items = data.subtasks ?? [];
       setSuggestions(items);
       setSelected(new Set(items.map((_, i) => i)));
+      setPhase("results");
     } catch {
       setError("Could not generate subtasks. Check your ANTHROPIC_API_KEY and try again.");
-    } finally {
-      setLoading(false);
+      setPhase("error");
     }
   }
-
-  useEffect(() => { void fetchBreakdown(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   function toggle(i: number) {
     setSelected((prev) => {
@@ -140,18 +147,58 @@ function BreakdownModal({
         </div>
         <p className="text-sm mb-5 truncate" style={{ color: 'var(--text-muted)' }}>"{task.name}"</p>
 
-        {loading && (
+        {phase === "questions" && (
+          <form onSubmit={(e) => { e.preventDefault(); void fetchBreakdown(); }} className="flex flex-col gap-4">
+            <div>
+              <label className="text-xs font-semibold uppercase tracking-wide block mb-2" style={{ color: 'var(--text-muted)' }}>
+                What does "done" look like? *
+              </label>
+              <textarea
+                autoFocus
+                required
+                rows={2}
+                placeholder="e.g. A published blog post with intro, 3 sections, and a conclusion"
+                value={goal}
+                onChange={(e) => setGoal(e.target.value)}
+                className="w-full rounded-xl px-4 py-3 text-sm focus:outline-none resize-none transition"
+                style={{ background: 'var(--bg-input)', color: 'var(--text-primary)' }}
+              />
+            </div>
+            <div>
+              <label className="text-xs font-semibold uppercase tracking-wide block mb-2" style={{ color: 'var(--text-muted)' }}>
+                Any tools, context, or constraints? <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>(optional)</span>
+              </label>
+              <textarea
+                rows={2}
+                placeholder="e.g. Using Figma, needs to match the existing design system, no external assets"
+                value={constraints}
+                onChange={(e) => setConstraints(e.target.value)}
+                className="w-full rounded-xl px-4 py-3 text-sm focus:outline-none resize-none transition"
+                style={{ background: 'var(--bg-input)', color: 'var(--text-primary)' }}
+              />
+            </div>
+            <button
+              type="submit"
+              className="w-full text-white font-semibold text-base rounded-full py-3.5 active:scale-[0.98] transition mt-1"
+              style={{ background: 'var(--text-primary)' }}
+            >
+              Generate subtasks
+            </button>
+          </form>
+        )}
+
+        {phase === "loading" && (
           <div className="flex flex-col items-center gap-3 py-8">
             <span className="text-3xl animate-spin inline-block" style={{ color: 'var(--accent)' }}>◎</span>
             <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Thinking…</p>
           </div>
         )}
 
-        {error && (
+        {phase === "error" && (
           <div className="flex flex-col items-center gap-3 py-6">
             <p className="text-sm text-center" style={{ color: 'var(--text-muted)' }}>{error}</p>
             <button
-              onClick={fetchBreakdown}
+              onClick={() => void fetchBreakdown()}
               className="px-4 py-2 rounded-full text-sm font-semibold"
               style={{ background: 'var(--bg-track)', color: 'var(--text-primary)' }}
             >
@@ -160,7 +207,7 @@ function BreakdownModal({
           </div>
         )}
 
-        {!loading && !error && suggestions.length > 0 && (
+        {phase === "results" && suggestions.length > 0 && (
           <>
             <div className="space-y-2 mb-5">
               {suggestions.map((s, i) => (
@@ -185,14 +232,23 @@ function BreakdownModal({
                 </button>
               ))}
             </div>
-            <button
-              onClick={() => { onAdd(suggestions.filter((_, i) => selected.has(i))); onClose(); }}
-              disabled={selectedCount === 0}
-              className="w-full text-white font-semibold text-base rounded-full py-3.5 active:scale-[0.98] transition disabled:opacity-40"
-              style={{ background: 'var(--text-primary)' }}
-            >
-              Add {selectedCount} task{selectedCount !== 1 ? "s" : ""}
-            </button>
+            <div className="flex gap-2.5">
+              <button
+                onClick={() => setPhase("questions")}
+                className="px-4 py-3.5 rounded-full text-sm font-semibold transition"
+                style={{ background: 'var(--bg-track)', color: 'var(--text-primary)' }}
+              >
+                Back
+              </button>
+              <button
+                onClick={() => { onAdd(suggestions.filter((_, i) => selected.has(i))); onClose(); }}
+                disabled={selectedCount === 0}
+                className="flex-1 text-white font-semibold text-base rounded-full py-3.5 active:scale-[0.98] transition disabled:opacity-40"
+                style={{ background: 'var(--text-primary)' }}
+              >
+                Add {selectedCount} task{selectedCount !== 1 ? "s" : ""}
+              </button>
+            </div>
           </>
         )}
       </div>
@@ -205,8 +261,8 @@ function BreakdownModal({
 interface TaskModalProps {
   task?: Task;
   categories: string[];
-  onAdd: (name: string, mins: number, color: string, category: string) => void;
-  onSave: (id: string, name: string, mins: number, color: string, category: string) => void;
+  onAdd: (name: string, mins: number, category: string) => void;
+  onSave: (id: string, name: string, mins: number, category: string) => void;
   onClose: () => void;
   onAddCategory: (cat: string) => void;
 }
@@ -218,7 +274,6 @@ function TaskModal({ task, categories, onAdd, onSave, onClose, onAddCategory }: 
   const [name, setName] = useState(task?.name ?? "");
   const [hours, setHours] = useState(Math.floor(defaultMins / 60));
   const [mins, setMins] = useState(defaultMins % 60);
-  const [color, setColor] = useState(task?.color ?? COLORS[0]);
   const [category, setCategory] = useState(task?.category ?? "");
   const [addingCat, setAddingCat] = useState(false);
   const [newCat, setNewCat] = useState("");
@@ -229,9 +284,9 @@ function TaskModal({ task, categories, onAdd, onSave, onClose, onAddCategory }: 
     if (!v) return;
     const total = Math.max(1, hours * 60 + mins);
     if (isEdit && task) {
-      onSave(task.id, v, total, color, category);
+      onSave(task.id, v, total, category);
     } else {
-      onAdd(v, total, color, category);
+      onAdd(v, total, category);
     }
     onClose();
   }
@@ -257,21 +312,6 @@ function TaskModal({ task, categories, onAdd, onSave, onClose, onAddCategory }: 
             className="w-full rounded-xl px-4 py-3.5 text-base focus:outline-none transition"
             style={{ background: 'var(--bg-input)', color: 'var(--text-primary)' }}
           />
-
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: 'var(--text-muted)' }}>Colour</p>
-            <div className="flex gap-2.5">
-              {COLORS.map((c) => (
-                <button
-                  type="button"
-                  key={c}
-                  onClick={() => setColor(c)}
-                  className={`w-8 h-8 rounded-full transition-transform ${color === c ? "ring-2 ring-offset-2 ring-[color:var(--text-primary)] scale-110" : ""}`}
-                  style={{ backgroundColor: c }}
-                />
-              ))}
-            </div>
-          </div>
 
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: 'var(--text-muted)' }}>Duration</p>
@@ -529,12 +569,13 @@ export function TasksTab() {
   const totalMinutesDone = todayCompleted.reduce((s, t) => s + t.minutesActual, 0);
   const goalPct = dailyGoal > 0 ? Math.min(Math.round((todayCompleted.length / dailyGoal) * 100), 100) : 0;
 
-  function handleAdd(name: string, mins: number, color: string, category: string) {
+  function handleAdd(name: string, mins: number, category: string) {
+    const color = COLORS[tasks.length % COLORS.length];
     addTask({ name, minutes: mins, color, icon: "BookOpen", category });
   }
 
-  function handleSave(id: string, name: string, mins: number, color: string, category: string) {
-    updateTask(id, { name, minutes: mins, color, category });
+  function handleSave(id: string, name: string, mins: number, category: string) {
+    updateTask(id, { name, minutes: mins, category });
     setEditingTask(null);
   }
 
