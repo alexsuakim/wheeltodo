@@ -480,6 +480,7 @@ function VoiceModal({
 interface TaskModalProps {
   task?: Task;
   categories: string[];
+  isPremium: boolean;
   onAdd: (name: string, mins: number, category: string) => void;
   onSave: (id: string, name: string, mins: number, category: string) => void;
   onClose: () => void;
@@ -498,7 +499,7 @@ function saveCorrection(task: string, category: string) {
   localStorage.setItem(CAT_CORRECTIONS_KEY, JSON.stringify(next));
 }
 
-function TaskModal({ task, categories, onAdd, onSave, onClose, onAddCategory }: TaskModalProps) {
+function TaskModal({ task, categories, isPremium, onAdd, onSave, onClose, onAddCategory }: TaskModalProps) {
   const { defaultTimerMinutes } = useApp();
   const isEdit = !!task;
   const defaultMins = task?.minutes ?? defaultTimerMinutes;
@@ -522,21 +523,33 @@ function TaskModal({ task, categories, onAdd, onSave, onClose, onAddCategory }: 
       if (cancelled) return;
       setSuggestionLoading(true);
       try {
-        const res = await fetch("/api/suggest-category", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ taskName: name.trim(), categories, examples: loadCorrections() }),
-        });
-        const data = (await res.json()) as { category: string | null };
-        if (!cancelled && data.category) {
-          setSuggestion(data.category);
-          setCategory(data.category);
+        const corrections = loadCorrections();
+        let suggested: string | null = null;
+
+        if (isPremium) {
+          // Haiku: higher accuracy, uses few-shot corrections server-side
+          const res = await fetch("/api/suggest-category", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ taskName: name.trim(), categories, examples: corrections }),
+          });
+          const data = (await res.json()) as { category: string | null };
+          suggested = data.category;
+        } else {
+          // Universal Sentence Encoder: runs in-browser, no API call
+          const { suggestCategoryUSE } = await import("@/lib/categorySuggest");
+          suggested = await suggestCategoryUSE(name.trim(), categories, corrections);
+        }
+
+        if (!cancelled && suggested) {
+          setSuggestion(suggested);
+          setCategory(suggested);
         }
       } catch { /* silent */ }
       if (!cancelled) setSuggestionLoading(false);
     }, 600);
     return () => { cancelled = true; clearTimeout(timer); };
-  }, [name, categories, isEdit, userSetCategory]);
+  }, [name, categories, isEdit, userSetCategory, isPremium]);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -1007,6 +1020,7 @@ export function TasksTab() {
         <TaskModal
           task={editingTask ?? undefined}
           categories={categories}
+          isPremium={isPremium}
           onAdd={handleAdd}
           onSave={handleSave}
           onClose={() => { setModalOpen(false); setEditingTask(null); }}
